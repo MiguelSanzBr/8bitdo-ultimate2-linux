@@ -38,7 +38,7 @@ class Device:
         try:
             self.fd = os.open(self.path, os.O_RDWR | os.O_NONBLOCK)
         except PermissionError:
-            sys.exit(f"permission denied on {self.path}: install udev/99-8bitdo-u2.rules (see README)")
+            sys.exit(f"permission denied on {self.path}: install udev/70-8bitdo-u2.rules (see README)")
         self._drain()
 
     def close(self):

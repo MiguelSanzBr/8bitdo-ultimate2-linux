@@ -25,7 +25,7 @@ for cmd in u2ctl:ultimate2.cli u2gui:ultimate2.gui.app; do
     chmod 755 "$DEST/usr/bin/$name"
 done
 
-install -m 644 "$ROOT/udev/99-8bitdo-u2.rules" "$DEST/usr/lib/udev/rules.d/"
+install -m 644 "$ROOT/udev/70-8bitdo-u2.rules" "$DEST/usr/lib/udev/rules.d/"
 install -m 644 "$ROOT/packaging/u2gui.desktop" "$DEST/usr/share/applications/"
 install -m 644 "$ROOT/packaging/ultimate2.svg" "$DEST/usr/share/icons/hicolor/scalable/apps/"
 install -m 644 "$ROOT/README.md" "$ROOT/CHANGELOG.md" "$DEST/usr/share/doc/$PKG/"

@@ -137,7 +137,7 @@ class ControllerView:
             w, h = f.measure(text) / s + 26, 22
             x1 = 6 if side == "l" else 2 * ox + WIDTH - 6 - w
             x2, edge = x1 + w, (x1 + w if side == "l" else x1)
-            tag = f"co:{text}"
+            tag = "co:" + text.replace(" ", "_")          # Tk splits tags at spaces
             rounded(c, x1 * s, (y - h / 2) * s, x2 * s, (y + h / 2) * s, h / 2 * s, fill=theme.CALLOUT_FILL,
                     outline=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)), tags=tag)
             c.create_text((x1 + w / 2) * s, y * s, text=text, fill=FG, font=theme.font(9, "bold"), tags=tag)

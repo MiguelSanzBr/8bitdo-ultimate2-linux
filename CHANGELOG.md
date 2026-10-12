@@ -2,6 +2,13 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## 0.1.0-beta.2 — 2026-10-12
+
+* The udev rule is now `70-8bitdo-u2.rules`. As `99-…` it sorted after systemd's `73-seat-late.rules`, so the
+  `uaccess` tag never became an ACL and users got "permission denied" on the hidraw node.
+* The home-page callouts with more than one word ("Analógico esquerdo", "Botões ABXY", …) now respond to
+  clicks. Tk splits canvas tags at spaces, so their bindings never matched.
+
 ## 0.1.0-beta.1 — 2026-10-12
 
 First public beta.

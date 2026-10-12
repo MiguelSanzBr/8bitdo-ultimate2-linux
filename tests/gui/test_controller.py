@@ -37,7 +37,9 @@ def test_leds_canvas_dots_pick_target(app):
                                                for c in geometry.CALLOUTS])
 def test_callouts_open_their_page(app, text, target, page):
     app.show("home")
-    fire(app, app.home_canvas, f"co:{text}")
+    tag = "co:" + text.replace(" ", "_")
+    assert " " not in tag and len(app.home_canvas.find_withtag(tag)) == 2   # a real click finds pill + label
+    fire(app, app.home_canvas, tag)
     assert app.page == page
     if page == "buttons":
         assert app.sel_btn == target

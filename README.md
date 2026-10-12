@@ -41,7 +41,7 @@ Download `ultimate2_<version>_all.deb` from the
 [Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases), then:
 
 ```bash
-sudo apt install ./ultimate2_0.1.0-beta1_all.deb
+sudo apt install ./ultimate2_0.1.0-beta2_all.deb
 ```
 
 This installs the `u2ctl` and `u2gui` commands, the menu entry "8BitDo Ultimate 2" and the udev rule.
@@ -54,7 +54,7 @@ dependencies.
 
 ```bash
 git clone https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux.git && cd 8bitdo-ultimate2-linux
-sudo cp udev/99-8bitdo-u2.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger
+sudo cp udev/70-8bitdo-u2.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger --action=add --subsystem-match=hidraw
 pip install .            # installs the u2ctl and u2gui commands
 ```
 
@@ -119,6 +119,8 @@ controller everything reads `0xffffffff` (erased flash). `u2ctl new-slot` fills 
 ## Troubleshooting
 
 - **`permission denied on /dev/hidrawN`**: install the udev rule (see *Install*), then unplug and replug the controller.
+  The rule must sort before `73-seat-late.rules`, which is why it is called `70-…`. If you installed 0.1.0-beta.1
+  from source, delete the old `/etc/udev/rules.d/99-8bitdo-u2.rules`.
 - **Writes hang or time out**: the firmware only answers while the host keeps reading the controller's
   XInput reports. The tools keep the joystick node (`/dev/input/js*`) open for this. If it was stuck before, unplug
   and replug the controller.
