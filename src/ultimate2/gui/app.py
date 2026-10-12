@@ -1,0 +1,144 @@
+"""The ``u2gui`` main window: state, layout skeleton and the mixins that do the work."""
+import threading
+import tkinter as tk
+import tkinter.font as tkfont
+from tkinter import ttk
+
+from .. import config
+from . import theme
+from .catalog import SECTIONS
+from .controller import ControllerView
+from .editor import Editor
+from .live_input import PadInput
+from .pages import Pages
+from .sync import DeviceSync
+from .theme import BG, FG, MUTED, TILE, WARN
+from .widgets import Pill, panel
+
+
+class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
+    """Main window. ``self.v`` holds one Tk variable per editable setting of the selected slot."""
+
+    def __init__(self):
+        super().__init__()
+        self.title("8BitDo Ultimate 2 — Linux")
+        self.configure(bg=BG)
+        theme.FAMILY = theme.pick_family(self)
+        # UI scale from the real font size (desktop DPI/font scaling); 10pt Sans is ~15px tall at 96 dpi
+        self.s = max(1.0, tkfont.Font(root=self, font=theme.font(10)).metrics("linespace") / 15)
+        self.doc = None          # decoded config being edited
+        self.base = None         # raw config as last read from / written to the controller
+        self.slot = 0
+        self.active_slot = None  # profile in use on the controller (3 = default, no custom profile)
+        self.busy = False
+        self.sel_btn = "A"
+        self.color_target = "hot_color"
+        self.theme_dev = None    # LED theme as last read from / written to the controller
+        self._loading = False
+        self._save_job = None
+        self.led_items = []      # (canvas, [24 item ids]) for the live LED preview
+        self.skin = "dark"
+        self.led_glow = {}       # canvas -> 24 halo arcs (dimmed copy of the LED colours)
+        self._imgs = {}          # canvas -> body gradient image (kept referenced)
+        self.ctrl = {}           # canvas -> (parts, mode) of every controller drawing
+        self.page = "home"
+        self.pad_down = set()    # buttons currently held on the real controller
+        self.pad_axes = {}       # js axis number -> value
+        self.press_t = {}        # button -> time of the last press (ripple animation)
+        self._remapped = set()
+        self._closing = False
+        self.conn_text = None    # pill text of the last successful read
+        self._style()
+        self._vars()
+        self._build()
+        w, h = int(1100 * self.s), int(800 * self.s)
+        self.geometry(f"{min(w, int(self.winfo_screenwidth() * .95))}x{min(h, int(self.winfo_screenheight() * .9))}")
+        self.after(200, self.read_device)
+        self.after(theme.POLL_MS, self.poll)
+        self.after(theme.FRAME_MS, self.animate)
+        threading.Thread(target=self._read_pad, daemon=True).start()
+
+    def destroy(self):
+        self._closing = True
+        super().destroy()
+
+    font = staticmethod(theme.font)
+
+    def _style(self):
+        st = ttk.Style(self)
+        st.theme_use("clam")
+        st.configure(".", background=BG, foreground=FG, font=theme.font(10))
+
+    def _vars(self):
+        V, I, B = tk.StringVar, tk.IntVar, tk.BooleanVar
+        side = ("left_start", "left_end", "right_start", "right_end")
+        self.v = {"name": V(), "enabled": B(), "keys": {b: V() for b in config.BUTTONS},
+                  "sticks": {k: I() for k in side}, "triggers": {k: I() for k in side}, "xr": {k: I() for k in side},
+                  "feat": {f: B() for f in config.FEATURES.values()},
+                  "rumble_l": I(), "rumble_r": I(),
+                  "gyro_type": I(), "gyro_mode": I(), "gyro_sens": I(), "gyro_dead": I(), "gyro_key": V(),
+                  "hot_speed": I(), "theme": I()}
+        self.colors = {}
+        self.swatches = {}       # colour key -> (canvas, item)
+
+    def _watch(self):
+        """Every setting change schedules an automatic save (the official app also applies changes at once)."""
+        def each(node):
+            for var in node.values():
+                if isinstance(var, dict):
+                    each(var)
+                elif var is not self.v["theme"]:
+                    var.trace_add("write", lambda *_, var=var: self.changed(var))
+        each(self.v)
+
+    def _build(self):
+        s = self.s
+        head = tk.Frame(self, bg=BG)
+        head.pack(fill="x", padx=int(24 * s), pady=(int(16 * s), 0))
+        tk.Label(head, text="8BitDo Ultimate Software · Linux", bg=BG, fg=MUTED, font=theme.font(9)).pack(side="left")
+        self.slot_btns = []
+        for i in range(3):
+            b = Pill(head, f"Perfil {i + 1}  ●", s, cmd=lambda i=i: self.select_slot(i), fill=BG, fg=MUTED,
+                     hover=TILE, padx=14, pady=6)
+            self.slot_btns.append(b)
+        for b in reversed(self.slot_btns):
+            b.pack(side="right", padx=2)
+
+        self.banner, banner_in = panel(self, s, fill="#2b2618", pady=10)
+        self.banner_text = tk.Label(banner_in, bg="#2b2618", fg=WARN, font=theme.font(9), anchor="w", justify="left",
+                                    wraplength=int(760 * s))
+        self.banner_text.pack(side="left", fill="x", expand=True)
+        self.banner_btn = self.button(banner_in, "Editar o perfil ativo", lambda: self.select_slot(self.active_slot))
+
+        foot = tk.Frame(self, bg=BG)
+        foot.pack(side="bottom", fill="x", padx=int(24 * s), pady=int(14 * s))
+        for text, cmd in (("Recarregar", self.read_device), ("Restaurar backup", self.restore), ("Backup", self.backup)):
+            self.button(foot, text, cmd).pack(side="right", padx=int(4 * s))
+        self.status = tk.Label(foot, text="", bg=BG, fg=MUTED, anchor="w", font=theme.font(9))
+        self.status.pack(side="left", fill="x", expand=True)
+
+        body = tk.Frame(self, bg=BG)
+        body.pack(fill="both", expand=True)
+        self.pages = {"home": self._p_home(body)}
+        builders = {"buttons": self._p_buttons, "sticks": self._p_sticks, "triggers": self._p_triggers,
+                    "rumble": self._p_rumble, "gyro": self._p_gyro, "leds": self._p_leds, "profile": self._p_profile}
+        for title, key in SECTIONS:
+            page = tk.Frame(body, bg=BG)
+            top = tk.Frame(page, bg=BG, height=int(46 * s))
+            top.pack(fill="x", padx=int(24 * s), pady=(int(10 * s), int(6 * s)))
+            back = Pill(top, "‹  Início", s, cmd=lambda: self.show("home"), fill=BG, fg=MUTED, hover=TILE, padx=12, pady=6)
+            back.place(relx=0, rely=.5, anchor="w")
+            tk.Label(top, text=title, bg=BG, fg=FG, font=theme.font(17)).place(relx=.5, rely=.5, anchor="center")
+            inner = tk.Frame(page, bg=BG)
+            inner.pack(fill="both", expand=True, padx=int(24 * s), pady=int(8 * s))
+            builders[key](inner)
+            self.pages[key] = page
+        for var in self.v["keys"].values():
+            var.trace_add("write", lambda *_: self.refresh_mapping())
+        self._watch()
+        self.select_slot(0, gather=False)
+        self.show("home")
+
+
+def main():
+    App().mainloop()

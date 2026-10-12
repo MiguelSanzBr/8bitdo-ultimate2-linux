@@ -1,0 +1,2 @@
+# 8BitDo controllers/dongles: give the logged-in user access to the hidraw config interface.
+KERNEL=="hidraw*", ATTRS{idVendor}=="2dc8", TAG+="uaccess"

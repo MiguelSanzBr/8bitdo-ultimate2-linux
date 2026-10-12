@@ -1,0 +1,23 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: System packages (Tk, virtual display, a UI font)
+        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb fonts-cantarell
+      - name: Install
+        run: pip install -e ".[test]"
+      - name: Tests with coverage (100% required)
+        run: xvfb-run -a python -m coverage run -m pytest -q && python -m coverage report

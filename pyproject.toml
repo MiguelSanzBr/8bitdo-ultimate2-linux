@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ultimate2"
+version = "0.1.0b1"
+description = "Open-source Linux configurator for the 8BitDo Ultimate 2 Wireless controller (CLI + GUI)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.8"
+authors = [{ name = "Miguel Sanz" }]
+keywords = ["8bitdo", "ultimate 2", "gamepad", "controller", "linux", "hidraw", "configurator"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Environment :: X11 Applications",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "coverage"]
+
+[project.scripts]
+u2ctl = "ultimate2.cli:main"
+
+[project.gui-scripts]
+u2gui = "ultimate2.gui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

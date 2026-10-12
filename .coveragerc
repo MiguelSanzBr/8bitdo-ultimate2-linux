@@ -1,0 +1,7 @@
+[run]
+branch = True
+source = src/ultimate2
+
+[report]
+show_missing = True
+fail_under = 100
