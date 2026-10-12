@@ -269,3 +269,21 @@ def test_field_is_rounded_entry(shared_app, scratch):
     e.insert(0, "x")
     assert var.get() == "xabc"
     assert int(cv["width"]) > 12 and int(cv["height"]) > 16
+
+
+# ---------------------------------------------------------------- Select
+def test_select_shows_the_choice_and_its_menu_sets_the_variable(shared_app, scratch, monkeypatch):
+    var = tk.StringVar(value="en")
+    sel = widgets.Select(scratch, var, [("pt", "Português (Brasil)"), ("en", "English")], 1.0)
+    sel.pack()
+    shared_app.update()
+    assert sel.text == "English  ▾"
+    assert [sel.menu.entrycget(i, "label") for i in range(2)] == ["Português (Brasil)", "English"]
+    sel.menu.invoke(0)
+    assert var.get() == "pt" and sel.text == "Português (Brasil)  ▾"
+    var.set("xx")
+    assert sel.text == "xx  ▾"                                   # an unknown value is shown as is
+    posted = []
+    monkeypatch.setattr(sel.menu, "tk_popup", lambda x, y: posted.append((x, y)))
+    click(shared_app, sel)
+    assert posted == [(sel.winfo_rootx(), sel.winfo_rooty() - sel.menu.winfo_reqheight())]   # opens above it

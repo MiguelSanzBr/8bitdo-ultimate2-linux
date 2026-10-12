@@ -16,7 +16,7 @@ from .live_input import PadInput
 from .pages import Pages
 from .sync import DeviceSync
 from .theme import BG, FG, MUTED, TILE, WARN
-from .widgets import Pill, panel
+from .widgets import Pill, Select, panel
 
 SETTINGS = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ultimate2", "gui.json")
 
@@ -149,6 +149,9 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         foot.pack(side="bottom", fill="x", padx=int(24 * s), pady=int(14 * s))
         for text, cmd in ((_("Recarregar"), self.read_device), (_("Restaurar backup"), self.restore), (_("Backup"), self.backup)):
             self.button(foot, text, cmd).pack(side="right", padx=int(4 * s))
+        self.lang_pick = tk.StringVar(value=i18n.LANG)                 # language selector, left of Backup
+        Select(foot, self.lang_pick, list(i18n.LANGS.items()), s).pack(side="right", padx=int(4 * s))
+        self.lang_pick.trace_add("write", lambda *_a: self.set_lang(self.lang_pick.get()))
         self.status = tk.Label(foot, text="", bg=BG, fg=MUTED, anchor="w", font=theme.font(9))
         self.status.pack(side="left", fill="x", expand=True)
 

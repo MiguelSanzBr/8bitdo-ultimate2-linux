@@ -81,7 +81,8 @@ u2gui
 - **LEDs**: pick the active theme, then click what to colour (theme colours, all custom LEDs, or a single LED on
   the drawing) and use the colour wheel.
 - **Profile** page: besides the profile settings, it holds the **interface language** (English or Brazilian
-  Portuguese). The first run follows the system language; picking another one restarts the window in it.
+  Portuguese). The first run follows the system language; picking another one (here or in the selector next to
+  **Backup**) restarts the window in it.
 - Changes are saved automatically. **Backup / Restaurar backup** save and restore the whole configuration.
 
 ### Command line
@@ -170,6 +171,6 @@ de LEDs com roda de cores.
 - **Usar**: `u2gui`. As mudanças são salvas sozinhas. As cores ficam por perfil, então ative o perfil no botão de
   perfil do controle (o ● mostra qual está ativo).
 - **Idioma**: a interface está disponível em inglês e português do Brasil. Ela segue o idioma do sistema e dá para
-  trocar na página Perfil (a janela reinicia no novo idioma).
+  trocar no seletor ao lado do Backup ou na página Perfil (a janela reinicia no novo idioma).
 - **Backup**: `u2ctl backup arquivo.bin` / `u2ctl restore arquivo.bin`.
 - Sem vínculo com a 8BitDo. O protocolo foi obtido por engenharia reversa para interoperabilidade.

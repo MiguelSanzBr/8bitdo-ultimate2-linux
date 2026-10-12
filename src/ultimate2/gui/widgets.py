@@ -144,6 +144,29 @@ class Toggle(tk.Canvas):
         self.create_oval(x - 7 * s, 3 * s, x + 7 * s, 17 * s, fill=FG, outline="")
 
 
+class Select(Pill):
+    """Drop-down selector: a pill with the current choice and a ▾; clicking opens a menu of ``(value, label)``
+    options that sets ``var``."""
+
+    def __init__(self, parent, var, options, s, **kw):
+        self.var, self.labels = var, dict(options)
+        self.menu = tk.Menu(parent, tearoff=0, bg=TILE, fg=FG, activebackground=LINE, activeforeground=ACCENT,
+                            selectcolor=ACCENT, relief="flat", borderwidth=0, font=(theme.FAMILY, 10))
+        for value, label in options:
+            self.menu.add_radiobutton(label=label, value=value, variable=var)
+        widest = max(self.labels.values(), key=len)
+        super().__init__(parent, f"{widest}  ▾", s, cmd=self.open, **kw)     # sized for the longest choice
+        self.set(text=self._text())
+        var.trace_add("write", lambda *_: self.set(text=self._text()))
+
+    def _text(self):
+        return f"{self.labels.get(self.var.get(), self.var.get())}  ▾"
+
+    def open(self):
+        """Show the menu just above the pill (it lives in the window footer)."""
+        self.menu.tk_popup(self.winfo_rootx(), self.winfo_rooty() - self.menu.winfo_reqheight())
+
+
 class ColorPicker(tk.Frame):
     """Inline HSV picker in the style of iro.js: hue/saturation wheel, brightness bar, hex field, presets, recents.
 

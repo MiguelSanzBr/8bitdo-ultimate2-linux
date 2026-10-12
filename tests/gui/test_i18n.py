@@ -169,3 +169,16 @@ def test_app_in_english_shows_english_texts(monkeypatch):
         assert a.status.cget("text") == "Pending changes…"
     finally:
         a.destroy()
+
+
+def test_footer_selector_left_of_backup_switches_language(app, settings_file, monkeypatch):
+    foot = app.status.master
+    order = [getattr(w, "text", None) for w in foot.pack_slaves()]
+    assert order[:4] == ["Recarregar", "Restaurar backup", "Backup", "Português (Brasil)  ▾"]   # packed right to left
+    destroyed = []
+    monkeypatch.setattr(app, "destroy", lambda: destroyed.append(1))
+    foot.pack_slaves()[3].menu.invoke(1)
+    app.update()
+    assert destroyed == [1] and app.restart is True and app_mod.load_settings() == {"lang": "en"}
+    app.restart = False
+    app.lang_pick.set("pt")
