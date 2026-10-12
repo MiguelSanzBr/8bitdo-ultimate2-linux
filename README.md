@@ -6,6 +6,12 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 
 *Português:* [veja o resumo em português](#português).
 
+![u2gui home screen: live controller view with callouts, LED rings and section tiles](docs/screenshots/home.png)
+
+| Button remapping | LED rings and colour wheel |
+|---|---|
+| ![Buttons page](docs/screenshots/buttons.png) | ![LEDs page](docs/screenshots/leds.png) |
+
 > **Not affiliated with 8BitDo.** "8BitDo" and "Ultimate 2" are trademarks of their owner. The protocol was
 > reverse-engineered for interoperability; no code or assets from the official software are included.
 
@@ -150,6 +156,9 @@ Macro step data, firmware updates, dongle pairing, and confirming which edition 
 
 Configurador open source do **8BitDo Ultimate 2 Wireless** para Linux, com linha de comando (`u2ctl`) e interface
 gráfica (`u2gui`) no estilo do app oficial.
+
+As imagens no topo desta página mostram a interface: os botões apertados acendem ao vivo, e há páginas de botões e
+de LEDs com roda de cores.
 
 - **Instalar**: baixe o `.deb` em [Releases](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases) e rode
   `sudo apt install ./ultimate2_*_all.deb`. Depois reconecte o controle. O app aparece no menu como "8BitDo Ultimate 2".
