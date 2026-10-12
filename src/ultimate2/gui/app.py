@@ -1,19 +1,41 @@
 """The ``u2gui`` main window: state, layout skeleton and the mixins that do the work."""
+import json
+import os
 import threading
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
 from .. import config
-from . import theme
+from . import i18n, theme
 from .catalog import SECTIONS
 from .controller import ControllerView
 from .editor import Editor
+from .i18n import _
 from .live_input import PadInput
 from .pages import Pages
 from .sync import DeviceSync
 from .theme import BG, FG, MUTED, TILE, WARN
 from .widgets import Pill, panel
+
+SETTINGS = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ultimate2", "gui.json")
+
+
+def load_settings():
+    try:
+        with open(SETTINGS, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_settings(data):
+    try:
+        os.makedirs(os.path.dirname(SETTINGS), exist_ok=True)
+        with open(SETTINGS, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except OSError:
+        pass                       # only a convenience (the interface language)
 
 
 class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
@@ -21,6 +43,9 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
 
     def __init__(self):
         super().__init__()
+        lang = load_settings().get("lang")
+        i18n.LANG = lang if lang in i18n.LANGS else i18n.system_lang()
+        self.restart = False
         self.title("8BitDo Ultimate 2 — Linux")
         self.configure(bg=BG)
         theme.FAMILY = theme.pick_family(self)
@@ -58,8 +83,18 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self.after(theme.FRAME_MS, self.animate)
         threading.Thread(target=self._read_pad, daemon=True).start()
 
+    def set_lang(self, lang):
+        """Save the chosen interface language and restart the window so every text is rebuilt in it."""
+        if lang == i18n.LANG:
+            return
+        save_settings({**load_settings(), "lang": lang})
+        self.restart = True
+        self.after_idle(self.destroy)           # let the chip traces of this change finish first
+
     def destroy(self):
         self._closing = True
+        for job in self.tk.splitlist(self.tk.call("after", "info")):   # timers would outlive the window
+            self.after_cancel(job)
         super().destroy()
 
     font = staticmethod(theme.font)
@@ -98,7 +133,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         tk.Label(head, text="8BitDo Ultimate Software · Linux", bg=BG, fg=MUTED, font=theme.font(9)).pack(side="left")
         self.slot_btns = []
         for i in range(3):
-            b = Pill(head, f"Perfil {i + 1}  ●", s, cmd=lambda i=i: self.select_slot(i), fill=BG, fg=MUTED,
+            b = Pill(head, _("Perfil {}").format(i + 1) + "  ●", s, cmd=lambda i=i: self.select_slot(i), fill=BG, fg=MUTED,
                      hover=TILE, padx=14, pady=6)
             self.slot_btns.append(b)
         for b in reversed(self.slot_btns):
@@ -108,11 +143,11 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self.banner_text = tk.Label(banner_in, bg="#2b2618", fg=WARN, font=theme.font(9), anchor="w", justify="left",
                                     wraplength=int(760 * s))
         self.banner_text.pack(side="left", fill="x", expand=True)
-        self.banner_btn = self.button(banner_in, "Editar o perfil ativo", lambda: self.select_slot(self.active_slot))
+        self.banner_btn = self.button(banner_in, _("Editar o perfil ativo"), lambda: self.select_slot(self.active_slot))
 
         foot = tk.Frame(self, bg=BG)
         foot.pack(side="bottom", fill="x", padx=int(24 * s), pady=int(14 * s))
-        for text, cmd in (("Recarregar", self.read_device), ("Restaurar backup", self.restore), ("Backup", self.backup)):
+        for text, cmd in ((_("Recarregar"), self.read_device), (_("Restaurar backup"), self.restore), (_("Backup"), self.backup)):
             self.button(foot, text, cmd).pack(side="right", padx=int(4 * s))
         self.status = tk.Label(foot, text="", bg=BG, fg=MUTED, anchor="w", font=theme.font(9))
         self.status.pack(side="left", fill="x", expand=True)
@@ -126,9 +161,9 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
             page = tk.Frame(body, bg=BG)
             top = tk.Frame(page, bg=BG, height=int(46 * s))
             top.pack(fill="x", padx=int(24 * s), pady=(int(10 * s), int(6 * s)))
-            back = Pill(top, "‹  Início", s, cmd=lambda: self.show("home"), fill=BG, fg=MUTED, hover=TILE, padx=12, pady=6)
+            back = Pill(top, _("‹  Início"), s, cmd=lambda: self.show("home"), fill=BG, fg=MUTED, hover=TILE, padx=12, pady=6)
             back.place(relx=0, rely=.5, anchor="w")
-            tk.Label(top, text=title, bg=BG, fg=FG, font=theme.font(17)).place(relx=.5, rely=.5, anchor="center")
+            tk.Label(top, text=_(title), bg=BG, fg=FG, font=theme.font(17)).place(relx=.5, rely=.5, anchor="center")
             inner = tk.Frame(page, bg=BG)
             inner.pack(fill="both", expand=True, padx=int(24 * s), pady=int(8 * s))
             builders[key](inner)
@@ -141,4 +176,8 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
 
 
 def main():
-    App().mainloop()
+    while True:
+        app = App()
+        app.mainloop()
+        if not getattr(app, "restart", False):
+            break

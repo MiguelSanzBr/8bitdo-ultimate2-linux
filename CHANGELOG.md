@@ -2,6 +2,11 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+* `u2gui` is available in English and Brazilian Portuguese. It starts in the system language and the choice can be
+  changed on the Profile page (saved in `~/.config/ultimate2/gui.json`). The command line is unchanged.
+
 ## 0.1.0-beta.2 — 2026-10-12
 
 * The udev rule is now `70-8bitdo-u2.rules`. As `99-…` it sorted after systemd's `73-seat-late.rules`, so the

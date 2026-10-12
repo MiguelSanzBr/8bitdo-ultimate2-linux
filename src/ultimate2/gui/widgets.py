@@ -5,6 +5,7 @@ import tkinter.font as tkfont
 
 from . import theme
 from .drawing import hex_to_hsv, hsv_to_hex, rounded, rr_points
+from .i18n import _
 from .theme import ACCENT, FG, LINE, MUTED, TILE, TILE_HI
 
 
@@ -187,7 +188,7 @@ class ColorPicker(tk.Frame):
         e.master.pack(anchor="w", pady=int(10 * s))
         e.bind("<Return>", lambda ev: self._typed())
         e.bind("<FocusOut>", lambda ev: self._typed())
-        tk.Label(info, text="Recentes", bg=bg, fg=MUTED, font=(theme.FAMILY, 8)).pack(anchor="w")
+        tk.Label(info, text=_("Recentes"), bg=bg, fg=MUTED, font=(theme.FAMILY, 8)).pack(anchor="w")
         self.recent_row = tk.Canvas(info, width=int(110 * s), height=int(40 * s), bg=bg, highlightthickness=0)
         self.recent_row.pack(anchor="w")
         presets = tk.Canvas(self, width=int(26 * s * len(self.PRESETS)), height=int(30 * s), bg=bg, highlightthickness=0)

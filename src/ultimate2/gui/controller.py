@@ -9,6 +9,7 @@ from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline
 from .geometry import (BEHIND, BODY, CALLOUTS, DPAD_CENTER, EMBLEM, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES,
                        STICK_WELLS, WIDTH)
+from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
 
@@ -133,14 +134,15 @@ class ControllerView:
         """Labels around the home drawing, linked to their part; clicking one opens its page."""
         s = self.s
         for text, side, y, (tx, ty), target in CALLOUTS:
+            label = _(text)
             f = tkfont.Font(root=c, font=theme.font(9, "bold"))
-            w, h = f.measure(text) / s + 26, 22
+            w, h = f.measure(label) / s + 26, 22
             x1 = 6 if side == "l" else 2 * ox + WIDTH - 6 - w
             x2, edge = x1 + w, (x1 + w if side == "l" else x1)
             tag = "co:" + text.replace(" ", "_")          # Tk splits tags at spaces
             rounded(c, x1 * s, (y - h / 2) * s, x2 * s, (y + h / 2) * s, h / 2 * s, fill=theme.CALLOUT_FILL,
                     outline=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)), tags=tag)
-            c.create_text((x1 + w / 2) * s, y * s, text=text, fill=FG, font=theme.font(9, "bold"), tags=tag)
+            c.create_text((x1 + w / 2) * s, y * s, text=label, fill=FG, font=theme.font(9, "bold"), tags=tag)
             px, py = (tx + ox) * s, ty * s
             mx = (edge + (14 if side == "l" else -14)) * s
             c.create_line(edge * s, y * s, mx, y * s, px, py, fill=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)))
@@ -259,8 +261,8 @@ class ControllerView:
         dflt = self._defaults(self.slot)["mapping"] if self.doc else {}
         self._remapped = {b for b in config.BUTTONS if dflt and self.v["keys"][b].get() != dflt[b]}
         cur = self.v["keys"][self.sel_btn].get()
-        self.map_title.configure(text=f"Botão {DISPLAY.get(self.sel_btn, self.sel_btn)}")
-        self.map_sub.configure(text=f"função atual: {DISPLAY.get(cur, cur) or '—'}")
+        self.map_title.configure(text=_("Botão {}").format(DISPLAY.get(self.sel_btn, self.sel_btn)))
+        self.map_sub.configure(text=_("função atual: {}").format(DISPLAY.get(cur, cur) or "—"))
         now = time.time()
         for c, (parts, mode) in self.ctrl.items():
             self.style(c, parts, mode, now)

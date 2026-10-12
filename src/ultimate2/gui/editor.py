@@ -4,6 +4,7 @@ import copy
 from .. import config
 from .catalog import GYRO_KEYS, KEY_NAMES, LED_TARGETS
 from .drawing import set_color
+from .i18n import _
 from .theme import ACCENT, FG, LINE, TILE_HI
 from .widgets import Pill
 
@@ -11,7 +12,7 @@ from .widgets import Pill
 class Editor:
     def _defaults(self, n):
         """Slot ``n`` as the Windows app would create it."""
-        return config.default_slot(copy.deepcopy(self.doc), n, f"Perfil {n + 1}")["slots"][n]
+        return config.default_slot(copy.deepcopy(self.doc), n, _("Perfil {}").format(n + 1))["slots"][n]
 
     def load(self, s=None):
         """Show slot ``self.slot`` (or the given slot dict) in the widgets without triggering auto-save."""
@@ -27,10 +28,10 @@ class Editor:
         enabled = cur["flag"] == "enabled"
         s = s or (cur if enabled else self._defaults(n))
         v = self.v
-        v["name"].set(s["name"] or f"Perfil {n + 1}")
+        v["name"].set(s["name"] or _("Perfil {}").format(n + 1))
         v["enabled"].set(enabled)
         self.profile_note.configure(text="" if enabled else
-                                    "Este perfil está vazio: os valores são os padrões do app. Ele é criado assim que você mudar algo.")
+                                    _("Este perfil está vazio: os valores são os padrões do app. Ele é criado assim que você mudar algo."))
         dflt = self._defaults(n)
         for b in config.BUTTONS:
             k = s["mapping"].get(b)
@@ -104,7 +105,7 @@ class Editor:
     def pick_color(self, key):
         """Choose what the colour picker edits; switch the controller to the LED theme that shows it."""
         self.color_target = key
-        led_theme = 4 if key.startswith("single") else next(t for k, _, t in LED_TARGETS if k == key)
+        led_theme = 4 if key.startswith("single") else next(t for k, _l, t in LED_TARGETS if k == key)
         self.v["theme"].set(led_theme)
         self.picker.set(self._color_of(key))
         self.refresh_targets()
@@ -114,8 +115,8 @@ class Editor:
         for k, cell in self.target_labels.items():
             on = k == key
             cell.set(fill=LINE if on else TILE_HI, fg=ACCENT if on else FG)
-        label = next((l for k, l, _ in LED_TARGETS if k == key), None) or f"LED {int(key[6:]) + 1} (personalizado)"
-        self.target_title.configure(text=f"Editando: {label}")
+        label = next((_(l) for k, l, _t in LED_TARGETS if k == key), None) or _("LED {} (personalizado)").format(int(key[6:]) + 1)
+        self.target_title.configure(text=_("Editando: {}").format(label))
 
     def on_pick(self, color):
         keys = [f"single{i}" for i in range(24)] if self.color_target == "single_all" else [self.color_target]
@@ -131,7 +132,7 @@ class Editor:
             return
         self.load(self._defaults(self.slot))
         self.v["enabled"].set(True)
-        self.set_status("Padrões restaurados.")
+        self.set_status(_("Padrões restaurados."))
 
     def reset_mapping(self):
         if not self.doc:

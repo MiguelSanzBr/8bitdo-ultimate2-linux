@@ -6,6 +6,7 @@ from tkinter import filedialog, messagebox
 
 from .. import config, device, protocol
 from . import theme
+from .i18n import _
 from .theme import ACCENT, DANGER, EDITION_SKINS, MUTED, SKINS, THEME_NAMES
 
 
@@ -15,7 +16,7 @@ class DeviceSync:
         self.status.configure(text=text, fg=DANGER if error else MUTED)
 
     def set_connected(self, text):
-        self.pill.configure(text=f"●  {text}" if text else "○  controle não encontrado", fg=ACCENT if text else MUTED)
+        self.pill.configure(text=f"●  {text}" if text else "○  " + _("controle não encontrado"), fg=ACCENT if text else MUTED)
 
     # ------------------------------------------------------------ worker
     def run(self, label, job, done, quiet=False):
@@ -41,7 +42,7 @@ class DeviceSync:
                     self.after(0, lambda: self.set_connected(None))
                 else:
                     self.after(0, lambda: (self.set_status(msg, True), self.set_connected(None),
-                                           messagebox.showerror("Erro", msg, parent=self)))
+                                           messagebox.showerror(_("Erro"), msg, parent=self)))
             finally:
                 if dev:
                     dev.close()
@@ -61,7 +62,7 @@ class DeviceSync:
         if self._save_job:
             self.after_cancel(self._save_job)
         self._save_job = self.after(theme.AUTOSAVE_MS, self.autosave)
-        self.set_status("Alterações pendentes…")
+        self.set_status(_("Alterações pendentes…"))
 
     def autosave(self):
         """Write only the changed byte range (like the app's per-setting writes) and verify it."""
@@ -70,7 +71,7 @@ class DeviceSync:
             self._save_job = self.after(300, self.autosave)
             return
         self.gather()
-        new, _ = config.encode(copy.deepcopy(self.doc), self.base)
+        new = config.encode(copy.deepcopy(self.doc), self.base)[0]
         span = config.changed_span(self.base, new)
         if not span:
             self.set_status("")
@@ -79,13 +80,13 @@ class DeviceSync:
         def job(dev):
             dev.write_config(new, *span)
             if dev.read_config()[span[0]:span[1]] != new[span[0]:span[1]]:
-                raise IOError("verificação falhou: o controle não guardou o que foi enviado")
+                raise IOError(_("verificação falhou: o controle não guardou o que foi enviado"))
 
-        def done(_):
+        def done(_r):
             self.base = new
             self.profile_note.configure(text="")
-            self.set_status(f"✓ Salvo no controle ({span[1] - span[0]} bytes).")
-        self.run("Salvando no controle…", job, done)
+            self.set_status(_("✓ Salvo no controle ({} bytes).").format(span[1] - span[0]))
+        self.run(_("Salvando no controle…"), job, done)
 
     # ------------------------------------------------------------ live state
     def poll(self):
@@ -109,10 +110,10 @@ class DeviceSync:
             self.after(300, self.apply_theme)
             return
 
-        def done(_):
+        def done(_r):
             self.theme_dev = t
-            self.set_status(f"✓ Tema de LED aplicado: {THEME_NAMES[t]}.")
-        self.run("Aplicando tema de LED…", lambda dev: dev.set_theme(t), done)
+            self.set_status(_("✓ Tema de LED aplicado: {}.").format(_(THEME_NAMES[t])))
+        self.run(_("Aplicando tema de LED…"), lambda dev: dev.set_theme(t), done)
 
     def read_device(self):
         """Read everything from the controller and show it (skin, theme, active slot, config)."""
@@ -129,15 +130,15 @@ class DeviceSync:
             self.doc = config.decode(cfg)
             self.active_slot = self.doc["cur_slot"]
             fw = f"{info['firmware'] / 100:.2f}" if info else "?"
-            self.conn_text = f"Conectado · {protocol.PIDS.get(pid, hex(pid))} · firmware {fw}"
+            self.conn_text = _("Conectado · {} · firmware {}").format(protocol.PIDS.get(pid, hex(pid)), fw)
             self.set_connected(self.conn_text)
             modes = {0: "Switch", 1: "Android", 3: "Windows (XInput)"}
-            self.info_label.configure(text=f"Dispositivo: {path}\nModo: {modes.get(self.doc['gamepad_mode'], self.doc['gamepad_mode'])}"
-                                           f"\nEdição: {edition} ({SKINS[self.skin]['name']})")
+            self.info_label.configure(text=_("Dispositivo: {}\nModo: {}\nEdição: {} ({})").format(
+                path, modes.get(self.doc["gamepad_mode"], self.doc["gamepad_mode"]), edition, _(SKINS[self.skin]["name"])))
             self.load()
             self.refresh_slots()
-            self.set_status("Configuração lida do controle. As mudanças são salvas automaticamente.")
-        self.run("Lendo do controle…", job, done)
+            self.set_status(_("Configuração lida do controle. As mudanças são salvas automaticamente."))
+        self.run(_("Lendo do controle…"), job, done)
 
     # ------------------------------------------------------------ backups
     def backup(self):
@@ -147,28 +148,28 @@ class DeviceSync:
             def job(dev):
                 with open(path, "wb") as f:
                     f.write(dev.read_config())
-            self.run("Fazendo backup…", job, lambda r: self.set_status(f"Backup salvo em {path}"))
+            self.run(_("Fazendo backup…"), job, lambda r: self.set_status(_("Backup salvo em {}").format(path)))
 
     def restore(self):
-        path = filedialog.askopenfilename(parent=self, filetypes=[("Backup", "*.bin")])
+        path = filedialog.askopenfilename(parent=self, filetypes=[(_("Backup"), "*.bin")])
         if not path:
             return
         with open(path, "rb") as f:
             data = f.read()
         if len(data) != protocol.CFG_SIZE:
-            return messagebox.showerror("Erro", f"Arquivo inválido ({len(data)} bytes, esperado {protocol.CFG_SIZE}).",
+            return messagebox.showerror(_("Erro"), _("Arquivo inválido ({} bytes, esperado {}).").format(len(data), protocol.CFG_SIZE),
                                         parent=self)
-        if not messagebox.askyesno("Restaurar", "Substituir toda a configuração do controle por este backup?", parent=self):
+        if not messagebox.askyesno(_("Restaurar"), _("Substituir toda a configuração do controle por este backup?"), parent=self):
             return
 
         def job(dev):
             dev.write_config(data)
             if dev.read_config() != data:
-                raise IOError("verificação falhou")
+                raise IOError(_("verificação falhou"))
 
-        def done(_):
+        def done(_r):
             self.base = data
             self.doc = config.decode(data)
             self.load()
-            self.set_status("Backup restaurado e verificado.")
-        self.run("Restaurando…", job, done)
+            self.set_status(_("Backup restaurado e verificado."))
+        self.run(_("Restaurando…"), job, done)

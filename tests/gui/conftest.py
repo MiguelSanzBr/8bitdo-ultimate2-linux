@@ -1,4 +1,5 @@
 """Shared fixtures and helpers of the GUI tests. They need a real X display and the in-process FakeController."""
+import os
 import re
 import time
 import tkinter as tk
@@ -8,7 +9,7 @@ import pytest
 
 from conftest import BLANK_CONFIG
 from ultimate2 import config, device
-from ultimate2.gui import app as app_mod, sync, theme
+from ultimate2.gui import app as app_mod, i18n, sync, theme
 
 BACKUP = open(BLANK_CONFIG, "rb").read()
 
@@ -105,6 +106,25 @@ def make_app(monkeypatch, families=None):
 
 
 # ---------------------------------------------------------------- fixtures
+@pytest.fixture(scope="session", autouse=True)
+def settings_file(tmp_path_factory):
+    """Never touch the real ~/.config: the settings file lives in a temp dir (starts absent -> Portuguese UI)."""
+    with pytest.MonkeyPatch.context() as mp:
+        path = str(tmp_path_factory.mktemp("cfg") / "gui.json")
+        mp.setattr(app_mod, "SETTINGS", path)
+        mp.setenv("LANGUAGE", "pt_BR:pt")
+        yield path
+    i18n.LANG = "pt"
+
+
+@pytest.fixture(autouse=True)
+def pt_lang(settings_file):
+    """The existing tests assert Portuguese texts; tests of other languages set i18n.LANG themselves."""
+    i18n.LANG = "pt"
+    if os.path.exists(settings_file):
+        os.remove(settings_file)
+
+
 @pytest.fixture(autouse=True)
 def dlg(monkeypatch):
     d = SimpleNamespace(save="", open="", yes=True, errors=[], asked=[])

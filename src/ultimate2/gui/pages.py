@@ -1,10 +1,11 @@
 """Mixin: layout helpers (cards, sliders, chips…), the home page, the section pages and navigation."""
 import tkinter as tk
 
-from . import theme
+from . import i18n, theme
 from .catalog import DISPLAY, GYRO_KEYS, KEY_NAMES, LED_TARGETS, SECTIONS
 from .drawing import rounded
 from .geometry import HEIGHT, HOME_OFFSET, WIDTH
+from .i18n import LANGS, _
 from .theme import ACCENT, BG, FG, LINE, MUTED, THEME_NAMES, TILE, TILE_HI
 from .widgets import ColorPicker, Pill, Slider, Toggle, field, panel
 
@@ -84,9 +85,9 @@ class Pages:
                                      highlightthickness=0)
         self.home_canvas.pack()
         self.home_items = self.draw_controller(self.home_canvas, "home", ox=HOME_OFFSET)
-        tk.Label(page, text="Aperte os botões do controle: eles acendem aqui.", bg=BG, fg=MUTED,
+        tk.Label(page, text=_("Aperte os botões do controle: eles acendem aqui."), bg=BG, fg=MUTED,
                  font=theme.font(8)).pack()
-        self.pill = tk.Label(page, text="procurando controle…", bg=BG, fg=MUTED, font=theme.font(9))
+        self.pill = tk.Label(page, text=_("procurando controle…"), bg=BG, fg=MUTED, font=theme.font(9))
         self.pill.pack(pady=int(8 * s))
         tiles = tk.Frame(page, bg=BG)
         tiles.pack(pady=int(10 * s))
@@ -95,7 +96,7 @@ class Pages:
             t.pack(side="left", padx=int(5 * s))
             rounded(t, 1, 1, 103 * s, 95 * s, 16 * s, fill=TILE, outline="", tags="bg")
             self.icon(t, key, 52, 36)
-            t.create_text(52 * s, 74 * s, text=title, fill=FG, font=theme.font(9))
+            t.create_text(52 * s, 74 * s, text=_(title), fill=FG, font=theme.font(9))
             t.bind("<Button-1>", lambda e, k=key: self.show(k))
             t.bind("<Enter>", lambda e, t=t: t.itemconfigure("bg", fill=TILE_HI))
             t.bind("<Leave>", lambda e, t=t: t.itemconfigure("bg", fill=TILE))
@@ -108,8 +109,8 @@ class Pages:
         self.map_canvas = tk.Canvas(left, width=int(WIDTH * s), height=int(HEIGHT * s), bg=BG, highlightthickness=0)
         self.map_canvas.pack(pady=int(20 * s))
         self.map_items = self.draw_controller(self.map_canvas, "map")
-        tk.Label(left, text="Clique num botão do controle para escolher a função dele.\n"
-                            "PL/PR: botões traseiros · ★: estrela/turbo.",
+        tk.Label(left, text=_("Clique num botão do controle para escolher a função dele.\n"
+                            "PL/PR: botões traseiros · ★: estrela/turbo."),
                  bg=BG, fg=MUTED, font=theme.font(9), justify="left").pack(anchor="w")
         right = self.card(p, side="left")
         self.map_title = tk.Label(right, bg=TILE, fg=FG, font=theme.font(13, "bold"))
@@ -120,55 +121,56 @@ class Pages:
         self.map_choice.trace_add("write", lambda *_: self.v["keys"][self.sel_btn].get() != self.map_choice.get()
                                   and self.v["keys"][self.sel_btn].set(self.map_choice.get()))
         self.chips(right, self.map_choice, [(k, DISPLAY.get(k, k)) for k in KEY_NAMES], 4)
-        self.button(right, "Restaurar todos os botões", self.reset_mapping).pack(anchor="w", pady=(int(10 * s), 0))
+        self.button(right, _("Restaurar todos os botões"), self.reset_mapping).pack(anchor="w", pady=(int(10 * s), 0))
 
     def _p_sticks(self, p):
         pct = lambda v: f"{v * 100 // 128}%"
         cols = self.row(p)
-        for side, lbl in (("left", "Analógico esquerdo"), ("right", "Analógico direito")):
+        for side, lbl in (("left", _("Analógico esquerdo")), ("right", _("Analógico direito"))):
             c = self.card(cols, lbl, side="left")
-            self.slider(c, "Zona morta interna", self.v["sticks"][f"{side}_start"], 0, 128, pct)
-            self.slider(c, "Alcance externo", self.v["sticks"][f"{side}_end"], 0, 128, pct)
-        c = self.card(p, "Opções")
-        for f, t in (("invert_LS_X", "Inverter eixo X esquerdo"), ("invert_LS_Y", "Inverter eixo Y esquerdo"),
-                     ("invert_RS_X", "Inverter eixo X direito"), ("invert_RS_Y", "Inverter eixo Y direito"),
-                     ("swap_sticks", "Trocar analógicos esquerdo/direito"), ("swap_LS_dpad", "Trocar analógico esquerdo com D-pad")):
+            self.slider(c, _("Zona morta interna"), self.v["sticks"][f"{side}_start"], 0, 128, pct)
+            self.slider(c, _("Alcance externo"), self.v["sticks"][f"{side}_end"], 0, 128, pct)
+        c = self.card(p, _("Opções"))
+        for f, t in (("invert_LS_X", _("Inverter eixo X esquerdo")), ("invert_LS_Y", _("Inverter eixo Y esquerdo")),
+                     ("invert_RS_X", _("Inverter eixo X direito")), ("invert_RS_Y", _("Inverter eixo Y direito")),
+                     ("swap_sticks", _("Trocar analógicos esquerdo/direito")),
+                     ("swap_LS_dpad", _("Trocar analógico esquerdo com D-pad"))):
             self.toggle(c, t, self.v["feat"][f])
 
     def _p_triggers(self, p):
         pct = lambda v: f"{v * 100 // 255}%"
         cols = self.row(p)
-        for side, lbl in (("left", "Gatilho LT"), ("right", "Gatilho RT")):
+        for side, lbl in (("left", _("Gatilho LT")), ("right", _("Gatilho RT"))):
             c = self.card(cols, lbl, side="left")
-            self.slider(c, "Início (zona morta)", self.v["triggers"][f"{side}_start"], 0, 255, pct)
-            self.slider(c, "Fim (pressão total)", self.v["triggers"][f"{side}_end"], 0, 255, pct)
-        c = self.card(p, "Opções")
-        self.toggle(c, "Trocar LT/RT", self.v["feat"]["swap_triggers"])
+            self.slider(c, _("Início (zona morta)"), self.v["triggers"][f"{side}_start"], 0, 255, pct)
+            self.slider(c, _("Fim (pressão total)"), self.v["triggers"][f"{side}_end"], 0, 255, pct)
+        c = self.card(p, _("Opções"))
+        self.toggle(c, _("Trocar LT/RT"), self.v["feat"]["swap_triggers"])
 
     def _p_rumble(self, p):
         pc = lambda v: f"{v}%"
         cols = self.row(p)
-        c = self.card(cols, "Motores", side="left")
-        self.slider(c, "Motor esquerdo", self.v["rumble_l"], 0, 5, lambda v: f"{v * 20}%")
-        self.slider(c, "Motor direito", self.v["rumble_r"], 0, 5, lambda v: f"{v * 20}%")
-        c = self.card(cols, "Vibração nos gatilhos", side="left")
-        self.toggle(c, "Ativar", self.v["feat"]["trigger_rumble"])
-        self.slider(c, "LT início", self.v["xr"]["left_start"], 1, 91, pc)
-        self.slider(c, "LT fim", self.v["xr"]["left_end"], 9, 100, pc)
-        self.slider(c, "RT início", self.v["xr"]["right_start"], 1, 91, pc)
-        self.slider(c, "RT fim", self.v["xr"]["right_end"], 9, 100, pc)
+        c = self.card(cols, _("Motores"), side="left")
+        self.slider(c, _("Motor esquerdo"), self.v["rumble_l"], 0, 5, lambda v: f"{v * 20}%")
+        self.slider(c, _("Motor direito"), self.v["rumble_r"], 0, 5, lambda v: f"{v * 20}%")
+        c = self.card(cols, _("Vibração nos gatilhos"), side="left")
+        self.toggle(c, _("Ativar"), self.v["feat"]["trigger_rumble"])
+        self.slider(c, _("LT início"), self.v["xr"]["left_start"], 1, 91, pc)
+        self.slider(c, _("LT fim"), self.v["xr"]["left_end"], 9, 100, pc)
+        self.slider(c, _("RT início"), self.v["xr"]["right_start"], 1, 91, pc)
+        self.slider(c, _("RT fim"), self.v["xr"]["right_end"], 9, 100, pc)
 
     def _p_gyro(self, p):
         cols = self.row(p)
-        c = self.card(cols, "Giroscópio (6 eixos)", side="left")
-        self.chips(c, self.v["gyro_type"], [(0, "Desligado"), (1, "→ Analógico direito"), (2, "→ Analógico esquerdo")], 1)
-        c = self.card(cols, "Ativação", side="left")
-        self.chips(c, self.v["gyro_mode"], [(1, "Segurar o botão"), (2, "Apertar liga/desliga")], 2)
-        tk.Label(c, text="Botão de ativação", bg=TILE, fg=MUTED, font=theme.font(9)).pack(anchor="w", pady=(int(8 * self.s), 0))
+        c = self.card(cols, _("Giroscópio (6 eixos)"), side="left")
+        self.chips(c, self.v["gyro_type"], [(0, _("Desligado")), (1, _("→ Analógico direito")), (2, _("→ Analógico esquerdo"))], 1)
+        c = self.card(cols, _("Ativação"), side="left")
+        self.chips(c, self.v["gyro_mode"], [(1, _("Segurar o botão")), (2, _("Apertar liga/desliga"))], 2)
+        tk.Label(c, text=_("Botão de ativação"), bg=TILE, fg=MUTED, font=theme.font(9)).pack(anchor="w", pady=(int(8 * self.s), 0))
         self.chips(c, self.v["gyro_key"], [(k, k) for k in GYRO_KEYS], 3)
-        c = self.card(p, "Ajustes")
-        self.slider(c, "Sensibilidade", self.v["gyro_sens"], 1, 10)
-        self.slider(c, "Compensação de zona morta", self.v["gyro_dead"], 0, 100, lambda v: f"{v}%")
+        c = self.card(p, _("Ajustes"))
+        self.slider(c, _("Sensibilidade"), self.v["gyro_sens"], 1, 10)
+        self.slider(c, _("Compensação de zona morta"), self.v["gyro_dead"], 0, 100, lambda v: f"{v}%")
 
     def _p_leds(self, p):
         s = self.s
@@ -177,19 +179,19 @@ class Pages:
         cv = tk.Canvas(left, width=int(WIDTH * s), height=int(HEIGHT * s), bg=BG, highlightthickness=0)
         cv.pack(pady=int(10 * s))
         self.draw_controller(cv, "leds")
-        tk.Label(left, text="Prévia ao vivo dos anéis de LED.\nClique num LED do desenho para pintar só ele.",
+        tk.Label(left, text=_("Prévia ao vivo dos anéis de LED.\nClique num LED do desenho para pintar só ele."),
                  bg=BG, fg=MUTED, font=theme.font(9), justify="left").pack(anchor="w")
         right = tk.Frame(p, bg=BG)
         right.pack(side="left", fill="both", expand=True)
-        c = self.card(right, "Tema ativo no controle")
-        self.chips(c, self.v["theme"], list(THEME_NAMES.items()), 4)
+        c = self.card(right, _("Tema ativo no controle"))
+        self.chips(c, self.v["theme"], [(k, _(n)) for k, n in THEME_NAMES.items()], 4)
         self.v["theme"].trace_add("write", lambda *_: self.apply_theme())
-        c = self.card(right, "Cor")
+        c = self.card(right, _("Cor"))
         grid = tk.Frame(c, bg=TILE)
         grid.pack(fill="x")
         self.target_labels = {}
-        for i, (key, label, _) in enumerate(LED_TARGETS):
-            cell = Pill(grid, label, s, cmd=lambda k=key: self.pick_color(k), font=theme.font(9), radius=10,
+        for i, (key, label, _t) in enumerate(LED_TARGETS):
+            cell = Pill(grid, _(label), s, cmd=lambda k=key: self.pick_color(k), font=theme.font(9), radius=10,
                         padx=10, pady=7, dot=True)
             cell.grid(row=i // 3, column=i % 3, sticky="ew", padx=int(3 * s), pady=int(3 * s))
             self.swatches[key] = (cell, "dot")
@@ -200,21 +202,25 @@ class Pages:
         self.target_title.pack(anchor="w", pady=(int(8 * s), int(6 * s)))
         self.picker = ColorPicker(c, s, self.on_pick)
         self.picker.pack(anchor="w")
-        self.slider(c, "Velocidade da roda", self.v["hot_speed"], 1, 15)
+        self.slider(c, _("Velocidade da roda"), self.v["hot_speed"], 1, 15)
 
     def _p_profile(self, p):
         s = self.s
-        c = self.card(p, "Perfil selecionado")
+        c = self.card(p, _("Perfil selecionado"))
         r = self.row(c)
-        tk.Label(r, text="Nome", bg=TILE, fg=MUTED, font=theme.font(9)).pack(side="left", padx=(0, int(10 * s)))
+        tk.Label(r, text=_("Nome"), bg=TILE, fg=MUTED, font=theme.font(9)).pack(side="left", padx=(0, int(10 * s)))
         field(r, self.v["name"], 20, theme.font(10), s).master.pack(side="left")
-        self.toggle(c, "Perfil custom ativo neste slot", self.v["enabled"])
+        self.toggle(c, _("Perfil custom ativo neste slot"), self.v["enabled"])
         self.profile_note = tk.Label(c, bg=TILE, fg=MUTED, font=theme.font(9), wraplength=int(600 * s), justify="left")
         self.profile_note.pack(anchor="w", pady=(int(6 * s), 0))
-        self.button(c, "Restaurar padrões deste perfil", self.reset_slot).pack(anchor="w", pady=(int(10 * s), 0))
-        c = self.card(p, "Controle")
+        self.button(c, _("Restaurar padrões deste perfil"), self.reset_slot).pack(anchor="w", pady=(int(10 * s), 0))
+        c = self.card(p, _("Controle"))
         self.info_label = tk.Label(c, bg=TILE, fg=MUTED, font=theme.font(9), justify="left")
         self.info_label.pack(anchor="w")
+        c = self.card(p, _("Idioma da interface"))
+        self.lang_var = tk.StringVar(value=i18n.LANG)
+        self.chips(c, self.lang_var, list(LANGS.items()), 2)
+        self.lang_var.trace_add("write", lambda *_a: self.set_lang(self.lang_var.get()))
 
     # ------------------------------------------------------------ navigation
     def show(self, name):
@@ -234,17 +240,18 @@ class Pages:
     def refresh_slots(self):
         """Profile chips (● = active on the controller) and the 'not active' banner."""
         for j, b in enumerate(self.slot_btns):
-            b.set(text=f"Perfil {j + 1}" + ("  ●" if j == self.active_slot else ""),
+            b.set(text=_("Perfil {}").format(j + 1) + ("  ●" if j == self.active_slot else ""),
                   fill=TILE if j == self.slot else BG, fg=ACCENT if j == self.slot else MUTED)
         act = self.active_slot
         self.home_sub.configure(text="" if act is None else
-                                f"Perfil ativo no controle: {'padrão' if act not in (0, 1, 2) else act + 1}")
+                                _("Perfil ativo no controle: {}").format(_("padrão") if act not in (0, 1, 2) else act + 1))
         if self.doc is None or act is None or act == self.slot:
             self.banner.pack_forget()
             return
-        where = "no perfil padrão (sem perfil custom)" if act not in (0, 1, 2) else f"no Perfil {act + 1}"
-        self.banner_text.configure(text=f"O controle está {where}. As mudanças do Perfil {self.slot + 1} são salvas, "
-                                        f"mas só aparecem quando você ativa esse perfil no botão de perfil do controle.")
+        where = _("no perfil padrão (sem perfil custom)") if act not in (0, 1, 2) else _("no Perfil {}").format(act + 1)
+        self.banner_text.configure(text=_("O controle está {}. As mudanças do Perfil {} são salvas, "
+                                          "mas só aparecem quando você ativa esse perfil no botão de perfil do controle.")
+                                 .format(where, self.slot + 1))
         if act in (0, 1, 2):
             self.banner_btn.pack(side="right", padx=(int(10 * self.s), 0))
         else:

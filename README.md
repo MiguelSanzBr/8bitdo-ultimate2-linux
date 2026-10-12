@@ -29,6 +29,7 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 | Backup / restore of the whole configuration | ✓ | ✓ |
 | Live view of the buttons you press, sticks and triggers | | ✓ |
 | Auto-save (changes are written ~0.4 s later and verified) | | ✓ |
+| Interface in English or Brazilian Portuguese (system language, changeable) | | ✓ |
 
 Tested with an Ultimate 2 Wireless (firmware 1.10) over USB (`2dc8:310b`). The 2.4G dongle (`2dc8:6013`) speaks
 the same protocol once the controller is paired, but this has not been tested yet.
@@ -79,6 +80,8 @@ u2gui
 - **Buttons**: click a button on the drawing, then choose its new function.
 - **LEDs**: pick the active theme, then click what to colour (theme colours, all custom LEDs, or a single LED on
   the drawing) and use the colour wheel.
+- **Profile** page: besides the profile settings, it holds the **interface language** (English or Brazilian
+  Portuguese). The first run follows the system language; picking another one restarts the window in it.
 - Changes are saved automatically. **Backup / Restaurar backup** save and restore the whole configuration.
 
 ### Command line
@@ -166,5 +169,7 @@ de LEDs com roda de cores.
   `sudo apt install ./ultimate2_*_all.deb`. Depois reconecte o controle. O app aparece no menu como "8BitDo Ultimate 2".
 - **Usar**: `u2gui`. As mudanças são salvas sozinhas. As cores ficam por perfil, então ative o perfil no botão de
   perfil do controle (o ● mostra qual está ativo).
+- **Idioma**: a interface está disponível em inglês e português do Brasil. Ela segue o idioma do sistema e dá para
+  trocar na página Perfil (a janela reinicia no novo idioma).
 - **Backup**: `u2ctl backup arquivo.bin` / `u2ctl restore arquivo.bin`.
 - Sem vínculo com a 8BitDo. O protocolo foi obtido por engenharia reversa para interoperabilidade.
