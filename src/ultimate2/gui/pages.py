@@ -6,7 +6,7 @@ from .catalog import DISPLAY, GYRO_KEYS, KEY_NAMES, LED_TARGETS, SECTIONS
 from .drawing import rounded
 from .geometry import HEIGHT, HOME_OFFSET, WIDTH
 from .i18n import LANGS, _
-from .theme import ACCENT, BG, FG, LINE, MUTED, THEME_NAMES, TILE, TILE_HI
+from .theme import ACCENT, BG, FG, LINE, MUTED, SKINS, THEME_NAMES, TILE, TILE_HI
 from .widgets import ColorPicker, Pill, Slider, Toggle, field, panel
 
 
@@ -110,7 +110,7 @@ class Pages:
         self.map_canvas.pack(pady=int(20 * s))
         self.map_items = self.draw_controller(self.map_canvas, "map")
         tk.Label(left, text=_("Clique num botão do controle para escolher a função dele.\n"
-                            "PL/PR: botões traseiros · ★: estrela/turbo."),
+                            "L4/R4: botões traseiros · ★: estrela/turbo."),
                  bg=BG, fg=MUTED, font=theme.font(9), justify="left").pack(anchor="w")
         right = self.card(p, side="left")
         self.map_title = tk.Label(right, bg=TILE, fg=FG, font=theme.font(13, "bold"))
@@ -217,6 +217,11 @@ class Pages:
         c = self.card(p, _("Controle"))
         self.info_label = tk.Label(c, bg=TILE, fg=MUTED, font=theme.font(9), justify="left")
         self.info_label.pack(anchor="w")
+        tk.Label(c, text=_("Cor do desenho"), bg=TILE, fg=MUTED, font=theme.font(9)).pack(anchor="w", pady=(int(8 * s), 0))
+        self.skin_var = tk.StringVar(value=self.skin_pref)
+        self.chips(c, self.skin_var, [("auto", _("Automática (pela edição)"))] +
+                   [(k, _(v["name"])) for k, v in SKINS.items()], 3)
+        self.skin_var.trace_add("write", lambda *_a: self.set_skin_pref(self.skin_var.get()))
         c = self.card(p, _("Idioma da interface"))
         self.lang_var = tk.StringVar(value=i18n.LANG)
         self.chips(c, self.lang_var, list(LANGS.items()), 2)

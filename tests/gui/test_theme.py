@@ -29,7 +29,7 @@ def test_skins_are_complete():
 
 def test_catalog():
     assert [k for _, k in catalog.SECTIONS][0] == "buttons" and "None" in catalog.KEY_NAMES
-    assert "P3" not in catalog.KEY_NAMES and catalog.DISPLAY["P4"] == "R4"
+    assert "P3" not in catalog.KEY_NAMES and catalog.DISPLAY == {"P1": "R4", "P2": "L4"}
     assert set(catalog.GYRO_KEYS) == {"LT", "RT", "LB", "RB", "L3", "R3"}
     assert {t for _, _, t in catalog.LED_TARGETS} == {2, 3, 4}
 

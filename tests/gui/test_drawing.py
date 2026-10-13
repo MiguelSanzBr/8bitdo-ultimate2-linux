@@ -91,3 +91,14 @@ def test_gradient_fill_degenerate_polygons(shared_app):
         assert not any(px(img, x, y) for x in range(20) for y in range(20))
     img = drawing.gradient_fill(shared_app, [(2, 2), (6, 2), (6, 3), (2, 3)], 20, 20, stops)     # one scanline tall
     assert px(img, 3, 2) == (255, 0, 0) and px(img, 3, 3) is None
+
+
+def test_gradient_fill_bevel_lights_the_edges(shared_app):
+    stops = ("#808080", "#808080", "#808080")
+    flat = drawing.gradient_fill(shared_app, [(2, 2), (38, 2), (38, 38), (2, 38)], 40, 40, stops)
+    lit = drawing.gradient_fill(shared_app, [(2, 2), (38, 2), (38, 38), (2, 38)], 40, 40, stops, bevel=8)
+    assert px(flat, 20, 4) == px(flat, 20, 36) == (128, 128, 128)
+    assert px(lit, 20, 4)[0] > 128 > px(lit, 20, 36)[0]               # top edge catches the light, bottom is shaded
+    assert px(lit, 0, 0) is None and px(lit, 20, 20)                    # still clipped to the shape
+    edge = drawing.gradient_fill(shared_app, [(-5, -5), (45, -5), (45, 45), (-5, 45)], 40, 40, stops, bevel=8)
+    assert all(px(edge, x, y) for x, y in ((0, 0), (39, 39), (0, 39)))  # a shape filling the image (no outline inside)

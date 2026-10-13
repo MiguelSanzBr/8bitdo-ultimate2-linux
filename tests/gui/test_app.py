@@ -51,3 +51,30 @@ def test_main_runs_mainloop(monkeypatch):
     monkeypatch.setattr(app_mod, "App", Fake)
     app_mod.main()
     assert calls == ["loop"]
+
+
+# ---------------------------------------------------------------- drawing colour
+def test_saved_drawing_colour_is_used_at_startup(monkeypatch):
+    app_mod.save_settings({"skin": "lilac"})
+    a = make_app(monkeypatch)
+    try:
+        assert a.skin == "lilac" and a.skin_pref == "lilac" and a.skin_var.get() == "lilac"
+    finally:
+        a.destroy()
+
+
+def test_drawing_colour_choice_overrides_the_edition(app):
+    assert app.skin_pref == "auto" and app.edition == 3 and app.skin == "lilac"      # the fake reports edition 3
+    try:
+        app.skin_var.set("dark")
+        assert app.skin == "dark" and app_mod.load_settings() == {"skin": "dark"}
+        app.skin_var.set("dark")                                       # same choice: nothing to do
+        app.read_device()
+        pump(app)
+        assert app.skin == "dark"                                      # kept although the edition says pink
+        app.skin_var.set("auto")
+        assert app.skin == "lilac" and app_mod.load_settings() == {"skin": "auto"}
+        app.skin_var.set("lilac")                                      # already drawn in that colour: saved only
+        assert app.skin == "lilac" and app_mod.load_settings() == {"skin": "lilac"}
+    finally:
+        app.skin_var.set("auto")

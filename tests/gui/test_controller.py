@@ -213,7 +213,8 @@ def test_apply_skin_draws_skin_colors(skinned, name):
             assert c.itemcget(p["body"], "fill") == shown[0] and c.itemcget(p["body"], "outline") == shown[1]
             if p["text"]:
                 assert c.itemcget(p["text"], "fill") == shown[2]
-        assert len(parts["L3"]["extra"]) == 2 and not parts["A"]["extra"]
+        assert len(parts["L3"]["extra"]) == 2 and not parts["LB"]["extra"]
+        assert [c.type(i) for i in parts["A"]["extra"]] == ["arc", "oval"]  # dome: lower rim shade + specular spot
         assert c.type(parts["L3"]["extra"][1]) == "arc"                 # stick cap highlight
         _, leds = next(x for x in app.led_items if x[0] is c)
         assert len(leds) == 24 and len(app.led_glow[c]) == 24

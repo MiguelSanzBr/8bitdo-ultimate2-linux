@@ -25,7 +25,7 @@ PARTS = {
     "X": ("circle", (307, 104, 12), "X"), "B": ("circle", (357, 104, 12), "B"),
     "Select": ("circle", (190, 98, 7), "−"), "Start": ("circle", (250, 98, 7), "+"),
     "Home": ("circle", (220, 76, 7), ""), "Star": ("circle", (220, 124, 7), "★"),
-    "P2": ("rrect", (176, 286, 210, 302), "PL"), "P1": ("rrect", (230, 286, 264, 302), "PR"),
+    "P2": ("rrect", (176, 286, 210, 302), "L4"), "P1": ("rrect", (230, 286, 264, 302), "R4"),   # back buttons
 }
 BEHIND = ("LT", "RT")            # parts drawn behind the body
 # button roles pick the skin colours (theme.SKINS); everything else uses "btn"
@@ -43,5 +43,6 @@ DPAD_CENTER = (166, 160)
 CALLOUTS = [("LT", "l", 18, (96, 18), "LT"), ("LB", "l", 56, (56, 52), "LB"),
             ("Analógico esquerdo", "l", 146, (80, 112), "sticks"), ("D-pad", "l", 196, (140, 160), "Up"),
             ("RT", "r", 18, (344, 18), "RT"), ("RB", "r", 56, (384, 52), "RB"),
-            ("Botões ABXY", "r", 146, (370, 104), "A"), ("Analógico direito", "r", 196, (306, 172), "sticks")]
+            ("Botões ABXY", "r", 146, (370, 104), "A"), ("Analógico direito", "r", 196, (306, 172), "sticks"),
+            ("Traseiros L4 / R4", "r", 294, (264, 294), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing

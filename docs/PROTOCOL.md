@@ -81,8 +81,10 @@ Every section has its own flag; a section is used only when its flag is `0x20200
 
 ### Button order of `mapping` (physical buttons)
 
-`A B X Y LB RB LT RT L3 R3 Select Start Star Home Up Down Left Right P1 P2 P3 P4`. In the app, `P1` = PR and `P2` = PL
-(back buttons), `P3` = L4 and `P4` = R4 (side buttons). The Ultimate 2 Wireless only has R4.
+`A B X Y LB RB LT RT L3 R3 Select Start Star Home Up Down Left Right P1 P2 P3 P4`. On the Ultimate 2 Wireless the two
+back buttons, printed L4 and R4, are `P2` (left) and `P1` (right); the app also defines `P3`/`P4` for other models.
+In XInput mode the back buttons have no code of their own: they report the function they are mapped to (LB/RB by
+default), which is why a press of L4 shows up as LB.
 
 ### Key codes (function assigned to a button)
 

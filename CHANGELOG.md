@@ -6,6 +6,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 * `u2gui` is available in English and Brazilian Portuguese. It starts in the system language and the choice can be
   changed with the selector next to Backup or on the Profile page (saved in `~/.config/ultimate2/gui.json`). The command line is unchanged.
+* The controller drawing is shaded like a moulded part (rounded, lit edges and raised buttons). The pink edition skin
+  uses colours taken from a photo of the controller.
+* The back buttons are labelled L4/R4, as printed on the controller (they were shown as PL/PR).
+* The drawing colour can be chosen on the Profile page (automatic from the edition, black or pink), for controllers
+  whose edition is not detected.
 
 ## 0.1.0-beta.2 — 2026-10-12
 

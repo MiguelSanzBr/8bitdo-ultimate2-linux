@@ -122,8 +122,10 @@ class DeviceSync:
 
         def done(r):
             path, pid, info, cfg, led_theme, edition = r
-            if EDITION_SKINS.get(edition, "dark") != self.skin:
-                self.apply_skin(EDITION_SKINS.get(edition, "dark"))
+            self.edition = edition
+            want = self.skin_pref if self.skin_pref in SKINS else EDITION_SKINS.get(edition, "dark")
+            if want != self.skin:
+                self.apply_skin(want)
             self.theme_dev = led_theme
             self.v["theme"].set(led_theme if led_theme in protocol.THEMES else 0)
             self.base = cfg

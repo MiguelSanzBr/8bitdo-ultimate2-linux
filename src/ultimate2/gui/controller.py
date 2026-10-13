@@ -33,10 +33,11 @@ class ControllerView:
             for k in range(10):
                 t = k / 9
                 rx, ry = 250 - 140 * t, 46 - 26 * t
-                c.create_oval(P(220 - rx, 262 - ry, 220 + rx, 262 + ry), outline="", fill=mix(BG, "#4b2f9a", .15 + .55 * t))
+                c.create_oval(P(220 - rx, 262 - ry, 220 + rx, 262 + ry), outline="", fill=mix(BG, sk["glow"], .15 + .55 * t))
         c.create_polygon([v + (4 if i % 2 else 0) * s for i, v in enumerate(body)], smooth=True,
                          fill=mix(BG, "#000000", .45), outline="")
         parts = {}
+        shadow = mix(sk["body"][1], "#000000", .38)
 
         def make(name):
             shape, xy, label = PARTS[name]
@@ -45,6 +46,15 @@ class ControllerView:
             pts = None
             if name in ("L3", "R3"):
                 xy = (xy[0], xy[1], xy[2] - 7)          # the cap moves inside its well
+            raised = ROLES.get(name, "btn") in ("face", "btn", "home", "dpad") and name not in ("P1", "P2")
+            if raised:                                      # soft drop shadow on the body below the button
+                sx, sy = (1.2, 2.2) if shape != "poly" else (0, 0)
+                if shape == "circle":
+                    x, y, r = xy
+                    c.create_oval(P(x - r + sx, y - r + sy, x + r + sx, y + r + sy), fill=shadow, outline="")
+                else:
+                    x1, y1, x2, y2 = xy
+                    rounded(c, *P(x1 + sx, y1 + sy, x2 + sx, y2 + sy), 4 * s, fill=shadow, outline="")
             if shape == "circle":
                 x, y, r = xy
                 box = P(x - r, y - r, x + r, y + r)
@@ -69,6 +79,13 @@ class ControllerView:
                      c.create_arc(cx - 15 * s, cy - 15 * s, cx + 15 * s, cy + 15 * s, start=100, extent=80,
                                   style="arc", outline=mix(base[0], "#ffffff", .25), width=2 * s, tags=tag)] \
                 if name in ("L3", "R3") else []
+            if shape == "circle" and raised:                # dome: darker lower rim and a small specular spot
+                x1, y1, x2, y2 = box
+                rr = (x2 - x1) / 2
+                extra += [c.create_arc(x1 + 1, y1 + 1, x2 - 1, y2 - 1, start=200, extent=140, style="arc",
+                                       outline=mix(base[0], "#000000", .22), width=max(1, round(1.6 * s)), tags=tag),
+                          c.create_oval(x1 + rr * .45, y1 + rr * .28, x1 + rr * 1.05, y1 + rr * .7,
+                                        fill=mix(base[0], "#ffffff", .7), outline="", tags=tag)]
             text = c.create_text(cx, cy, text=label, fill=base[2], font=theme.font(7, "bold"), tags=tag) if label else None
             bx, by = (cx + 14 * s, cy - 6 * s) if shape == "poly" else (box[2], box[1])
             badge = c.create_oval(bx - 3 * s, by - 3 * s, bx + 3 * s, by + 3 * s, fill=ACCENT, outline=BODY_FILL, state="hidden")
@@ -82,12 +99,13 @@ class ControllerView:
         for name in BEHIND:
             make(name)
         self._imgs[c] = gradient_fill(c, smooth_outline([(x * s, y * s) for x, y in BODY]),
-                                      int(WIDTH * s), int(HEIGHT * s), sk["body"])
+                                      int(WIDTH * s), int(HEIGHT * s), sk["body"], bevel=round(20 * s))
         c.create_image(ox * s, 0, image=self._imgs[c], anchor="nw")
         c.create_polygon(body, smooth=True, fill="", outline=sk["line"], width=max(1, round(2 * s)))
         for x, y, r in STICK_WELLS:
             c.create_oval(P(x - r, y - r, x + r, y + r), fill=sk["well"], outline="")
         dx0, dy0 = DPAD_CENTER
+        rounded(c, *P(dx0 - 9, dy0 - 8, dx0 + 11, dy0 + 12), 5 * s, fill=shadow, outline="")              # hub shadow
         rounded(c, *P(dx0 - 10, dy0 - 10, dx0 + 10, dy0 + 10), 5 * s, fill=sk["dpad"][0], outline="")   # d-pad hub
         if sk["emblem"]:                                    # flower emblem around Home
             ex, ey = EMBLEM

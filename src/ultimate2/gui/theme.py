@@ -33,15 +33,17 @@ THEME_NAMES = {2: "Dinâmico", 3: "Roda", 4: "Personalizado", 5: "Desligado"}
 
 # controller skins: body gradient (top, middle, bottom) and (fill, outline, label) per button role
 SKINS = {
-    "dark": dict(name="Preto", body=("#2c2c2c", "#232323", "#1a1a1a"), line="#6a6a6a", well="#161616", emblem=None,
+    "dark": dict(name="Preto", glow="#4b2f9a", body=("#2c2c2c", "#232323", "#1a1a1a"), line="#6a6a6a", well="#161616", emblem=None,
                  led_off="#3a3a3a", btn=("#2e2e2e", "#808080", FG), face=("#2e2e2e", "#808080", FG),
                  dpad=("#2e2e2e", "#808080", FG), stick=("#1e1e1e", "#5a5a5a", FG), shoulder=("#2e2e2e", "#808080", FG),
                  trigger=("#262626", "#6a6a6a", FG), home=("#2e2e2e", "#808080", FG)),
-    "lilac": dict(name="Lilás", body=("#efe7fb", "#cdbaef", "#9c82d0"), line="#7d65b0", well="#2b2238", emblem="#c8182f",
-                  led_off="#4a3a6a", btn=("#e2d8f6", "#9f8bcb", "#3d2f5c"), face=("#fbf8ff", "#c2b4e0", "#d0142c"),
-                  dpad=("#2a2a2e", "#5a5a62", FG), stick=("#1f1f22", "#3c3c42", FG),
-                  shoulder=("#ddd0f5", "#9f8bcb", "#3d2f5c"), trigger=("#b9a1ec", "#8a6fcf", "#2e2150"),
-                  home=("#efe7f1", "#6e0f1d", FG)),
+    # colours sampled from a photo of the edition: pale mauve-pink fading to dark mauve, white shoulders and
+    # ABXY with red letters, black d-pad and sticks, dark red flower emblem
+    "lilac": dict(name="Rosa", glow="#6a3a5e", body=("#e2d0de", "#ab97ab", "#6f5a73"), line="#5e4a62", well="#241b26", emblem="#b3122a",
+                  led_off="#4a3a4e", btn=("#e6d9e2", "#9a8597", "#4a3550"), face=("#fdf9fb", "#c4afbd", "#a3122a"),
+                  dpad=("#2c2c30", "#46464c", FG), stick=("#2a2a2e", "#46464c", FG),
+                  shoulder=("#f7f2f5", "#c3b1bd", "#4a3550"), trigger=("#ece3e9", "#b6a2b1", "#4a3550"),
+                  home=("#f3eef1", "#6e0f1d", FG)),
 }
 # controller edition (the app's m_ControllerColor) -> skin; 3 is the lilac edition with red stick rings
 EDITION_SKINS = {3: "lilac"}
