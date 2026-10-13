@@ -61,6 +61,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self.theme_dev = None    # LED theme as last read from / written to the controller
         self._loading = False
         self._save_job = None
+        self._retry_job = None             # pending read_device() while the controller is off
         self.led_items = []      # (canvas, [24 item ids]) for the live LED preview
         self.skin_pref = load_settings().get("skin", "auto")    # "auto" = from the controller's edition
         self.skin = self.skin_pref if self.skin_pref in SKINS else DEFAULT_SKIN

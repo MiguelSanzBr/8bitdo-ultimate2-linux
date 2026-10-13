@@ -60,6 +60,39 @@ def test_run_job_ioerror_with_device_and_empty_message(app, dlg):
 
 
 # ---------------------------------------------------------------- read_device
+def test_read_device_controller_off_is_not_an_error(app, dlg, monkeypatch):
+    def off(self):
+        raise OSError(5, "Input/output error")
+    real = device.Device.read_config
+    monkeypatch.setattr(device.Device, "read_config", off)
+    app.read_device()
+    pump(app)
+    assert not dlg.errors and "desligado" in app.status.cget("text") and app.status.cget("fg") != theme.DANGER
+    assert "não encontrado" in app.pill.cget("text") and app._retry_job
+    app.busy = True                                         # a retry while busy waits for the next turn
+    job = app._retry_job
+    app.read_device(True)
+    assert app._retry_job and app._retry_job != job
+    app.busy = False
+    monkeypatch.setattr(device.Device, "read_config", real)  # switched on: the retry reads it quietly
+    app.read_device(True)
+    pump(app)
+    assert app._retry_job is None and "salvas automaticamente" in app.status.cget("text") and not dlg.errors
+
+
+def test_read_device_unplugged_retries_and_permission_opens_dialog(app, dlg, monkeypatch):
+    monkeypatch.setattr(discovery, "find_devices", lambda: iter([]))
+    app.read_device()
+    pump(app)
+    assert not dlg.errors and app._retry_job
+    def denied(self, path=None):
+        raise SystemExit("permission denied on /dev/hidraw0")
+    monkeypatch.setattr(device.Device, "__init__", denied)
+    app.read_device()                                       # Reload cancels the pending retry
+    pump(app)
+    assert dlg.errors and app._retry_job is None and app.status.cget("fg") == theme.DANGER
+
+
 def test_read_device(app):
     assert app.doc["gamepad_mode"] == 3 and app.active_slot == 3 and app.base == BACKUP
     assert "Windows (XInput)" in app.info_label.cget("text") and "/dev/hidraw-fake" in app.info_label.cget("text")

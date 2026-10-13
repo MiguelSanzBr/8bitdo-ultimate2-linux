@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* Fixed: starting `u2gui` with the controller switched off (only the 2.4G dongle plugged in) showed an
+  "[Errno 5] Input/output error" dialog. It now says the controller is off or out of range and reads it as soon as it
+  answers. Only a permission problem still opens a dialog.
 * Fixed: RT and Home had swapped remap codes (`0x8000` is RT, `0x20000` is Home). Any profile saved by `u2gui` or
   `u2ctl` made RT act as Home and Home as RT; open the profile and use "Reset all buttons" (or fix RT/Home) once.
 * `u2gui` is available in English and Brazilian Portuguese. It starts in the system language and the choice can be

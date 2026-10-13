@@ -1,6 +1,6 @@
 """Colours, fonts, timings and controller skins of the interface.
 
-Values that other modules read at call time (``FAMILY``, ``AUTOSAVE_MS``, ``POLL_MS``, ``FRAME_MS``) are
+Values that other modules read at call time (``FAMILY``, ``AUTOSAVE_MS``, ``POLL_MS``, ``FRAME_MS``, ``RETRY_MS``) are
 always accessed as ``theme.NAME`` so they can be changed in one place (and patched in tests).
 """
 import tkinter.font as tkfont
@@ -13,6 +13,7 @@ CALLOUT_FILL, CALLOUT_LINE, CALLOUT_DOT = "#1d1733", "#7c5cd6", "#b9a1ec"
 
 # timings (ms) and the ripple duration (s)
 AUTOSAVE_MS, POLL_MS, FRAME_MS = 400, 2500, 33
+RETRY_MS = 3000                  # next read attempt while the controller does not answer
 PULSE = 0.35
 
 FAMILY = "Sans"          # replaced at startup by pick_family()

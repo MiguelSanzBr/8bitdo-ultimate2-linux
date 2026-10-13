@@ -135,6 +135,7 @@ def dlg(monkeypatch):
     # timers the tests do not drive explicitly must not fire behind their back
     monkeypatch.setattr(theme, "POLL_MS", 10 ** 7)
     monkeypatch.setattr(theme, "FRAME_MS", 10 ** 7)
+    monkeypatch.setattr(theme, "RETRY_MS", 10 ** 7)
     return d
 
 

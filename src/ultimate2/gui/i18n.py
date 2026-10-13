@@ -129,4 +129,6 @@ EN = {
     "Personalizado · todos": "Custom · all",
     "Botões ABXY": "ABXY buttons",
     "Traseiros PL / PR": "Back buttons PL / PR",
+    "Controle desligado ou fora de alcance. Ligue-o: ele será lido automaticamente.":
+        "Controller off or out of range. Turn it on: it will be read automatically.",
 }

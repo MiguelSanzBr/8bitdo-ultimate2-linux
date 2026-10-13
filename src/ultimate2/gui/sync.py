@@ -19,10 +19,11 @@ class DeviceSync:
         self.pill.configure(text=f"●  {text}" if text else "○  " + _("controle não encontrado"), fg=ACCENT if text else MUTED)
 
     # ------------------------------------------------------------ worker
-    def run(self, label, job, done, quiet=False):
+    def run(self, label, job, done, quiet=False, fail=None):
         """Run ``job(dev)`` on a worker thread; ``done(result)`` runs on the Tk thread.
 
         ``quiet`` (background polling): no status text and no error dialog, only the connection pill.
+        ``fail(error, message)``, when given, handles errors instead (on the Tk thread).
         """
         if self.busy:
             return
@@ -38,7 +39,9 @@ class DeviceSync:
                 self.after(0, lambda: done(res))
             except BaseException as e:     # Device uses sys.exit for user-facing errors
                 msg = str(e) or e.__class__.__name__
-                if quiet:
+                if fail:
+                    self.after(0, lambda e=e: fail(e, msg))     # `e` is unbound once the except block ends
+                elif quiet:
                     self.after(0, lambda: self.set_connected(None))
                 else:
                     self.after(0, lambda: (self.set_status(msg, True), self.set_connected(None),
@@ -115,8 +118,28 @@ class DeviceSync:
             self.set_status(_("✓ Tema de LED aplicado: {}.").format(_(THEME_NAMES[t])))
         self.run(_("Aplicando tema de LED…"), lambda dev: dev.set_theme(t), done)
 
-    def read_device(self):
-        """Read everything from the controller and show it (skin, theme, active slot, config)."""
+    def read_device(self, retry=False):
+        """Read everything from the controller and show it (skin, theme, active slot, config).
+
+        A controller that does not answer (switched off, out of the dongle's range, unplugged) is not an error: the
+        status says so and the read is tried again until it answers. Only a permission problem opens a dialog.
+        """
+        if self._retry_job:                     # Reload while waiting for the controller
+            self.after_cancel(self._retry_job)
+            self._retry_job = None
+        if retry and self.busy:
+            self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
+            return
+
+        def fail(e, msg):
+            self.set_connected(None)
+            if isinstance(e, SystemExit) and "permission" in msg:
+                self.set_status(msg, True)
+                messagebox.showerror(_("Erro"), msg, parent=self)
+                return
+            self.set_status(_("Controle desligado ou fora de alcance. Ligue-o: ele será lido automaticamente."))
+            self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
+
         def job(dev):
             return dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition()
 
@@ -140,7 +163,7 @@ class DeviceSync:
             self.load()
             self.refresh_slots()
             self.set_status(_("Configuração lida do controle. As mudanças são salvas automaticamente."))
-        self.run(_("Lendo do controle…"), job, done)
+        self.run("" if retry else _("Lendo do controle…"), job, done, quiet=retry, fail=fail)
 
     # ------------------------------------------------------------ backups
     def backup(self):
