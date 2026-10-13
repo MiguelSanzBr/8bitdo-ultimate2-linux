@@ -87,8 +87,9 @@ class Pages:
         self.home_items = self.draw_controller(self.home_canvas, "home", ox=HOME_OFFSET)
         tk.Label(page, text=_("Aperte os botões do controle: eles acendem aqui."), bg=BG, fg=MUTED,
                  font=theme.font(8)).pack()
-        self.pill = tk.Label(page, text=_("procurando controle…"), bg=BG, fg=MUTED, font=theme.font(9))
+        self.pill = tk.Canvas(page, height=int(22 * s), bg=BG, highlightthickness=0)      # connection badge
         self.pill.pack(pady=int(8 * s))
+        self.set_connected(False)
         tiles = tk.Frame(page, bg=BG)
         tiles.pack(pady=int(10 * s))
         for title, key in SECTIONS:

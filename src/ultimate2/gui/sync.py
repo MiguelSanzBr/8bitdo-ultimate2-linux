@@ -15,8 +15,32 @@ class DeviceSync:
     def set_status(self, text, error=False):
         self.status.configure(text=text, fg=DANGER if error else MUTED)
 
-    def set_connected(self, text):
-        self.pill.configure(text=f"●  {text}" if text else "○  " + _("controle não encontrado"), fg=ACCENT if text else MUTED)
+    def set_connected(self, state):
+        """Connection badge (Wi-Fi and battery; the firmware goes to the footer's corner). ``state``: ``(firmware,
+        battery %)`` when connected (battery may be ``None``), ``None`` when the controller does not answer (grey Wi-Fi
+        with a red X), ``False`` while still looking (grey Wi-Fi)."""
+        c, s = self.pill, self.s
+        c.delete("all")
+        col, w = ACCENT if state else MUTED, max(1, round(2 * s))
+        x, y = 11 * s, 17 * s                                  # Wi-Fi: three arcs over a dot
+        for r in (5, 9.5, 14):
+            c.create_arc(x - r * s, y - r * s, x + r * s, y + r * s, start=50, extent=80, style="arc", outline=col, width=w)
+        c.create_oval(x - 2 * s, y - 2 * s, x + 2 * s, y + 2 * s, fill=col, outline="")
+        if state is None:                                      # red X over the bottom-right of the arcs
+            c.create_line(15 * s, 10 * s, 22 * s, 17 * s, fill=DANGER, width=w, capstyle="round")
+            c.create_line(15 * s, 17 * s, 22 * s, 10 * s, fill=DANGER, width=w, capstyle="round")
+        self.fw_label.configure(text=f"firmware {state[0]}" if state else "")
+        if state and state[1] is not None:                   # battery outline, fill to the level, then the %
+            battery, px, bw, bh, top = state[1], 32 * s, 22 * s, 11 * s, 6 * s
+            c.create_rectangle(px, top, px + bw, top + bh, outline=col, width=max(1, round(1.5 * s)))
+            c.create_rectangle(px + bw, top + 3 * s, px + bw + 2.5 * s, top + bh - 3 * s, fill=col, outline="")
+            level = min(max(battery, 0), 100) / 100
+            if level:
+                c.create_rectangle(px + 2 * s, top + 2 * s, px + 2 * s + (bw - 4 * s) * level, top + bh - 2 * s,
+                                   fill=DANGER if battery <= 15 else col, outline="")
+            c.create_text(px + bw + 6 * s, 11.5 * s, text=f"{battery}%", anchor="w", fill=col, font=theme.font(9),
+                          tags="battery")
+        c.configure(width=c.bbox("all")[2] + 2)
 
     # ------------------------------------------------------------ worker
     def run(self, label, job, done, quiet=False, fail=None):
@@ -95,13 +119,18 @@ class DeviceSync:
     def poll(self):
         """Follow the controller's active profile (the user switches it with the profile button)."""
         if self.doc is not None and not self.busy and self._save_job is None:
-            def done(slot):
-                if slot is not None and self.conn_text:
-                    self.set_connected(self.conn_text)     # recover the pill after a transient error
+            wireless = bool(self.conn and self.conn[1] is not None)    # battery only exists through the dongle
+
+            def done(r):
+                slot, pad = r
+                if pad:
+                    self.conn = (self.conn[0], pad["battery"])
+                if slot is not None and self.conn:
+                    self.set_connected(self.conn)          # recover the badge after a transient error
                 if slot is not None and slot != self.active_slot:
                     self.active_slot = slot
                     self.refresh_slots()
-            self.run("", lambda dev: dev.current_slot(), done, quiet=True)
+            self.run("", lambda dev: (dev.current_slot(), dev.pad_status() if wireless else None), done, quiet=True)
         self.after(theme.POLL_MS, self.poll)
 
     def apply_theme(self):
@@ -141,10 +170,12 @@ class DeviceSync:
             self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
 
         def job(dev):
-            return dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition()
+            return dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition(), dev.pad_status()
 
         def done(r):
-            path, pid, info, cfg, led_theme, edition = r
+            path, pid, info, cfg, led_theme, edition, pad = r
+            if pad:                         # through the dongle, info() is the dongle's: use the controller's own
+                edition, info = pad["edition"], pad
             self.edition = edition
             want = self.skin_pref if self.skin_pref in SKINS else EDITION_SKINS.get(edition, DEFAULT_SKIN)
             if want != self.skin:
@@ -155,11 +186,12 @@ class DeviceSync:
             self.doc = config.decode(cfg)
             self.active_slot = self.doc["cur_slot"]
             fw = f"{info['firmware'] / 100:.2f}" if info else "?"
-            self.conn_text = _("Conectado · {} · firmware {}").format(protocol.PIDS.get(pid, hex(pid)), fw)
-            self.set_connected(self.conn_text)
+            self.conn = (fw, pad and pad["battery"])
+            self.set_connected(self.conn)
             modes = {0: "Switch", 1: "Android", 3: "Windows (XInput)"}
+            mode = modes.get(self.doc["gamepad_mode"], self.doc["gamepad_mode"])
             self.info_label.configure(text=_("Dispositivo: {}\nModo: {}\nEdição: {} ({})").format(
-                path, modes.get(self.doc["gamepad_mode"], self.doc["gamepad_mode"]), edition, _(SKINS[self.skin]["name"])))
+                f"{path} · {protocol.PIDS.get(pid, hex(pid))}", mode, edition, _(SKINS[self.skin]["name"])))
             self.load()
             self.refresh_slots()
             self.set_status(_("Configuração lida do controle. As mudanças são salvas automaticamente."))

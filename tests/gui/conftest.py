@@ -26,6 +26,13 @@ def cfg_with(slot=0, edit=None, mode=None, name="Perfil X"):
     return config.encode(doc, BACKUP)[0]
 
 
+def badge(app):
+    """Connection badge as ``(firmware text or None, red X shown)``."""
+    c, fw = app.pill, app.fw_label.cget("text")             # firmware sits in the footer's corner
+    x = [i for i in c.find_all() if c.type(i) == "line" and c.itemcget(i, "fill") == theme.DANGER]
+    return (fw.split()[-1] if fw else None), bool(x)
+
+
 def pump(app, cond=None, timeout=5.0):
     """Run the Tk event loop until cond() (default: worker finished and its after-callbacks ran)."""
     cond = cond or (lambda: not app.busy)

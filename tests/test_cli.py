@@ -38,6 +38,13 @@ def test_info(fake, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "firmware    1.10\n" in out and "beta" not in out
     assert "report pid  0x6012 (Ultimate 2)" in out and "gamepad_mode=" in out
+    assert "controller" not in out                           # wired: nothing behind a dongle
+
+
+def test_info_through_the_dongle(fake, monkeypatch, capsys):
+    fake.pad = {"battery": 86, "firmware": 110, "edition": 3}
+    run(monkeypatch, "info")
+    assert "controller  firmware 1.10, battery 86%, colorway 3\n" in capsys.readouterr().out
 
 
 def test_info_beta(fake, monkeypatch, capsys):

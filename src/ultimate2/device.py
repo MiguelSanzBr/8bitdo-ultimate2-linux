@@ -7,8 +7,8 @@ import time
 
 from . import discovery
 from .protocol import (CFG_SIZE, CHUNK, CMD_COMMIT, CMD_GET_THEME, CMD_READ, CMD_REPORT, CMD_SET_THEME,
-                       CMD_WRITE, COMMIT_KEY, QUERY_VERSION, ANSWER_VERSION, REPORT_SIZE, build_request, parse_info,
-                       parse_reply)
+                       CMD_WRITE, COMMIT_KEY, QUERY_VERSION, ANSWER_VERSION, QUERY_PAD, ANSWER_PAD, REPORT_SIZE,
+                       build_request, parse_info, parse_reply)
 
 RETRIES = 30             # the app's retry count per chunk
 
@@ -88,6 +88,12 @@ class Device:
         """Colorway of the controller (the app's ``m_ControllerColor``), or ``None``."""
         r = self.query(QUERY_VERSION, want=ANSWER_VERSION)
         return r[6] if r else None
+
+    def pad_status(self):
+        """Through the dongle: ``{"battery", "firmware", "edition"}`` of the controller itself, or ``None`` (wired,
+        or the controller does not answer). The app reads firmware and colour here; byte 18 is the battery %."""
+        r = self.query(QUERY_PAD, want=ANSWER_PAD, timeout=.25)      # wired: nobody answers, keep it short
+        return {"battery": r[18], "firmware": r[19] | r[20] << 8, "edition": r[23]} if r else None
 
     def report(self, on):
         """Turn the controller's input reports off/on around config writes (like the app)."""

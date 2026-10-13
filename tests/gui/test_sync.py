@@ -6,7 +6,7 @@ import pytest
 from ultimate2 import config, device, discovery, protocol
 from ultimate2.gui import theme
 
-from .conftest import BACKUP, cfg_with, pump, slot_states
+from .conftest import BACKUP, badge, cfg_with, pump, slot_states
 
 
 def saved(a):
@@ -18,10 +18,22 @@ def test_set_status_and_connected(app):
     assert app.status.cget("fg") == theme.DANGER
     app.set_status("ok")
     assert app.status.cget("fg") == theme.MUTED
-    app.set_connected("hi")
-    assert app.pill.cget("text") == "●  hi"
-    app.set_connected(None)
-    assert "não encontrado" in app.pill.cget("text")
+    c = app.pill
+    arcs = lambda: {c.itemcget(i, "outline") for i in c.find_all() if c.type(i) == "arc"}
+    app.set_connected(("1.10", 80))
+    assert badge(app) == ("1.10", False) and arcs() == {theme.ACCENT}
+    assert c.itemcget(c.find_withtag("battery")[0], "text") == "80%"
+    fills = lambda: [c.itemcget(i, "fill") for i in c.find_all() if c.type(i) == "rectangle"]
+    app.set_connected(("1.10", 10))                          # low battery: red level
+    assert theme.DANGER in fills()
+    app.set_connected(("1.10", 0))                           # empty: outline and nub only
+    assert len(fills()) == 2
+    app.set_connected(("1.10", None))                        # battery unknown: Wi-Fi and firmware only
+    assert not c.find_withtag("battery") and badge(app) == ("1.10", False)
+    app.set_connected(None)                                  # not answering: grey Wi-Fi with a red X
+    assert badge(app) == (None, True) and arcs() == {theme.MUTED}
+    app.set_connected(False)                                 # still looking: grey, no X
+    assert badge(app) == (None, False)
 
 
 # ---------------------------------------------------------------- run
@@ -48,7 +60,7 @@ def test_run_no_device_systemexit(app, dlg, monkeypatch):
     app.run("lbl", lambda d: None, lambda r: pytest.fail("done"))
     pump(app)
     assert "no 8BitDo" in app.status.cget("text") and app.status.cget("fg") == theme.DANGER
-    assert "não encontrado" in app.pill.cget("text") and dlg.errors
+    assert badge(app) == (None, True) and dlg.errors
 
 
 def test_run_job_ioerror_with_device_and_empty_message(app, dlg):
@@ -68,7 +80,7 @@ def test_read_device_controller_off_is_not_an_error(app, dlg, monkeypatch):
     app.read_device()
     pump(app)
     assert not dlg.errors and "desligado" in app.status.cget("text") and app.status.cget("fg") != theme.DANGER
-    assert "não encontrado" in app.pill.cget("text") and app._retry_job
+    assert badge(app) == (None, True) and app._retry_job
     app.busy = True                                         # a retry while busy waits for the next turn
     job = app._retry_job
     app.read_device(True)
@@ -96,7 +108,7 @@ def test_read_device_unplugged_retries_and_permission_opens_dialog(app, dlg, mon
 def test_read_device(app):
     assert app.doc["gamepad_mode"] == 3 and app.active_slot == 3 and app.base == BACKUP
     assert "Windows (XInput)" in app.info_label.cget("text") and "/dev/hidraw-fake" in app.info_label.cget("text")
-    assert "wired (XInput)" in app.pill.cget("text") and "firmware 1.10" in app.pill.cget("text")
+    assert "wired (XInput)" in app.info_label.cget("text") and badge(app) == ("1.10", False)
     assert "salvas automaticamente" in app.status.cget("text")
     assert app.home_sub.cget("text") == "Perfil ativo no controle: padrão"
 
@@ -108,11 +120,27 @@ def test_read_device_unknown_mode_and_info_none(mk, monkeypatch, fake):
     monkeypatch.setattr(protocol, "PIDS", {})
     a = mk(bytes(cfg))
     assert "Modo: 7" in a.info_label.cget("text")
-    assert "firmware ?" in a.pill.cget("text") and hex(fake.usb_pid) in a.pill.cget("text")
+    assert badge(a) == ("?", False) and hex(fake.usb_pid) in a.info_label.cget("text")
 
 
 def test_read_device_loads_theme(app, fake):
     assert app.theme_dev == 2 and app.v["theme"].get() == 2
+
+
+def test_read_device_through_the_dongle_shows_battery(mk, fake, monkeypatch):
+    fake.firmware, fake.edition = 106, 0                     # the dongle's own firmware / colorway
+    fake.pad = {"battery": 86, "firmware": 110, "edition": 3}
+    a = mk(BACKUP)
+    assert a.conn == ("1.10", 86) and a.edition == 3
+    assert a.pill.itemcget(a.pill.find_withtag("battery")[0], "text") == "86%"
+    fake.pad["battery"] = 85                                 # the poll keeps the level up to date
+    a.poll()
+    pump(a)
+    assert a.conn == ("1.10", 85)
+    fake.pad = None                                          # controller switched off: keep the last level
+    a.poll()
+    pump(a)
+    assert a.conn == ("1.10", 85)
 
 
 def test_read_device_unknown_theme(mk, fake, monkeypatch):
@@ -291,20 +319,20 @@ def test_poll_error_is_silent_but_marks_disconnected(eapp, dlg, monkeypatch):
     eapp.poll()
     pump(eapp)
     assert not dlg.errors and eapp.status.cget("text") == "marker"
-    assert "não encontrado" in eapp.pill.cget("text")
+    assert badge(eapp) == (None, True)
 
 
 def test_poll_recovers_pill_after_transient_error(eapp):
-    assert eapp.conn_text and "Conectado" in eapp.conn_text
+    assert eapp.conn == ("1.10", None)
     eapp.set_connected(None)                     # e.g. controller was unplugged for a moment
     eapp.poll()
     pump(eapp)
-    assert eapp.pill.cget("text") == f"●  {eapp.conn_text}"
-    eapp.conn_text = None                        # never read successfully: nothing to restore
+    assert badge(eapp) == ("1.10", False)
+    eapp.conn = None                             # never read successfully: nothing to restore
     eapp.set_connected(None)
     eapp.poll()
     pump(eapp)
-    assert "não encontrado" in eapp.pill.cget("text")
+    assert badge(eapp) == (None, True)
 
 
 # ---------------------------------------------------------------- LED theme (cmd 0x40/0x41)

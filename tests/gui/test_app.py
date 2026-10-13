@@ -3,7 +3,7 @@ import tkinter as tk
 
 from ultimate2.gui import app as app_mod, theme
 
-from .conftest import make_app, pump
+from .conftest import badge, make_app, pump
 
 
 def test_family_resolution(monkeypatch):
@@ -21,7 +21,7 @@ def test_startup_timer_fires_read_and_pad_thread(fake, monkeypatch):
     a.tk.willdispatch()
     try:
         pump(a, lambda: a.doc is not None and not a.busy)
-        assert "Conectado" in a.pill.cget("text") and a.active_slot == 0xFFFF   # blank config
+        assert badge(a)[0] and a.active_slot == 0xFFFF       # blank config
     finally:
         a.destroy()
     assert a._closing

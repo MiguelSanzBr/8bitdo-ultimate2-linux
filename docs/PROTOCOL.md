@@ -46,6 +46,7 @@ answer  : 02 04 | u16 4   | u16 cmd | u16 len | u16 crc | u32 total | u32 offset
 | `0x41` | — | get active LED theme | data[0] = theme |
 | `0x0120` (dongle) | — | is a controller connected? | data[0] = 1 if yes |
 | `81 05 00 21 01` | fixed query | version and edition | `02 22`, `u16 fw`, `u8 beta`, …, byte 6 = **edition** (`m_ControllerColor`) |
+| `81 04 21 01 00 00 06` | fixed query | the controller behind the 2.4G dongle | `02 04 04 00 21 01`, byte 18 = **battery %**, 19-20 = controller firmware ×100, 21 = beta, 23 = edition. The app sends it when the dongle reports PID `0x6013` and reads firmware and edition from it (byte 18 is not used by the app; it falls as the battery drains). No answer when wired or switched off. |
 
 The active profile ("current slot") is `cur_slot` in the record header. The app reads it with a 20-byte read at
 offset 0.

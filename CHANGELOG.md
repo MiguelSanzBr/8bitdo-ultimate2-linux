@@ -4,6 +4,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* The home screen shows a connection badge instead of the text line: a green Wi-Fi sign and, through the 2.4G
+  dongle, the battery level (red at 15% or less, refreshed with the profile poll); a grey Wi-Fi with a red X when the
+  controller does not answer. The firmware number moved to the bottom-right corner.
+* Through the dongle the firmware and edition are the controller's own (they were the dongle's, so the pink edition
+  showed as edition 0 and firmware 1.06). `u2ctl info` prints the controller's firmware, battery and colorway too.
+
 ## 0.1.0-beta.3 — 2026-10-12
 
 * Fixed: starting `u2gui` with the controller switched off (only the 2.4G dongle plugged in) showed an

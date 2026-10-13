@@ -20,6 +20,7 @@ class FakeController:
         self.log = []              # (cmd, sub, length, offset) of every framed request
         self.theme = 2
         self.edition = 3
+        self.pad = None            # through the dongle: {"battery", "firmware", "edition"} of the controller
         self.host, self._dev = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
         self._t = threading.Thread(target=self._serve, daemon=True)
         self._t.start()
@@ -61,6 +62,12 @@ class FakeController:
             if pkt[:5] == b"\x81\x05\x00\x21\x01":       # version / colorway query
                 self._dev.send(bytes([0x02, 0x22, self.firmware & 0xFF, self.firmware >> 8, self.beta, 0,
                                       self.edition]).ljust(64, b"\0"))
+                continue
+            if pkt[:7] == u.QUERY_PAD:                   # controller behind the dongle (silent when wired)
+                if self.pad:
+                    p = self.pad
+                    self._dev.send((u.ANSWER_PAD + bytes(12) + bytes([p["battery"], p["firmware"] & 0xFF,
+                                    p["firmware"] >> 8, 0, 0, p["edition"]])).ljust(64, b"\0"))
                 continue
             if pkt[:2] != b"\x81\x04" or len(pkt) < 18:
                 continue

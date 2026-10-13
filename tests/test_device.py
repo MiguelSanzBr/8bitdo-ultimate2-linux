@@ -150,6 +150,12 @@ def test_edition_no_answer(dev, monkeypatch):
     assert dev.edition() is None
 
 
+def test_pad_status_through_the_dongle(dev, fake):
+    assert dev.pad_status() is None                          # wired: the query goes unanswered
+    fake.pad = {"battery": 86, "firmware": 110, "edition": 3}
+    assert dev.pad_status() == {"battery": 86, "firmware": 110, "edition": 3}
+
+
 def test_get_and_set_theme(dev, fake):
     assert dev.get_theme() == 2
     dev.set_theme(3)

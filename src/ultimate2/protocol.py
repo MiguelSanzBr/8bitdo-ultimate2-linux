@@ -23,6 +23,10 @@ THEMES = {2: "dynamic", 3: "hotwheel", 4: "custom", 5: "off"}   # active LED the
 
 QUERY_VERSION = b"\x81\x05\x00\x21\x01"   # answer starts 02 22; byte 6 = colorway (edition)
 ANSWER_VERSION = b"\x02\x22"
+# through the 2.4G dongle (it reports PID 0x6013), the controller itself: the app's getControllerVersion_CMD.
+# Answer: byte 18 battery %, 19-20 firmware x100, 21 beta, 23 colorway; no answer when wired or switched off
+QUERY_PAD = b"\x81\x04\x21\x01\x00\x00\x06"
+ANSWER_PAD = b"\x02\x04\x04\x00\x21\x01"
 
 
 def crc16(data):

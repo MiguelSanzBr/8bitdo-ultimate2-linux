@@ -158,7 +158,6 @@ def test_app_in_english_shows_english_texts(monkeypatch):
     try:
         labels = {w.text for w in walk(a) if isinstance(w, widgets.Pill)}
         assert {"Reload", "Restore backup", "Backup", "‹  Home", "Profile 1", "Profile 2", "Edit the active profile"} <= labels
-        assert a.pill.cget("text") == "looking for the controller…"
         tiles = [t for w in walk(a.pages["home"]) if w.winfo_class() == "Canvas" for t in texts(w)]
         assert {"Buttons", "Sticks", "Triggers", "Gyroscope", "Profile"} <= set(tiles)
         assert {"Left stick", "ABXY buttons", "D-pad"} <= set(texts(a.home_canvas))
@@ -174,10 +173,11 @@ def test_app_in_english_shows_english_texts(monkeypatch):
 def test_footer_selector_left_of_backup_switches_language(app, settings_file, monkeypatch):
     foot = app.status.master
     order = [getattr(w, "text", None) for w in foot.pack_slaves()]
-    assert order[:4] == ["Recarregar", "Restaurar backup", "Backup", "Português (Brasil)  ▾"]   # packed right to left
+    assert foot.pack_slaves()[0] is app.fw_label                            # firmware in the corner, rightmost
+    assert order[1:5] == ["Recarregar", "Restaurar backup", "Backup", "Português (Brasil)  ▾"]   # packed right to left
     destroyed = []
     monkeypatch.setattr(app, "destroy", lambda: destroyed.append(1))
-    foot.pack_slaves()[3].menu.invoke(1)
+    foot.pack_slaves()[4].menu.invoke(1)
     app.update()
     assert destroyed == [1] and app.restart is True and app_mod.load_settings() == {"lang": "en"}
     app.restart = False

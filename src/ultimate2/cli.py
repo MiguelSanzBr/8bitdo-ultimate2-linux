@@ -49,6 +49,9 @@ def main(argv=None):
         print(f"firmware    {i['firmware'] / 100:.2f}" + (f" beta {i['beta']}" if i["beta"] else ""))
         print(f"report pid  0x{i['device_pid']:04x} ({PIDS.get(i['device_pid'], '?')})")
         print(f"mode/slot   gamepad_mode={mode} cur_slot={slot}")
+        pad = dev.pad_status()
+        if pad:                                    # 2.4G: the controller behind the dongle
+            print(f"controller  firmware {pad['firmware'] / 100:.2f}, battery {pad['battery']}%, colorway {pad['edition']}")
     elif a.cmd == "dump":
         text = json.dumps(config.decode(dev.read_config()), indent=2, ensure_ascii=False)
         if a.output:
