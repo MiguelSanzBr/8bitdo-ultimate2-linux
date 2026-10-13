@@ -1,13 +1,19 @@
-"""Shape of the controller drawing, in logical units inside a 440x306 box (scaled by the UI factor)."""
+"""Shape of the controller drawing, in logical units inside a 440x330 box (scaled by the UI factor).
 
-BODY = [(120, 44), (320, 44), (372, 52), (404, 78), (424, 140), (438, 214), (432, 256), (404, 272), (374, 262),
-        (340, 212), (100, 212), (66, 262), (36, 272), (8, 256), (2, 214), (16, 140), (36, 78), (68, 52)]
-WIDTH, HEIGHT = 440, 306
+The outline and the button centres were traced from the silhouette (alpha channel only) of the official front
+render with ``tools/trace_silhouette.py``, scaled to 440 units wide and moved 18 units down so the triggers fit above.
+"""
 
-# shoulders seen from the front: bumpers hug the body's top corners, triggers peek out behind them
-LB_PTS = ((26, 96), (34, 68), (56, 47), (92, 35), (140, 31), (158, 36), (154, 45), (120, 46), (84, 51), (58, 63),
-          (42, 80), (34, 100))
-LT_PTS = ((58, 46), (64, 26), (86, 11), (124, 7), (148, 15), (152, 32), (112, 36), (78, 42))
+BODY = [(105, 18), (132, 20), (138, 26), (171, 24), (301, 26), (305, 21), (310, 19), (340, 18), (368, 25), (395, 43),
+        (396, 52), (406, 60), (417, 82), (428, 128), (439, 227), (439, 260), (435, 285), (428, 301), (418, 313),
+        (403, 321), (388, 326), (367, 304), (333, 248), (320, 235), (299, 229), (131, 230), (120, 234), (111, 241),
+        (74, 303), (52, 326), (49, 326), (29, 318), (15, 306), (7, 293), (2, 275), (0, 229), (10, 136), (20, 88),
+        (30, 66), (36, 57), (44, 52), (44, 43), (49, 39), (75, 24)]
+WIDTH, HEIGHT = 440, 330
+
+# shoulders seen from the front: bumpers are the body's top corners, triggers peek out behind them
+LB_PTS = ((44, 48), (44, 43), (49, 39), (75, 24), (105, 18), (132, 20), (138, 26), (112, 28), (82, 33), (60, 40))
+LT_PTS = ((52, 36), (62, 22), (84, 8), (116, 3), (140, 8), (146, 22), (120, 22), (80, 26))
 
 
 def mirror(pts):
@@ -16,17 +22,20 @@ def mirror(pts):
 
 # name -> (shape, coords, label). shape: circle (x, y, r) | rect/rrect (x1, y1, x2, y2) | poly (points, label point)
 PARTS = {
-    "LT": ("poly", (LT_PTS, (112, 21)), "LT"), "RT": ("poly", (mirror(LT_PTS), (328, 21)), "RT"),
-    "LB": ("poly", (LB_PTS, (106, 40)), "LB"), "RB": ("poly", (mirror(LB_PTS), (334, 40)), "RB"),
-    "L3": ("circle", (112, 104, 25), ""), "R3": ("circle", (280, 164, 23), ""),
-    "Up": ("rect", (158, 134, 174, 154), ""), "Down": ("rect", (158, 166, 174, 186), ""),
-    "Left": ("rect", (140, 152, 160, 168), ""), "Right": ("rect", (172, 152, 192, 168), ""),
-    "Y": ("circle", (332, 79, 12), "Y"), "A": ("circle", (332, 129, 12), "A"),
-    "X": ("circle", (307, 104, 12), "X"), "B": ("circle", (357, 104, 12), "B"),
-    "Select": ("circle", (190, 98, 7), "−"), "Start": ("circle", (250, 98, 7), "+"),
-    "Home": ("circle", (220, 76, 7), ""), "Star": ("circle", (220, 124, 7), "★"),
-    "P2": ("rrect", (176, 286, 210, 302), "L4"), "P1": ("rrect", (230, 286, 264, 302), "R4"),   # back buttons
+    "LT": ("poly", (LT_PTS, (112, 13)), "LT"), "RT": ("poly", (mirror(LT_PTS), (328, 13)), "RT"),
+    "LB": ("poly", (LB_PTS, (96, 27)), "LB"), "RB": ("poly", (mirror(LB_PTS), (344, 27)), "RB"),
+    "L3": ("circle", (93, 106, 32), ""), "R3": ("circle", (281, 177, 32), ""),
+    "Up": ("rect", (145, 137, 173, 161), ""), "Down": ("rect", (145, 189, 173, 213), ""),
+    "Left": ("rect", (121, 161, 145, 189), ""), "Right": ("rect", (173, 161, 197, 189), ""),
+    "Y": ("circle", (347, 73, 15), "Y"), "A": ("circle", (347, 136, 15), "A"),
+    "X": ("circle", (316, 104, 15), "X"), "B": ("circle", (379, 104, 15), "B"),
+    "Select": ("circle", (162, 67, 10), "−"), "Start": ("circle", (277, 67, 10), "+"),
+    "Home": ("circle", (220, 67, 14), ""), "Star": ("circle", (250, 99, 10), "★"),
+    "P2": ("rrect", (176, 300, 210, 316), "L4"), "P1": ("rrect", (230, 300, 264, 316), "R4"),   # back buttons
 }
+# parts of the face that are not configurable: square button, profile button, centre dot, player LEDs (rrect boxes)
+DECOR = [(180, 89, 200, 109, 5), (209, 113, 231, 125, 6), (219, 98, 221, 100, 1),
+         *((219, y - 1, 221, y + 1, 1) for y in (147, 156, 165))]
 BEHIND = ("LT", "RT")            # parts drawn behind the body
 # button roles pick the skin colours (theme.SKINS); everything else uses "btn"
 ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "Down", "Left", "Right"), "dpad"),
@@ -34,15 +43,20 @@ ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "
          **dict.fromkeys(("LT", "RT"), "trigger"), "Home": "home"}
 
 # 24 RGB LEDs: 12 around each stick (index 0 at the top, clockwise; left stick first)
-RINGS = [(112, 104, 30), (280, 164, 28)]
-STICK_WELLS = [(112, 104, 25), (280, 164, 23)]
-EMBLEM = (220, 76)               # centre of the flower emblem around Home
-DPAD_CENTER = (166, 160)
+RINGS = [(93, 106, 37), (281, 177, 37)]
+STICK_WELLS = [(93, 106, 32), (281, 177, 32)]
+EMBLEM = (220, 67)               # centre of the flower emblem around Home
+DPAD_CENTER = (159, 175)
+DPAD_ARM, DPAD_HALF = 38, 14     # d-pad cross: arm length and half width
+
+# outline style: grip contours and the arch inside the grips
+DETAILS = [((60, 168), (36, 233), (26, 280), (34, 318)), ((380, 168), (404, 233), (414, 280), (406, 318)),
+           ((84, 306), (118, 250), (136, 240), (304, 240), (322, 250), (356, 306))]
 
 # home-page callouts: label, side, label y, target point on the controller, button (or "sticks") opened on click
-CALLOUTS = [("LT", "l", 18, (96, 18), "LT"), ("LB", "l", 56, (56, 52), "LB"),
-            ("Analógico esquerdo", "l", 146, (80, 112), "sticks"), ("D-pad", "l", 196, (140, 160), "Up"),
-            ("RT", "r", 18, (344, 18), "RT"), ("RB", "r", 56, (384, 52), "RB"),
-            ("Botões ABXY", "r", 146, (370, 104), "A"), ("Analógico direito", "r", 196, (306, 172), "sticks"),
-            ("Traseiros L4 / R4", "r", 294, (264, 294), "P1")]
+CALLOUTS = [("LT", "l", 12, (96, 12), "LT"), ("LB", "l", 48, (54, 42), "LB"),
+            ("Analógico esquerdo", "l", 106, (61, 106), "sticks"), ("D-pad", "l", 175, (121, 175), "Up"),
+            ("RT", "r", 12, (344, 12), "RT"), ("RB", "r", 48, (386, 42), "RB"),
+            ("Botões ABXY", "r", 104, (394, 104), "A"), ("Analógico direito", "r", 177, (313, 177), "sticks"),
+            ("Traseiros L4 / R4", "r", 308, (264, 308), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing

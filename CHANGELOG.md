@@ -14,6 +14,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 * The drawing style can be chosen on the Profile page (outline, automatic from the edition, black or pink), for
   controllers whose edition is not detected.
 
+* The drawing follows the real shape of the Ultimate 2: outline, shoulders and button positions were traced from
+  the silhouette of the official render (alpha channel only, `tools/trace_silhouette.py`; no artwork is included).
+  The square button, profile button and player LEDs are drawn too.
+
 ## 0.1.0-beta.2 — 2026-10-12
 
 * The udev rule is now `70-8bitdo-u2.rules`. As `99-…` it sorted after systemd's `73-seat-late.rules`, so the
