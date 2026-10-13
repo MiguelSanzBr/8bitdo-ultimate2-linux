@@ -6,8 +6,8 @@ from .. import config
 from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
-from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF,
-                       HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
+from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_CROSS,
+                       DPAD_HALF, HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -47,15 +47,11 @@ class ControllerView:
             pts = None
             if name in ("L3", "R3"):
                 xy = (xy[0], xy[1], xy[2] - 7)          # the cap moves inside its well
-            raised = not line and ROLES.get(name, "btn") in ("face", "btn", "home", "dpad") and name not in ("P1", "P2")
+            # round face/centre buttons stand out of the body (the d-pad casts one shadow under its whole cross)
+            raised = not line and shape == "circle" and ROLES.get(name, "btn") in ("face", "btn", "home")
             if raised:                                      # soft drop shadow on the body below the button
-                sx, sy = (1.2, 2.2) if shape != "poly" else (0, 0)
-                if shape == "circle":
-                    x, y, r = xy
-                    c.create_oval(P(x - r + sx, y - r + sy, x + r + sx, y + r + sy), fill=shadow, outline="")
-                else:
-                    x1, y1, x2, y2 = xy
-                    rounded(c, *P(x1 + sx, y1 + sy, x2 + sx, y2 + sy), 4 * s, fill=shadow, outline="")
+                x, y, r = xy
+                c.create_oval(P(x - r + 1.2, y - r + 2.2, x + r + 1.2, y + r + 2.2), fill=shadow, outline="")
             if shape == "circle":
                 x, y, r = xy
                 box = P(x - r, y - r, x + r, y + r)
@@ -120,9 +116,11 @@ class ControllerView:
             c.create_polygon(body, smooth=True, fill="", outline=sk["line"], width=max(1, round(2 * s)))
             for x, y, r in STICK_WELLS:
                 c.create_oval(P(x - r, y - r, x + r, y + r), fill=sk["well"], outline="")
-            h = DPAD_HALF
-            rounded(c, *P(dx0 - h + 1, dy0 - h + 2, dx0 + h + 1, dy0 + h + 2), 5 * s, fill=shadow, outline="")  # hub shadow
-            rounded(c, *P(dx0 - h, dy0 - h, dx0 + h, dy0 + h), 5 * s, fill=sk["dpad"][0], outline="")          # d-pad hub
+            cross = [v for x, y in DPAD_CROSS for v in (x, y)]  # one rounded cross under the four arms: no seams
+            c.create_polygon(P(*[v + (1 if i % 2 == 0 else 2) for i, v in enumerate(cross)]), smooth=True, fill=shadow,
+                             outline="")
+            c.create_polygon(P(*cross), smooth=True, fill=sk["dpad"][0], outline=mix(sk["dpad"][0], "#ffffff", .15),
+                             width=max(1, round(1.5 * s)))
         for x1, y1, x2, y2 in DECOR:                        # non-configurable face details
             c.create_polygon(P(*stadium(x1, y1, x2, y2)), fill=BG if line else sk["btn"][0],
                              outline=sk["line"] if line else sk["btn"][1], width=w if y2 - y1 > 2 else 1)
@@ -146,21 +144,18 @@ class ControllerView:
         for name in PARTS:
             if name not in BEHIND:
                 make(name)
-        if line:                                            # hollow cross with an X, drawn over the d-pad parts
-            arm, half = DPAD_ARM, DPAD_HALF
-            cross = [(-half, -arm), (half, -arm), (half, -half), (arm, -half), (arm, half), (half, half), (half, arm),
-                     (-half, arm), (-half, half), (-arm, half), (-arm, -half), (-half, -half)]
-            c.create_polygon(P(*[v for x, y in cross for v in (dx0 + x, dy0 + y)]), fill="", outline=sk["line"],
-                             width=w, joinstyle="round")
+        if line:                                            # hollow rounded cross with an X, over the d-pad parts
+            half = DPAD_HALF
+            c.create_polygon(P(*[v for pt in DPAD_CROSS for v in pt]), smooth=True, fill="", outline=sk["line"], width=w)
             for sx in (-1, 1):
                 c.create_line(P(dx0 - half, dy0 - half * sx, dx0 + half, dy0 + half * sx), fill=sk["line"], width=w)
         arrows = {} if line else {(0, -1): "Up", (0, 1): "Down", (-1, 0): "Left", (1, 0): "Right"}
         if not line:
             c.create_oval(P(dx0 - 4, dy0 - 4, dx0 + 4, dy0 + 4), fill="#a6a6ae", outline="#d8d8de")   # metal centre
         for (dx, dy), name in arrows.items():
-            x, y = dx0 + (DPAD_ARM - 10) * dx, dy0 + (DPAD_ARM - 10) * dy
-            c.create_polygon(P(x + 3 * dx, y + 3 * dy, x - 3 * dy - 2 * dx, y - 3 * dx - 2 * dy,
-                               x + 3 * dy - 2 * dx, y + 3 * dx - 2 * dy), fill="#55555c", outline="", tags=f"b:{name}")
+            x, y = dx0 + (DPAD_ARM - 12) * dx, dy0 + (DPAD_ARM - 12) * dy
+            c.create_polygon(P(x + 5 * dx, y + 5 * dy, x - 5 * dy - 3 * dx, y - 5 * dx - 3 * dy,
+                               x + 5 * dy - 3 * dx, y + 5 * dx - 3 * dy), fill="#6a6a72", outline="", tags=f"b:{name}")
         if mode == "home":
             self.callouts(c, ox)
         if mode == "leds":

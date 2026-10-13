@@ -298,6 +298,6 @@ def test_outline_skin_draws_strokes_only(skinned):
         greys = [i for i in c.find_all() if c.type(i) == "line" and c.itemcget(i, "fill") == sk["detail"]]
         assert len(greys) == 3                                           # grip contours and the inner arch
         cross = [i for i in c.find_all() if c.type(i) == "polygon" and c.itemcget(i, "outline") == sk["line"]
-                 and c.itemcget(i, "fill") == "" and len(c.coords(i)) == 24 and c.itemcget(i, "smooth") == "0"]
+                 and c.itemcget(i, "fill") == "" and len(c.coords(i)) == 2 * len(geometry.DPAD_CROSS)]
         assert len(cross) == 1                                           # hollow d-pad cross
     app.apply_skin("dark")

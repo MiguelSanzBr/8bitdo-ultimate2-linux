@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* The d-pad is one rounded cross: arms with round ends, no seams between them, larger arrows.
+
 * Pink skin: the red flower around Home is gone; Home is pink with a white heart.
 
 * The home screen shows a connection badge instead of the text line: a green Wi-Fi sign and, through the 2.4G

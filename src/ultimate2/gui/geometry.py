@@ -24,13 +24,30 @@ def mirror(pts):
     return tuple((WIDTH - x, y) for x, y in pts)
 
 
+DPAD_CENTER = (159, 175)
+DPAD_ARM, DPAD_HALF = 38, 14     # d-pad cross: arm length and half width
+DPAD_DIRS = {"Up": (0, -1), "Right": (1, 0), "Down": (0, 1), "Left": (-1, 0)}
+
+
+def _dpad(pts, dx, dy):
+    """Rotate points drawn for the Up arm towards (dx, dy) and move them onto the d-pad centre."""
+    cx, cy = DPAD_CENTER
+    return tuple((cx - y * dx - x * dy, cy + x * dx - y * dy) for x, y in pts)
+
+
+# one arm, and the whole cross, as smoothed polygons: the doubled inner corners stay sharp, the ends come out round
+_A, _H = DPAD_ARM, DPAD_HALF
+DPAD_ARMS = {n: _dpad(((-_H, -_H), (-_H, -_H), (-_H, -_A), (_H, -_A), (_H, -_H), (_H, -_H)), *d)
+             for n, d in DPAD_DIRS.items()}
+DPAD_CROSS = tuple(p for d in DPAD_DIRS.values() for p in _dpad(((-_H, -_A), (_H, -_A), (_H, -_H), (_H, -_H)), *d))
+
 # name -> (shape, coords, label). shape: circle (x, y, r) | rect/rrect (x1, y1, x2, y2) | poly (points, label point)
 PARTS = {
     "LT": ("poly", (LT_PTS, (112, 13)), "LT"), "RT": ("poly", (mirror(LT_PTS), (328, 13)), "RT"),
     "LB": ("poly", (LB_PTS, (96, 27)), "LB"), "RB": ("poly", (mirror(LB_PTS), (344, 27)), "RB"),
     "L3": ("circle", (93, 106, 32), ""), "R3": ("circle", (281, 177, 32), ""),
-    "Up": ("rect", (145, 137, 173, 161), ""), "Down": ("rect", (145, 189, 173, 213), ""),
-    "Left": ("rect", (121, 161, 145, 189), ""), "Right": ("rect", (173, 161, 197, 189), ""),
+    **{n: ("poly", (DPAD_ARMS[n], (DPAD_CENTER[0] + 26 * d[0], DPAD_CENTER[1] + 26 * d[1])), "")
+       for n, d in DPAD_DIRS.items()},
     "Y": ("circle", (347, 73, 15), "Y"), "A": ("circle", (347, 136, 15), "A"),
     "X": ("circle", (316, 104, 15), "X"), "B": ("circle", (379, 104, 15), "B"),
     "Select": ("circle", (162, 67, 10), "−"), "Start": ("circle", (277, 67, 10), "+"),
@@ -55,8 +72,6 @@ ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "
 # 24 RGB LEDs: 12 around each stick (index 0 at the top, clockwise; left stick first)
 RINGS = [(93, 106, 37), (281, 177, 37)]
 STICK_WELLS = [(93, 106, 32), (281, 177, 32)]
-DPAD_CENTER = (159, 175)
-DPAD_ARM, DPAD_HALF = 38, 14     # d-pad cross: arm length and half width
 
 # outline style: grip contours and the arch inside the grips
 DETAILS = [((60, 168), (36, 233), (26, 280), (34, 318)), ((380, 168), (404, 233), (414, 280), (406, 318)),
