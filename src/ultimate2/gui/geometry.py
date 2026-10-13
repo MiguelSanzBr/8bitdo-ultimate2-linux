@@ -3,7 +3,6 @@
 The outline and the button centres were traced from the silhouette (alpha channel only) of the official front
 render with ``tools/trace_silhouette.py``, scaled to 440 units wide and moved 18 units down so the triggers fit above.
 """
-import math
 
 BODY = [(105, 18), (132, 20), (138, 26), (171, 24), (301, 26), (305, 21), (310, 19), (340, 18), (368, 25), (395, 43),
         (396, 52), (406, 60), (417, 82), (428, 128), (439, 227), (439, 260), (435, 285), (428, 301), (418, 313),
@@ -16,9 +15,9 @@ WIDTH, HEIGHT = 440, 330
 LB_PTS = ((44, 48), (44, 43), (49, 39), (75, 24), (105, 18), (132, 20), (138, 26), (112, 28), (82, 33), (60, 40))
 LT_PTS = ((52, 36), (62, 22), (84, 8), (116, 3), (140, 8), (146, 22), (120, 22), (80, 26))
 
-# L4: half-circle sitting on the body's top edge, against the inner end of LT
-L4_PTS = tuple((round(152 + 12 * math.cos(math.pi * k / 8), 1), round(25 - 12 * math.sin(math.pi * k / 8), 1))
-               for k in range(9))
+# L4: half square with rounded top corners, sitting on the body's top edge against the inner end of LT
+# (a doubled point keeps a sharp corner in Tk's smoothed polygons)
+L4_PTS = ((140, 26), (140, 26), (140, 20), (140, 13), (147, 13), (157, 13), (164, 13), (164, 20), (164, 26), (164, 26))
 
 
 def mirror(pts):
