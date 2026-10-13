@@ -55,7 +55,6 @@ ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "
 # 24 RGB LEDs: 12 around each stick (index 0 at the top, clockwise; left stick first)
 RINGS = [(93, 106, 37), (281, 177, 37)]
 STICK_WELLS = [(93, 106, 32), (281, 177, 32)]
-EMBLEM = (220, 67)               # centre of the flower emblem around Home
 DPAD_CENTER = (159, 175)
 DPAD_ARM, DPAD_HALF = 38, 14     # d-pad cross: arm length and half width
 

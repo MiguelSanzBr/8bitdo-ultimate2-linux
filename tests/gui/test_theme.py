@@ -23,7 +23,6 @@ def test_skins_are_complete():
         assert name in theme.SKINS
     for sk in theme.SKINS.values():
         assert roles <= set(sk) and len(sk["body"]) == 3
-    assert theme.SKINS["dark"]["emblem"] is None and theme.SKINS["lilac"]["emblem"]
     assert set(theme.THEME_NAMES) == {2, 3, 4, 5}
 
 

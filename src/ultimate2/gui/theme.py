@@ -37,20 +37,20 @@ LINE_FG = "#e8e8e8"
 SKINS = {
     # outline drawing in the style of the controller diagrams: light strokes on the background, no fills
     "line": dict(name="Linhas", line_art=True, glow=None, body=(BG, BG, BG), line=LINE_FG, detail="#6b6b6b",
-                 well=BG, emblem=None, led_off="#4a4a4a", btn=(BG, LINE_FG, LINE_FG), face=(BG, LINE_FG, LINE_FG),
+                 well=BG, led_off="#4a4a4a", btn=(BG, LINE_FG, LINE_FG), face=(BG, LINE_FG, LINE_FG),
                  dpad=(BG, BG, LINE_FG), stick=(BG, LINE_FG, LINE_FG), shoulder=(BG, LINE_FG, LINE_FG),
                  trigger=(BG, LINE_FG, LINE_FG), home=(BG, LINE_FG, LINE_FG)),
-    "dark": dict(name="Preto", glow="#4b2f9a", body=("#2c2c2c", "#232323", "#1a1a1a"), line="#6a6a6a", well="#161616", emblem=None,
+    "dark": dict(name="Preto", glow="#4b2f9a", body=("#2c2c2c", "#232323", "#1a1a1a"), line="#6a6a6a", well="#161616",
                  led_off="#3a3a3a", btn=("#2e2e2e", "#808080", FG), face=("#2e2e2e", "#808080", FG),
                  dpad=("#2e2e2e", "#808080", FG), stick=("#1e1e1e", "#5a5a5a", FG), shoulder=("#2e2e2e", "#808080", FG),
                  trigger=("#262626", "#6a6a6a", FG), home=("#2e2e2e", "#808080", FG)),
     # colours sampled from a photo of the edition: pale mauve-pink fading to dark mauve, white shoulders and
-    # ABXY with red letters, black d-pad and sticks, dark red flower emblem
-    "lilac": dict(name="Rosa", glow="#6a3a5e", body=("#e2d0de", "#ab97ab", "#6f5a73"), line="#5e4a62", well="#241b26", emblem="#b3122a",
+    # ABXY with red letters, black d-pad and sticks, a pink heart on Home
+    "lilac": dict(name="Rosa", glow="#6a3a5e", body=("#e2d0de", "#ab97ab", "#6f5a73"), line="#5e4a62", well="#241b26",
                   led_off="#4a3a4e", btn=("#e6d9e2", "#9a8597", "#4a3550"), face=("#fdf9fb", "#c4afbd", "#a3122a"),
                   dpad=("#2c2c30", "#46464c", FG), stick=("#2a2a2e", "#46464c", FG),
                   shoulder=("#f7f2f5", "#c3b1bd", "#4a3550"), trigger=("#ece3e9", "#b6a2b1", "#4a3550"),
-                  home=("#f3eef1", "#6e0f1d", "#a3122a")),
+                  home=("#e9a8c6", "#c27a9e", "#ffffff")),
 }
 # controller edition (the app's m_ControllerColor) -> skin; 3 is the lilac edition with red stick rings
 EDITION_SKINS = {3: "lilac"}

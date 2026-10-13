@@ -1,5 +1,4 @@
 """Mixin: the controller drawing (skins, LED rings, callouts), its per-frame animation and section icons."""
-import math
 import time
 import tkinter.font as tkfont
 
@@ -8,7 +7,7 @@ from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
 from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF,
-                       EMBLEM, HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
+                       HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -128,14 +127,6 @@ class ControllerView:
             c.create_polygon(P(*stadium(x1, y1, x2, y2)), fill=BG if line else sk["btn"][0],
                              outline=sk["line"] if line else sk["btn"][1], width=w if y2 - y1 > 2 else 1)
         rounded(c, *P(*DECOR_SQUARE), 1.5 * s, fill="", outline=sk["line"] if line else sk["btn"][2], width=max(1, w - 1))
-        if sk["emblem"]:                                    # flower emblem around Home
-            ex, ey = EMBLEM
-            for k in range(8):
-                a, ln = math.radians(k * 45 - 90), (30 if k % 2 == 0 else 20)
-                tip = (ex + ln * math.cos(a), ey + ln * math.sin(a))
-                side = [(ex + ln * .5 * math.cos(a + d), ey + ln * .5 * math.sin(a + d)) for d in (.5, -.5)]
-                c.create_polygon(P(ex, ey, *side[0], *tip, *side[1]), smooth=True, outline="#6e0f1d",
-                                 fill=sk["emblem"] if k % 2 == 0 else mix(sk["emblem"], "#ffffff", .25))
         leds, glow = [], []
         for ring, (x, y, r) in enumerate(RINGS):          # soft halo behind the light ring
             for i in range(12):

@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* Pink skin: the red flower around Home is gone; Home is pink with a white heart.
+
 * The home screen shows a connection badge instead of the text line: a green Wi-Fi sign and, through the 2.4G
   dongle, the battery level (red at 15% or less, refreshed with the profile poll); a grey Wi-Fi with a red X when the
   controller does not answer. The firmware number moved to the bottom-right corner.

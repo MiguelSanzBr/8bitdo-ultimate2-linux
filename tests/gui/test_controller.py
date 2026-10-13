@@ -241,10 +241,6 @@ def test_apply_skin_draws_skin_colors(skinned, name):
         assert len(leds) == 24 and len(app.led_glow[c]) == 24
         assert {c.itemcget(i, "outline") for i in leds + app.led_glow[c]} == {sk["led_off"]}
         assert float(c.itemcget(leds[0], "width")) > float(c.itemcget(app.led_glow[c][0], "width")) * 0.4
-        petals = [i for i in c.find_all() if c.type(i) == "polygon" and c.itemcget(i, "outline") == "#6e0f1d"]
-        assert len(petals) == (8 if sk["emblem"] else 0)                 # flower emblem only on skins that have one
-        if sk["emblem"]:
-            assert {c.itemcget(i, "fill") for i in petals} == {sk["emblem"], mix(sk["emblem"], "#ffffff", .25)}
         image = [i for i in c.find_all() if c.type(i) == "image"]
         assert len(image) == 1 and app._imgs[c].width() > 0
         for n in ("LT", "RT"):                                           # triggers sit behind the body image
