@@ -8,7 +8,7 @@ from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
 from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF,
-                       EMBLEM, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
+                       EMBLEM, HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -90,9 +90,16 @@ class ControllerView:
                                         fill=mix(base[0], "#ffffff", .7), outline="", tags=tag)]
             size = 10 if ROLES.get(name) == "face" else 7
             text = c.create_text(cx, cy, text=label, fill=base[2], font=theme.font(size, "bold"), tags=tag) if label else None
+            icon = []
+            if name == "Home":                              # pixel heart, recoloured like a label
+                k = HEART_PX * s
+                x0, y0 = cx - len(HEART[0]) * k / 2, cy - len(HEART) * k / 2
+                icon = [c.create_rectangle(x0 + i * k, y0 + j * k, x0 + (i + 1) * k, y0 + (j + 1) * k, fill=base[2],
+                                           outline="", tags=tag)
+                        for j, row in enumerate(HEART) for i, px in enumerate(row) if px == "X"]
             bx, by = (cx + 14 * s, cy - 6 * s) if shape == "poly" else (box[2], box[1])
             badge = c.create_oval(bx - 3 * s, by - 3 * s, bx + 3 * s, by + 3 * s, fill=ACCENT, outline=BODY_FILL, state="hidden")
-            parts[name] = dict(body=part, text=text, glow=glow, badge=badge, extra=extra, box=box, shape=shape,
+            parts[name] = dict(body=part, text=text, icon=icon, glow=glow, badge=badge, extra=extra, box=box, shape=shape,
                                off=(0.0, 0.0), st=None, glowing=False, base=base, pts=pts)
             if mode == "map":
                 c.tag_bind(tag, "<Button-1>", lambda e, n=name: (self.flash(n), self.select_button(n)))
@@ -269,8 +276,9 @@ class ControllerView:
             if st != p["st"]:
                 p["st"] = st
                 c.itemconfigure(p["body"], fill=st[0], outline=st[1])
-                if p["text"]:
-                    c.itemconfigure(p["text"], fill=st[2])
+                for item in [p["text"], *p["icon"]]:
+                    if item:
+                        c.itemconfigure(item, fill=st[2])
             c.itemconfigure(p["badge"], state="normal" if mode != "leds" and name in self._remapped else "hidden")
             t = now - max(self.press_t.get(name, -1e9), self.press_t.get(fn, -1e9))
             if t < theme.PULSE:

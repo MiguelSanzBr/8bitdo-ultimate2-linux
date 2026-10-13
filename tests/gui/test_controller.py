@@ -94,6 +94,14 @@ def test_style_states(app):
     assert app.home_items["B"]["st"] == app.home_items["B"]["base"]
 
 
+def test_home_shows_a_pixel_heart_recoloured_with_the_button(app):
+    cv, parts = app.map_canvas, app.map_items
+    icon = parts["Home"]["icon"]
+    assert len(icon) == sum(row.count("X") for row in geometry.HEART) == 22
+    app.pad_down.add("Home")
+    app.style(cv, parts, "map", time.time())
+    assert {cv.itemcget(i, "fill") for i in icon} == {theme.BG}
+
 def test_extras_light_with_the_function_they_output(app):
     cv, parts = app.map_canvas, app.map_items
     app.v["keys"]["P3"].set("LB")                          # L4 -> LB, PR -> LT, PL -> None

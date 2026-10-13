@@ -49,7 +49,7 @@ SKINS = {
                   led_off="#4a3a4e", btn=("#e6d9e2", "#9a8597", "#4a3550"), face=("#fdf9fb", "#c4afbd", "#a3122a"),
                   dpad=("#2c2c30", "#46464c", FG), stick=("#2a2a2e", "#46464c", FG),
                   shoulder=("#f7f2f5", "#c3b1bd", "#4a3550"), trigger=("#ece3e9", "#b6a2b1", "#4a3550"),
-                  home=("#f3eef1", "#6e0f1d", FG)),
+                  home=("#f3eef1", "#6e0f1d", "#a3122a")),
 }
 # controller edition (the app's m_ControllerColor) -> skin; 3 is the lilac edition with red stick rings
 EDITION_SKINS = {3: "lilac"}

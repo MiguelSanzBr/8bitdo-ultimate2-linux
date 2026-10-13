@@ -42,6 +42,10 @@ PARTS = {
 # centre dot, player LEDs; DECOR_SQUARE is the square drawn in the middle of the round button
 DECOR = [(180, 89, 200, 109), (207, 113, 233, 125), (219, 98, 221, 100), *((219, y - 1, 221, y + 1) for y in (147, 156, 165))]
 DECOR_SQUARE = (186, 95, 194, 103)
+# pixel-art heart drawn in the middle of Home (11x9 cells of HEART_PX units)
+HEART = ["..XX...XX..", ".X..X.X..X.", "X....X....X", "X.........X", ".X.......X.", "..X.....X..", "...X...X...",
+         "....X.X....", ".....X....."]
+HEART_PX = 1.8
 BEHIND = ("LT", "RT")            # parts drawn behind the body
 # button roles pick the skin colours (theme.SKINS); everything else uses "btn"
 ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "Down", "Left", "Right"), "dpad"),

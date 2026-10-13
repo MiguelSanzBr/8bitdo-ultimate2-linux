@@ -12,6 +12,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   uses colours taken from a photo of the controller.
 * The four extra buttons use the official names: L4/R4 (small shoulder buttons, `P3`/`P4`) are drawn beside LT/RT and
   can be remapped (L4 was missing), and the back paddles (`P2`/`P1`) are labelled PL/PR again.
+* Home shows a pixel-art heart; it changes colour with the button like the other labels.
 * The extra buttons send no input of their own, so the drawing lights them when the function they are mapped to
   arrives (e.g. L4 mapped to LB lights with LB). Mapped to None they cannot be seen on Linux.
 * New default drawing in outline style (light strokes, no fills), like the controller diagrams. Editions without a
