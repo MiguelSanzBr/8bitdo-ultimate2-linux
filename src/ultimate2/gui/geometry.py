@@ -64,9 +64,9 @@ DETAILS = [((60, 168), (36, 233), (26, 280), (34, 318)), ((380, 168), (404, 233)
            ((84, 306), (118, 250), (136, 240), (304, 240), (322, 250), (356, 306))]
 
 # home-page callouts: label, side, label y, target point on the controller, button (or "sticks") opened on click
-CALLOUTS = [("LT", "l", 10, (96, 12), "LT"), ("L4", "l", 33, (142, 21), "P3"), ("LB", "l", 56, (54, 42), "LB"),
+CALLOUTS = [("LT", "l", 13, (96, 12), "LT"), ("L4", "l", 36, (142, 21), "P3"), ("LB", "l", 59, (54, 42), "LB"),
             ("Analógico esquerdo", "l", 106, (61, 106), "sticks"), ("D-pad", "l", 175, (121, 175), "Up"),
-            ("RT", "r", 10, (344, 12), "RT"), ("R4", "r", 33, (298, 21), "P4"), ("RB", "r", 56, (386, 42), "RB"),
+            ("RT", "r", 13, (344, 12), "RT"), ("R4", "r", 36, (298, 21), "P4"), ("RB", "r", 59, (386, 42), "RB"),
             ("Botões ABXY", "r", 104, (394, 104), "A"), ("Analógico direito", "r", 177, (313, 177), "sticks"),
             ("Traseiros PL / PR", "r", 308, (264, 308), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing

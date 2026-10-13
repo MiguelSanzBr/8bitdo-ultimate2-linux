@@ -39,3 +39,4 @@ def test_geometry_parts_fit_the_box():
     for pts in (geometry.BODY, geometry.LB_PTS, geometry.LT_PTS):
         assert all(0 <= x <= geometry.WIDTH and 0 <= y <= geometry.HEIGHT for x, y in pts)
     assert all(target in geometry.PARTS or target == "sticks" for *_, target in geometry.CALLOUTS)
+    assert all(12 <= y <= geometry.HEIGHT - 12 for _t, _s, y, *_ in geometry.CALLOUTS)   # 22-unit cards + outline fit
