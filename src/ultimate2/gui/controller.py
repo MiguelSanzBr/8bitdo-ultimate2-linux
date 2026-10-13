@@ -7,8 +7,8 @@ from .. import config
 from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
-from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF, EMBLEM, HEIGHT,
-                       HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
+from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF,
+                       EMBLEM, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -120,6 +120,7 @@ class ControllerView:
         for x1, y1, x2, y2 in DECOR:                        # non-configurable face details
             c.create_polygon(P(*stadium(x1, y1, x2, y2)), fill=BG if line else sk["btn"][0],
                              outline=sk["line"] if line else sk["btn"][1], width=w if y2 - y1 > 2 else 1)
+        rounded(c, *P(*DECOR_SQUARE), 1.5 * s, fill="", outline=sk["line"] if line else sk["btn"][2], width=max(1, w - 1))
         if sk["emblem"]:                                    # flower emblem around Home
             ex, ey = EMBLEM
             for k in range(8):
