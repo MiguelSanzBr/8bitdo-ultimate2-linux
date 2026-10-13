@@ -15,9 +15,9 @@ WIDTH, HEIGHT = 440, 330
 LB_PTS = ((44, 48), (44, 43), (49, 39), (75, 24), (105, 18), (132, 20), (138, 26), (112, 28), (82, 33), (60, 40))
 LT_PTS = ((52, 36), (62, 22), (84, 8), (116, 3), (140, 8), (146, 22), (120, 22), (80, 26))
 
-# L4: half square with rounded top corners, sitting on the body's top edge against the inner end of LT
-# (a doubled point keeps a sharp corner in Tk's smoothed polygons)
-L4_PTS = ((140, 26), (140, 26), (140, 20), (140, 13), (147, 13), (157, 13), (164, 13), (164, 20), (164, 26), (164, 26))
+# L4: a small curved tab sitting on the body's top edge against the inner end of LT; it rises along LT's curve and
+# slopes down towards the centre (a doubled point keeps a sharp corner in Tk's smoothed polygons)
+L4_PTS = ((138, 26), (138, 26), (139, 17), (145, 11), (154, 11), (162, 15), (167, 21), (169, 26), (169, 26))
 
 
 def mirror(pts):
