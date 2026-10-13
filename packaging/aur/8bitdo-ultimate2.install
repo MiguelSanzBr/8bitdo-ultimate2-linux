@@ -1,0 +1,7 @@
+post_install() {
+  echo "Replug the controller (or run: udevadm trigger) so the udev rule gives you access to it."
+}
+
+post_upgrade() {
+  post_install
+}

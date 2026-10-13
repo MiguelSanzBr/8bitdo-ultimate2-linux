@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* Arch Linux package: `packaging/aur/PKGBUILD` (package `8bitdo-ultimate2`), with a built `.pkg.tar.zst` on the
+  Releases page.
+
 ## 0.1.0-beta.4 — 2026-10-12
 
 * The drawing is in outline style by default. The colour (black, pink, or automatic from the edition) is chosen

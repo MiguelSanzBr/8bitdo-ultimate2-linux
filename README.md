@@ -48,6 +48,18 @@ sudo apt install ./ultimate2_0.1.0-beta4_all.deb
 This installs the `u2ctl` and `u2gui` commands, the menu entry "8BitDo Ultimate 2" and the udev rule.
 Unplug and replug the controller afterwards.
 
+### Arch Linux (.pkg.tar.zst)
+
+Download `8bitdo-ultimate2-<version>-any.pkg.tar.zst` from the
+[Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases), then:
+
+```bash
+sudo pacman -U ./8bitdo-ultimate2-0.1.0beta4-1-any.pkg.tar.zst
+```
+
+Or build it yourself from the [`PKGBUILD`](packaging/aur/PKGBUILD) (`makepkg -si` in `packaging/aur`). Replug the
+controller afterwards.
+
 ### From source
 
 Requirements: Python ≥ 3.8 and Tk (`python3-tk` on Debian/Ubuntu) for the GUI. There are no other
