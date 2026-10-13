@@ -14,7 +14,7 @@ assert set(KEY_NAMES) == set(config.KEYCODES.values()) - {"P3"}
 # codes P3/P4 for other models; in XInput mode a back button reports the function it is mapped to (LB/RB by default)
 DISPLAY = {"P1": "R4", "P2": "L4"}
 
-# gyro activation buttons (the app's KeyMap table, which differs from the remap codes for RT/Home)
+# gyro activation buttons (same codes as the remap table)
 GYRO_KEYS = {"LT": 0x4000, "RT": 0x8000, "LB": 0x400, "RB": 0x800, "L3": 0x2, "R3": 0x4}
 
 # what the colour picker can edit: key, label, LED theme that shows it

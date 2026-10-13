@@ -16,7 +16,7 @@ BUTTONS = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Select", "St
 # output codes a button can be remapped to
 KEYCODES = {0: "None", 0x1: "Start", 0x2: "L3", 0x4: "R3", 0x8: "Select", 0x10: "X", 0x20: "Y",
             0x40: "Right", 0x80: "Left", 0x100: "Down", 0x200: "Up", 0x400: "LB", 0x800: "RB",
-            0x1000: "B", 0x2000: "A", 0x4000: "LT", 0x8000: "Home", 0x10000: "Menu", 0x20000: "RT",
+            0x1000: "B", 0x2000: "A", 0x4000: "LT", 0x8000: "RT", 0x10000: "Menu", 0x20000: "Home",
             0x100000: "P5", 0x200000: "P3", 0x400000: "Screenshot", 0x800000: "TurboSingle",
             0x1000000: "TurboAuto", 0x2000000: "P1", 0x4000000: "P2", 0x40000000: "P4",
             0x08000001: "RS_Up", 0x08000002: "RS_Down", 0x08000004: "RS_Left", 0x08000008: "RS_Right",

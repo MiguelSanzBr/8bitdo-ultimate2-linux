@@ -96,9 +96,9 @@ default), which is why a press of L4 shows up as LB.
 | `0x8` | Select | `0x1000` | B | `0x800000` | Turbo (single) |
 | `0x10` | X | `0x2000` | A | `0x1000000` | Turbo (auto) |
 | `0x20` | Y | `0x4000` | LT | `0x2000000` | P1 |
-| `0x40` | Right | `0x8000` | Home | `0x4000000` | P2 |
+| `0x40` | Right | `0x8000` | RT | `0x4000000` | P2 |
 | `0x80` | Left | `0x10000` | Menu | `0x40000000` | P4 |
-| `0x100` | Down | `0x20000` | RT | `0x080000xx` | stick directions |
+| `0x100` | Down | `0x20000` | Home | `0x080000xx` | stick directions |
 
 `0` means disabled. Stick directions: RS Up/Down/Left/Right = `0x08000001/02/04/08`, LS = `0x08000010/20/40/80`.
 

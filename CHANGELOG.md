@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* Fixed: RT and Home had swapped remap codes (`0x8000` is RT, `0x20000` is Home). Any profile saved by `u2gui` or
+  `u2ctl` made RT act as Home and Home as RT; open the profile and use "Reset all buttons" (or fix RT/Home) once.
 * `u2gui` is available in English and Brazilian Portuguese. It starts in the system language and the choice can be
   changed with the selector next to Backup or on the Profile page (saved in `~/.config/ultimate2/gui.json`). The command line is unchanged.
 * The controller drawing is shaded like a moulded part (rounded, lit edges and raised buttons). The pink edition skin

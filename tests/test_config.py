@@ -170,3 +170,8 @@ def test_changed_span():
     assert c.changed_span(a, bytes(b)) is None
     b[100] = 1; b[200] = 1
     assert c.changed_span(a, bytes(b)) == (100, 201)
+
+
+def test_rt_and_home_codes_match_the_app():
+    # the app's keymap table (Ultimate2_4Advance2UI): 32768 -> R2 (RT), 131072 -> Home; verified on the controller
+    assert c.KEYCODES[0x8000] == "RT" and c.KEYCODES[0x20000] == "Home"
