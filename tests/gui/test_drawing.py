@@ -102,3 +102,12 @@ def test_gradient_fill_bevel_lights_the_edges(shared_app):
     assert px(lit, 0, 0) is None and px(lit, 20, 20)                    # still clipped to the shape
     edge = drawing.gradient_fill(shared_app, [(-5, -5), (45, -5), (45, 45), (-5, 45)], 40, 40, stops, bevel=8)
     assert all(px(edge, x, y) for x, y in ((0, 0), (39, 39), (0, 39)))  # a shape filling the image (no outline inside)
+
+
+def test_stadium_is_a_circle_when_square_and_a_capsule_otherwise():
+    pts = drawing.stadium(0, 0, 20, 20)
+    xy = list(zip(pts[::2], pts[1::2]))
+    assert all(abs(((x - 10) ** 2 + (y - 10) ** 2) ** .5 - 10) < 1e-9 for x, y in xy)
+    xy = list(zip(*[iter(drawing.stadium(0, 0, 30, 10))] * 2))
+    assert min(x for x, _ in xy) == 0 and max(x for x, _ in xy) == 30
+    assert min(y for _, y in xy) == 0 and max(y for _, y in xy) == 10

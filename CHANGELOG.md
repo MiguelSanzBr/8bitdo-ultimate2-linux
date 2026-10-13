@@ -16,7 +16,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 * The drawing follows the real shape of the Ultimate 2: outline, shoulders and button positions were traced from
   the silhouette of the official render (alpha channel only, `tools/trace_silhouette.py`; no artwork is included).
-  The square button, profile button and player LEDs are drawn too.
+  The round button, the capsule-shaped profile button and the player LEDs are drawn too.
 
 ## 0.1.0-beta.2 — 2026-10-12
 

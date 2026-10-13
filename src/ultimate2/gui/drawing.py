@@ -17,6 +17,19 @@ def rounded(c, x1, y1, x2, y2, r, **kw):
     return c.create_polygon(rr_points(x1, y1, x2, y2, r), smooth=True, **kw)
 
 
+def stadium(x1, y1, x2, y2, steps=12):
+    """Points of a box with fully rounded ends (a circle when it is square), for ``create_polygon``."""
+    r = min(x2 - x1, y2 - y1) / 2
+    cx1, cy1, cx2, cy2 = x1 + r, y1 + r, x2 - r, y2 - r
+    out = []
+    for k in range(4 * steps):              # quarter arcs, clockwise from the right end
+        a = math.pi / 2 * k / steps - math.pi / 2
+        cx = cx2 if math.cos(a) >= 0 else cx1
+        cy = cy2 if math.sin(a) >= 0 else cy1
+        out += [cx + r * math.cos(a), cy + r * math.sin(a)]
+    return out
+
+
 def smooth_outline(pts, steps=10):
     """Points of the curve Tk draws for a closed ``smooth=True`` polygon (quadratic splines through edge midpoints)."""
     out = []

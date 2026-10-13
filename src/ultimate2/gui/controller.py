@@ -6,7 +6,7 @@ import tkinter.font as tkfont
 from .. import config
 from . import theme
 from .catalog import DISPLAY
-from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline
+from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
 from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_HALF, EMBLEM, HEIGHT,
                        HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
 from .i18n import _
@@ -117,9 +117,9 @@ class ControllerView:
             h = DPAD_HALF
             rounded(c, *P(dx0 - h + 1, dy0 - h + 2, dx0 + h + 1, dy0 + h + 2), 5 * s, fill=shadow, outline="")  # hub shadow
             rounded(c, *P(dx0 - h, dy0 - h, dx0 + h, dy0 + h), 5 * s, fill=sk["dpad"][0], outline="")          # d-pad hub
-        for x1, y1, x2, y2, r in DECOR:                     # non-configurable face details
-            rounded(c, *P(x1, y1, x2, y2), r * s, fill=BG if line else sk["btn"][0],
-                    outline=sk["line"] if line else sk["btn"][1], width=w if r > 1 else 1)
+        for x1, y1, x2, y2 in DECOR:                        # non-configurable face details
+            c.create_polygon(P(*stadium(x1, y1, x2, y2)), fill=BG if line else sk["btn"][0],
+                             outline=sk["line"] if line else sk["btn"][1], width=w if y2 - y1 > 2 else 1)
         if sk["emblem"]:                                    # flower emblem around Home
             ex, ey = EMBLEM
             for k in range(8):

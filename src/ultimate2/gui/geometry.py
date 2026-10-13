@@ -33,9 +33,9 @@ PARTS = {
     "Home": ("circle", (220, 67, 14), ""), "Star": ("circle", (250, 99, 10), "★"),
     "P2": ("rrect", (176, 300, 210, 316), "L4"), "P1": ("rrect", (230, 300, 264, 316), "R4"),   # back buttons
 }
-# parts of the face that are not configurable: square button, profile button, centre dot, player LEDs (rrect boxes)
-DECOR = [(180, 89, 200, 109, 5), (209, 113, 231, 125, 6), (219, 98, 221, 100, 1),
-         *((219, y - 1, 221, y + 1, 1) for y in (147, 156, 165))]
+# parts of the face that are not configurable, drawn fully rounded (x1, y1, x2, y2): round button, profile button,
+# centre dot, player LEDs
+DECOR = [(180, 89, 200, 109), (207, 113, 233, 125), (219, 98, 221, 100), *((219, y - 1, 221, y + 1) for y in (147, 156, 165))]
 BEHIND = ("LT", "RT")            # parts drawn behind the body
 # button roles pick the skin colours (theme.SKINS); everything else uses "btn"
 ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "Down", "Left", "Right"), "dpad"),
