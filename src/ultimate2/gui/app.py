@@ -63,7 +63,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self._save_job = None
         self._retry_job = None             # pending read_device() while the controller is off
         self.led_items = []      # (canvas, [24 item ids]) for the live LED preview
-        self.skin_pref = load_settings().get("skin", "auto")    # "auto" = from the controller's edition
+        self.skin_pref = load_settings().get("skin", DEFAULT_SKIN)  # outline by default; "auto" = from the edition
         self.skin = self.skin_pref if self.skin_pref in SKINS else DEFAULT_SKIN
         self.edition = None      # last edition read from the controller
         self.led_glow = {}       # canvas -> 24 halo arcs (dimmed copy of the LED colours)

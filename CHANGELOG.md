@@ -4,6 +4,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+* The drawing is in outline style by default. The colour (black, pink, or automatic from the edition) is chosen
+  in a drop-down on the Profile page.
+
 * The d-pad is one rounded cross: arms with round ends, no seams between them, larger arrows.
 
 * Pink skin: the red flower around Home is gone; Home is pink with a white heart.

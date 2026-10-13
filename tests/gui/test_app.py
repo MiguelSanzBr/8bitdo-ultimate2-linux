@@ -64,7 +64,8 @@ def test_saved_drawing_colour_is_used_at_startup(monkeypatch):
 
 
 def test_drawing_colour_choice_overrides_the_edition(app):
-    assert app.skin_pref == "auto" and app.edition == 3 and app.skin == "lilac"      # the fake reports edition 3
+    assert app.skin_pref == "line" and app.edition == 3 and app.skin == "line"   # outline by default, even for pink
+    assert app.skin_var.get() == "line"
     try:
         app.skin_var.set("dark")
         assert app.skin == "dark" and app_mod.load_settings() == {"skin": "dark"}
@@ -77,4 +78,4 @@ def test_drawing_colour_choice_overrides_the_edition(app):
         app.skin_var.set("lilac")                                      # already drawn in that colour: saved only
         assert app.skin == "lilac" and app_mod.load_settings() == {"skin": "lilac"}
     finally:
-        app.skin_var.set("auto")
+        app.skin_var.set("line")

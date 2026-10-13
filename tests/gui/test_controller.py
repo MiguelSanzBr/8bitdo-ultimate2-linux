@@ -49,7 +49,8 @@ def test_callout_geometry_and_modes(app):
     c = app.home_canvas
     assert len(c.find_withtag("co:LT")) == 2                             # pill + label
     assert not app.map_canvas.find_withtag("co:LT")                      # only the home drawing has callouts
-    assert len(c.find_withtag("b:Up")) == 2                              # d-pad part + its arrow (see PARTS)
+    arrow = not theme.SKINS[app.skin].get("line_art")                   # shaded skins add an arrow to each arm
+    assert len(c.find_withtag("b:Up")) == 1 + arrow
     right = c.bbox("co:RT")
     assert right[0] > c.bbox("co:LT")[2]
 

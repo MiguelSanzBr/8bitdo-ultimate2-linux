@@ -7,7 +7,7 @@ from .drawing import rounded
 from .geometry import HEIGHT, HOME_OFFSET, WIDTH
 from .i18n import LANGS, _
 from .theme import ACCENT, BG, FG, LINE, MUTED, SKINS, THEME_NAMES, TILE, TILE_HI
-from .widgets import ColorPicker, Pill, Slider, Toggle, field, panel
+from .widgets import ColorPicker, Pill, Select, Slider, Toggle, field, panel
 
 
 class Pages:
@@ -220,8 +220,8 @@ class Pages:
         self.info_label.pack(anchor="w")
         tk.Label(c, text=_("Cor do desenho"), bg=TILE, fg=MUTED, font=theme.font(9)).pack(anchor="w", pady=(int(8 * s), 0))
         self.skin_var = tk.StringVar(value=self.skin_pref)
-        self.chips(c, self.skin_var, [("auto", _("Automática (pela edição)"))] +
-                   [(k, _(v["name"])) for k, v in SKINS.items()], 3)
+        Select(c, self.skin_var, [(k, _(v["name"])) for k, v in SKINS.items()] + [("auto", _("Automática (pela edição)"))],
+               s, fill=TILE_HI).pack(anchor="w", pady=(int(4 * s), 0))
         self.skin_var.trace_add("write", lambda *_a: self.set_skin_pref(self.skin_var.get()))
         c = self.card(p, _("Idioma da interface"))
         self.lang_var = tk.StringVar(value=i18n.LANG)

@@ -156,6 +156,7 @@ def test_read_device_unknown_theme(mk, fake, monkeypatch):
     ("lilac", None, "line", True), ("line", None, "line", False)])      # no answer to the colorway query
 def test_read_device_picks_skin_from_edition(mk, fake, monkeypatch, start, edition, end, switches):
     a = mk(BACKUP, read=False)
+    monkeypatch.setattr(a, "skin_pref", "auto")                          # follow the edition (default is the outline)
     old = a.skin
     a.apply_skin(start)
     calls = []
