@@ -10,7 +10,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   changed with the selector next to Backup or on the Profile page (saved in `~/.config/ultimate2/gui.json`). The command line is unchanged.
 * The controller drawing is shaded like a moulded part (rounded, lit edges and raised buttons). The pink edition skin
   uses colours taken from a photo of the controller.
-* The back buttons are labelled L4/R4, as printed on the controller (they were shown as PL/PR).
+* The four extra buttons use the official names: L4/R4 (small shoulder buttons, `P3`/`P4`) are drawn beside LT/RT and
+  can be remapped (L4 was missing), and the back paddles (`P2`/`P1`) are labelled PL/PR again.
 * New default drawing in outline style (light strokes, no fills), like the controller diagrams. Editions without a
   skin of their own use it.
 * The drawing style can be chosen on the Profile page (outline, automatic from the edition, black or pink), for

@@ -110,7 +110,7 @@ class Pages:
         self.map_canvas.pack(pady=int(20 * s))
         self.map_items = self.draw_controller(self.map_canvas, "map")
         tk.Label(left, text=_("Clique num botão do controle para escolher a função dele.\n"
-                            "L4/R4: botões traseiros · ★: estrela/turbo."),
+                            "L4/R4: botões extras do ombro · PL/PR: botões traseiros · ★: estrela/turbo."),
                  bg=BG, fg=MUTED, font=theme.font(9), justify="left").pack(anchor="w")
         right = self.card(p, side="left")
         self.map_title = tk.Label(right, bg=TILE, fg=FG, font=theme.font(13, "bold"))

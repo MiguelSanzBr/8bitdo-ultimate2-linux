@@ -31,7 +31,8 @@ PARTS = {
     "X": ("circle", (316, 104, 15), "X"), "B": ("circle", (379, 104, 15), "B"),
     "Select": ("circle", (162, 67, 10), "−"), "Start": ("circle", (277, 67, 10), "+"),
     "Home": ("circle", (220, 67, 14), ""), "Star": ("circle", (250, 99, 10), "★"),
-    "P2": ("rrect", (176, 300, 210, 316), "L4"), "P1": ("rrect", (230, 300, 264, 316), "R4"),   # back buttons
+    "P3": ("rrect", (148, 12, 176, 24), "L4"), "P4": ("rrect", (264, 12, 292, 24), "R4"),       # shoulder extras
+    "P2": ("rrect", (176, 300, 210, 316), "PL"), "P1": ("rrect", (230, 300, 264, 316), "PR"),   # back paddles
 }
 # parts of the face that are not configurable, drawn fully rounded (x1, y1, x2, y2): round button, profile button,
 # centre dot, player LEDs; DECOR_SQUARE is the square drawn in the middle of the round button
@@ -40,7 +41,7 @@ DECOR_SQUARE = (186, 95, 194, 103)
 BEHIND = ("LT", "RT")            # parts drawn behind the body
 # button roles pick the skin colours (theme.SKINS); everything else uses "btn"
 ROLES = {**dict.fromkeys(("A", "B", "X", "Y"), "face"), **dict.fromkeys(("Up", "Down", "Left", "Right"), "dpad"),
-         **dict.fromkeys(("L3", "R3"), "stick"), **dict.fromkeys(("LB", "RB"), "shoulder"),
+         **dict.fromkeys(("L3", "R3"), "stick"), **dict.fromkeys(("LB", "RB", "P3", "P4"), "shoulder"),
          **dict.fromkeys(("LT", "RT"), "trigger"), "Home": "home"}
 
 # 24 RGB LEDs: 12 around each stick (index 0 at the top, clockwise; left stick first)
@@ -55,9 +56,9 @@ DETAILS = [((60, 168), (36, 233), (26, 280), (34, 318)), ((380, 168), (404, 233)
            ((84, 306), (118, 250), (136, 240), (304, 240), (322, 250), (356, 306))]
 
 # home-page callouts: label, side, label y, target point on the controller, button (or "sticks") opened on click
-CALLOUTS = [("LT", "l", 12, (96, 12), "LT"), ("LB", "l", 48, (54, 42), "LB"),
+CALLOUTS = [("LT", "l", 10, (96, 12), "LT"), ("L4", "l", 33, (148, 18), "P3"), ("LB", "l", 56, (54, 42), "LB"),
             ("Analógico esquerdo", "l", 106, (61, 106), "sticks"), ("D-pad", "l", 175, (121, 175), "Up"),
-            ("RT", "r", 12, (344, 12), "RT"), ("RB", "r", 48, (386, 42), "RB"),
+            ("RT", "r", 10, (344, 12), "RT"), ("R4", "r", 33, (292, 18), "P4"), ("RB", "r", 56, (386, 42), "RB"),
             ("Botões ABXY", "r", 104, (394, 104), "A"), ("Analógico direito", "r", 177, (313, 177), "sticks"),
-            ("Traseiros L4 / R4", "r", 308, (264, 308), "P1")]
+            ("Traseiros PL / PR", "r", 308, (264, 308), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing

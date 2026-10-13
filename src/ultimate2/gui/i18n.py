@@ -79,7 +79,8 @@ EN = {
     "Restaurar padrões deste perfil": "Restore this profile's defaults",
     "no Perfil {}": "on Profile {}",
     "Aperte os botões do controle: eles acendem aqui.": "Press the controller's buttons: they light up here.",
-    "Clique num botão do controle para escolher a função dele.\nL4/R4: botões traseiros · ★: estrela/turbo.": "Click a button on the controller to choose its function.\nL4/R4: back buttons · ★: star/turbo.",
+    "Clique num botão do controle para escolher a função dele.\nL4/R4: botões extras do ombro · PL/PR: botões traseiros · ★: estrela/turbo.":
+        "Click a button on the controller to choose its function.\nL4/R4: extra shoulder buttons · PL/PR: back buttons · ★: star/turbo.",
     "Botão de ativação": "Activation button",
     "Prévia ao vivo dos anéis de LED.\nClique num LED do desenho para pintar só ele.": "Live preview of the LED rings.\nClick an LED in the drawing to paint only that one.",
     "Nome": "Name",
@@ -127,5 +128,5 @@ EN = {
     "Roda · fundo": "Wheel · background",
     "Personalizado · todos": "Custom · all",
     "Botões ABXY": "ABXY buttons",
-    "Traseiros L4 / R4": "Back buttons L4 / R4",
+    "Traseiros PL / PR": "Back buttons PL / PR",
 }

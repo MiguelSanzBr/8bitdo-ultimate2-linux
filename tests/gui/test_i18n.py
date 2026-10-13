@@ -11,7 +11,7 @@ from ultimate2.gui import app as app_mod, catalog, geometry, i18n, theme, widget
 from .conftest import click, make_app, texts, walk
 
 GUI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "ultimate2", "gui")
-NEUTRAL = {"LT", "LB", "RT", "RB", "D-pad", "LEDs"}      # constant labels that read the same in English
+NEUTRAL = {"LT", "LB", "RT", "RB", "L4", "R4", "D-pad", "LEDs"}      # constant labels that read the same in English
 
 
 # ---------------------------------------------------------------- detection and lookup

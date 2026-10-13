@@ -21,7 +21,7 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 |---|:-:|:-:|
 | Read firmware version, active profile, controller edition | ✓ | ✓ |
 | 3 custom profiles: create, rename, enable/disable | ✓ | ✓ |
-| Button remapping (incl. the L4/R4 back buttons) | ✓ | ✓ |
+| Button remapping (incl. L4/R4 and the PL/PR back buttons) | ✓ | ✓ |
 | Stick dead zones/range, invert axes, swap sticks/d-pad | ✓ | ✓ |
 | Trigger ranges, swap triggers, trigger rumble | ✓ | ✓ |
 | Rumble strength, gyro (6-axis) mapping | ✓ | ✓ |
@@ -112,7 +112,7 @@ controller everything reads `0xffffffff` (erased flash). `u2ctl new-slot` fills 
 | `gamepad_mode` | 0 Switch, 1 Android, 3 Windows/XInput |
 | `slots[n].flag` | `"enabled"` turns the slot into a custom profile |
 | `name` | up to 16 characters |
-| `mapping.<button>` | function of a physical button: `A B X Y LB RB LT RT L3 R3 Select Start Home Menu Screenshot Up Down Left Right P1..P5 TurboSingle TurboAuto LS_Up.. RS_Right None` (`P1` = R4 and `P2` = L4, the back buttons) |
+| `mapping.<button>` | function of a physical button: `A B X Y LB RB LT RT L3 R3 Select Start Home Menu Screenshot Up Down Left Right P1..P5 TurboSingle TurboAuto LS_Up.. RS_Right None` (`P1` = PR and `P2` = PL, the back buttons; `P3` = L4 and `P4` = R4, the small shoulder buttons) |
 | `sticks.left_start / left_end` (`right_*`) | inner dead zone / outer range, 0–128 |
 | `triggers.left_start / left_end` (`right_*`) | LT/RT activation / full-press point, 0–255 |
 | `special.features` | `invert_LS_X invert_LS_Y invert_RS_X invert_RS_Y swap_sticks swap_triggers swap_LS_dpad trigger_rumble` |

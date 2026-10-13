@@ -81,10 +81,10 @@ Every section has its own flag; a section is used only when its flag is `0x20200
 
 ### Button order of `mapping` (physical buttons)
 
-`A B X Y LB RB LT RT L3 R3 Select Start Star Home Up Down Left Right P1 P2 P3 P4`. On the Ultimate 2 Wireless the two
-back buttons, printed L4 and R4, are `P2` (left) and `P1` (right); the app also defines `P3`/`P4` for other models.
-In XInput mode the back buttons have no code of their own: they report the function they are mapped to (LB/RB by
-default), which is why a press of L4 shows up as LB.
+`A B X Y LB RB LT RT L3 R3 Select Start Star Home Up Down Left Right P1 P2 P3 P4`. On the Ultimate 2 Wireless (names from
+the app's mapping images and its `getUltimate2` layout): `P1` = PR and `P2` = PL, the back paddles (right and left);
+`P3` = L4 and `P4` = R4, the small shoulder buttons beside LB/RB. A new profile maps all four to `None`. In XInput mode
+they have no code of their own: they report the function they are mapped to.
 
 ### Key codes (function assigned to a button)
 
@@ -110,4 +110,4 @@ triggers, `0x100` swap LS/d-pad, `0x8000` trigger rumble. Other bits are not ful
 ## Live input
 
 With `xpad`, `/dev/input/jsN` reports 11 buttons (`A B X Y LB RB Select Start Home L3 R3`) and 8 axes (LX, LY, LT, RX,
-RY, RT, d-pad X, d-pad Y). Star, R4 and the back buttons are not reported as separate inputs.
+RY, RT, d-pad X, d-pad Y). Star, L4/R4 and the PL/PR back buttons are not reported as separate inputs.
