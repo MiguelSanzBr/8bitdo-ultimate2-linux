@@ -255,8 +255,10 @@ class ControllerView:
         """Per-frame look of each part: pressed > trigger pressure > selected > normal, plus ripple and stick motion."""
         s = self.s
         for name, p in parts.items():
-            level = self.trigger_level(name)
-            if name in self.pad_down:
+            # the extras (L4/R4/PL/PR) send no input of their own: light them when the function they output arrives
+            fn = self.v["keys"][name].get() if name in DISPLAY else name
+            level = self.trigger_level(fn)
+            if name in self.pad_down or fn in self.pad_down:
                 st = (ACCENT, ACCENT, BG)
             elif level and level > .02:
                 st = (mix(p["base"][0], ACCENT, level), ACCENT, p["base"][2])
@@ -270,7 +272,7 @@ class ControllerView:
                 if p["text"]:
                     c.itemconfigure(p["text"], fill=st[2])
             c.itemconfigure(p["badge"], state="normal" if mode != "leds" and name in self._remapped else "hidden")
-            t = now - self.press_t.get(name, -1e9)
+            t = now - max(self.press_t.get(name, -1e9), self.press_t.get(fn, -1e9))
             if t < theme.PULSE:
                 k = t / theme.PULSE
                 g = (2 + 9 * k) * s

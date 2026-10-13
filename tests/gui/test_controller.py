@@ -94,6 +94,19 @@ def test_style_states(app):
     assert app.home_items["B"]["st"] == app.home_items["B"]["base"]
 
 
+def test_extras_light_with_the_function_they_output(app):
+    cv, parts = app.map_canvas, app.map_items
+    app.v["keys"]["P3"].set("LB")                          # L4 -> LB, PR -> LT, PL -> None
+    app.v["keys"]["P1"].set("LT")
+    app.v["keys"]["P2"].set("None")
+    app.pad_down.add("LB")
+    app.pad_axes[2] = 32767
+    app.press_t["LB"] = now = time.time()
+    app.style(cv, parts, "map", now)
+    assert parts["P3"]["st"] == (theme.ACCENT, theme.ACCENT, theme.BG) and parts["P3"]["glowing"]
+    assert parts["P1"]["st"][0] == theme.ACCENT != parts["P1"]["base"][0]
+    assert parts["P2"]["st"] == parts["P2"]["base"]
+
 def test_style_badges_follow_remap(eapp):
     eapp._remapped = {"Y"}
     now = time.time()

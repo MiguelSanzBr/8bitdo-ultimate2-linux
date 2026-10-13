@@ -17,7 +17,7 @@ LB_PTS = ((44, 48), (44, 43), (49, 39), (75, 24), (105, 18), (132, 20), (138, 26
 LT_PTS = ((52, 36), (62, 22), (84, 8), (116, 3), (140, 8), (146, 22), (120, 22), (80, 26))
 
 # L4: half-circle sitting on the body's top edge, against the inner end of LT
-L4_PTS = tuple((round(159 + 12 * math.cos(math.pi * k / 8), 1), round(25 - 12 * math.sin(math.pi * k / 8), 1))
+L4_PTS = tuple((round(152 + 12 * math.cos(math.pi * k / 8), 1), round(25 - 12 * math.sin(math.pi * k / 8), 1))
                for k in range(9))
 
 
@@ -36,7 +36,7 @@ PARTS = {
     "X": ("circle", (316, 104, 15), "X"), "B": ("circle", (379, 104, 15), "B"),
     "Select": ("circle", (162, 67, 10), "−"), "Start": ("circle", (277, 67, 10), "+"),
     "Home": ("circle", (220, 67, 14), ""), "Star": ("circle", (250, 99, 10), "★"),
-    "P3": ("poly", (L4_PTS, (159, 19)), "L4"), "P4": ("poly", (mirror(L4_PTS), (281, 19)), "R4"),   # shoulder extras
+    "P3": ("poly", (L4_PTS, (152, 19)), "L4"), "P4": ("poly", (mirror(L4_PTS), (288, 19)), "R4"),   # shoulder extras
     "P2": ("rrect", (176, 300, 210, 316), "PL"), "P1": ("rrect", (230, 300, 264, 316), "PR"),   # back paddles
 }
 # parts of the face that are not configurable, drawn fully rounded (x1, y1, x2, y2): round button, profile button,
@@ -61,9 +61,9 @@ DETAILS = [((60, 168), (36, 233), (26, 280), (34, 318)), ((380, 168), (404, 233)
            ((84, 306), (118, 250), (136, 240), (304, 240), (322, 250), (356, 306))]
 
 # home-page callouts: label, side, label y, target point on the controller, button (or "sticks") opened on click
-CALLOUTS = [("LT", "l", 10, (96, 12), "LT"), ("L4", "l", 33, (149, 21), "P3"), ("LB", "l", 56, (54, 42), "LB"),
+CALLOUTS = [("LT", "l", 10, (96, 12), "LT"), ("L4", "l", 33, (142, 21), "P3"), ("LB", "l", 56, (54, 42), "LB"),
             ("Analógico esquerdo", "l", 106, (61, 106), "sticks"), ("D-pad", "l", 175, (121, 175), "Up"),
-            ("RT", "r", 10, (344, 12), "RT"), ("R4", "r", 33, (291, 21), "P4"), ("RB", "r", 56, (386, 42), "RB"),
+            ("RT", "r", 10, (344, 12), "RT"), ("R4", "r", 33, (298, 21), "P4"), ("RB", "r", 56, (386, 42), "RB"),
             ("Botões ABXY", "r", 104, (394, 104), "A"), ("Analógico direito", "r", 177, (313, 177), "sticks"),
             ("Traseiros PL / PR", "r", 308, (264, 308), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing
