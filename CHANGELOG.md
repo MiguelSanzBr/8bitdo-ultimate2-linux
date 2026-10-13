@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.1.0-beta.4 — 2026-10-12
+
 * The drawing is in outline style by default. The colour (black, pink, or automatic from the edition) is chosen
   in a drop-down on the Profile page.
 

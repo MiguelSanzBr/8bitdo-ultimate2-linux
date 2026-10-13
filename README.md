@@ -42,7 +42,7 @@ Download `ultimate2_<version>_all.deb` from the
 [Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases), then:
 
 ```bash
-sudo apt install ./ultimate2_0.1.0-beta3_all.deb
+sudo apt install ./ultimate2_0.1.0-beta4_all.deb
 ```
 
 This installs the `u2ctl` and `u2gui` commands, the menu entry "8BitDo Ultimate 2" and the udev rule.
