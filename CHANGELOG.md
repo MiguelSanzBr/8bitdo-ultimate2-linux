@@ -4,6 +4,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 0.1.0-beta.3 — 2026-10-12
+
 * Fixed: starting `u2gui` with the controller switched off (only the 2.4G dongle plugged in) showed an
   "[Errno 5] Input/output error" dialog. It now says the controller is off or out of range and reads it as soon as it
   answers. Only a permission problem still opens a dialog.
@@ -22,7 +24,6 @@ This project follows [Semantic Versioning](https://semver.org/).
   skin of their own use it.
 * The drawing style can be chosen on the Profile page (outline, automatic from the edition, black or pink), for
   controllers whose edition is not detected.
-
 * The drawing follows the real shape of the Ultimate 2: outline, shoulders and button positions were traced from
   the silhouette of the official render (alpha channel only, `tools/trace_silhouette.py`; no artwork is included).
   The round button, the capsule-shaped profile button and the player LEDs are drawn too.
