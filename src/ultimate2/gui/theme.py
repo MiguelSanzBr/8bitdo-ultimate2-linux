@@ -32,7 +32,13 @@ def font(size, weight="normal"):
 THEME_NAMES = {2: "Dinâmico", 3: "Roda", 4: "Personalizado", 5: "Desligado"}
 
 # controller skins: body gradient (top, middle, bottom) and (fill, outline, label) per button role
+LINE_FG = "#e8e8e8"
 SKINS = {
+    # outline drawing in the style of the controller diagrams: light strokes on the background, no fills
+    "line": dict(name="Linhas", line_art=True, glow=None, body=(BG, BG, BG), line=LINE_FG, detail="#6b6b6b",
+                 well=BG, emblem=None, led_off="#4a4a4a", btn=(BG, LINE_FG, LINE_FG), face=(BG, LINE_FG, LINE_FG),
+                 dpad=(BG, BG, LINE_FG), stick=(BG, LINE_FG, LINE_FG), shoulder=(BG, LINE_FG, LINE_FG),
+                 trigger=(BG, LINE_FG, LINE_FG), home=(BG, LINE_FG, LINE_FG)),
     "dark": dict(name="Preto", glow="#4b2f9a", body=("#2c2c2c", "#232323", "#1a1a1a"), line="#6a6a6a", well="#161616", emblem=None,
                  led_off="#3a3a3a", btn=("#2e2e2e", "#808080", FG), face=("#2e2e2e", "#808080", FG),
                  dpad=("#2e2e2e", "#808080", FG), stick=("#1e1e1e", "#5a5a5a", FG), shoulder=("#2e2e2e", "#808080", FG),
@@ -47,3 +53,4 @@ SKINS = {
 }
 # controller edition (the app's m_ControllerColor) -> skin; 3 is the lilac edition with red stick rings
 EDITION_SKINS = {3: "lilac"}
+DEFAULT_SKIN = "line"            # editions without a skin of their own

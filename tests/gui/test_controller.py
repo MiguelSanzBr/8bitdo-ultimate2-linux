@@ -267,3 +267,20 @@ def test_apply_skin_repaints_swatches_only_with_colors(skinned):
     assert canvas.itemcget(item, "outline") == "#100002"
     cell, dot = app.swatches["hot_color"]
     assert cell.itemcget(dot, "fill") == "#00ff00"                       # pill dots repainted too
+
+
+def test_outline_skin_draws_strokes_only(skinned):
+    app = skinned
+    app.colors = {}
+    app.apply_skin("line")
+    sk = theme.SKINS["line"]
+    for c, (parts, mode) in app.ctrl.items():
+        assert not [i for i in c.find_all() if c.type(i) == "image"]   # no shaded body image
+        assert all(c.itemcget(p["body"], "fill") in (theme.BG, theme.SEL_FILL) for p in parts.values())
+        assert not parts["A"]["extra"]                                   # no dome shading on outlines
+        greys = [i for i in c.find_all() if c.type(i) == "line" and c.itemcget(i, "fill") == sk["detail"]]
+        assert len(greys) == 3                                           # grip contours and the inner arch
+        cross = [i for i in c.find_all() if c.type(i) == "polygon" and c.itemcget(i, "outline") == sk["line"]
+                 and c.itemcget(i, "fill") == "" and len(c.coords(i)) == 24]
+        assert len(cross) == 1                                           # hollow d-pad cross
+    app.apply_skin("dark")

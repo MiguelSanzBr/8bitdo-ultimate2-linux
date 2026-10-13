@@ -15,7 +15,7 @@ from .i18n import _
 from .live_input import PadInput
 from .pages import Pages
 from .sync import DeviceSync
-from .theme import BG, EDITION_SKINS, FG, MUTED, SKINS, TILE, WARN
+from .theme import BG, DEFAULT_SKIN, EDITION_SKINS, FG, MUTED, SKINS, TILE, WARN
 from .widgets import Pill, Select, panel
 
 SETTINGS = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ultimate2", "gui.json")
@@ -63,7 +63,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self._save_job = None
         self.led_items = []      # (canvas, [24 item ids]) for the live LED preview
         self.skin_pref = load_settings().get("skin", "auto")    # "auto" = from the controller's edition
-        self.skin = self.skin_pref if self.skin_pref in SKINS else "dark"
+        self.skin = self.skin_pref if self.skin_pref in SKINS else DEFAULT_SKIN
         self.edition = None      # last edition read from the controller
         self.led_glow = {}       # canvas -> 24 halo arcs (dimmed copy of the LED colours)
         self._imgs = {}          # canvas -> body gradient image (kept referenced)
@@ -99,7 +99,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
             return
         self.skin_pref = pref
         save_settings({**load_settings(), "skin": pref})
-        want = pref if pref in SKINS else EDITION_SKINS.get(self.edition, "dark")
+        want = pref if pref in SKINS else EDITION_SKINS.get(self.edition, DEFAULT_SKIN)
         if want != self.skin:
             self.apply_skin(want)
 

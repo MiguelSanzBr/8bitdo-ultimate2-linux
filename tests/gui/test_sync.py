@@ -90,9 +90,9 @@ def test_read_device_unknown_theme(mk, fake, monkeypatch):
 
 @pytest.mark.parametrize("start,edition,end,switches", [
     ("dark", 3, "lilac", True), ("lilac", 3, "lilac", False),
-    ("lilac", 0, "dark", True), ("dark", 0, "dark", False),
-    ("lilac", 9, "dark", True),                                          # unknown edition falls back to dark
-    ("lilac", None, "dark", True), ("dark", None, "dark", False)])      # no answer to the colorway query
+    ("lilac", 0, "line", True), ("line", 0, "line", False),
+    ("lilac", 9, "line", True),                                          # unknown edition: the outline drawing
+    ("lilac", None, "line", True), ("line", None, "line", False)])      # no answer to the colorway query
 def test_read_device_picks_skin_from_edition(mk, fake, monkeypatch, start, edition, end, switches):
     a = mk(BACKUP, read=False)
     old = a.skin

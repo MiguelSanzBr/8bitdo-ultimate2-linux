@@ -117,6 +117,7 @@ EN = {
     "Roda": "Wheel",
     "Personalizado": "Custom",
     "Preto": "Black",
+    "Linhas": "Outline",
     "Cor do desenho": "Drawing color",
     "Automática (pela edição)": "Automatic (from the edition)",
     "Rosa": "Pink",

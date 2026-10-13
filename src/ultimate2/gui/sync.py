@@ -7,7 +7,7 @@ from tkinter import filedialog, messagebox
 from .. import config, device, protocol
 from . import theme
 from .i18n import _
-from .theme import ACCENT, DANGER, EDITION_SKINS, MUTED, SKINS, THEME_NAMES
+from .theme import ACCENT, DANGER, DEFAULT_SKIN, EDITION_SKINS, MUTED, SKINS, THEME_NAMES
 
 
 class DeviceSync:
@@ -123,7 +123,7 @@ class DeviceSync:
         def done(r):
             path, pid, info, cfg, led_theme, edition = r
             self.edition = edition
-            want = self.skin_pref if self.skin_pref in SKINS else EDITION_SKINS.get(edition, "dark")
+            want = self.skin_pref if self.skin_pref in SKINS else EDITION_SKINS.get(edition, DEFAULT_SKIN)
             if want != self.skin:
                 self.apply_skin(want)
             self.theme_dev = led_theme

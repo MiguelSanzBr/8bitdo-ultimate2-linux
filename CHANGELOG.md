@@ -9,8 +9,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 * The controller drawing is shaded like a moulded part (rounded, lit edges and raised buttons). The pink edition skin
   uses colours taken from a photo of the controller.
 * The back buttons are labelled L4/R4, as printed on the controller (they were shown as PL/PR).
-* The drawing colour can be chosen on the Profile page (automatic from the edition, black or pink), for controllers
-  whose edition is not detected.
+* New default drawing in outline style (light strokes, no fills), like the controller diagrams. Editions without a
+  skin of their own use it.
+* The drawing style can be chosen on the Profile page (outline, automatic from the edition, black or pink), for
+  controllers whose edition is not detected.
 
 ## 0.1.0-beta.2 — 2026-10-12
 

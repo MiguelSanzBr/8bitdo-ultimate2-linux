@@ -26,16 +26,18 @@ class ControllerView:
         button) or ``"leds"`` (LEDs are clickable colour targets). ``ox`` shifts the drawing right (logical units).
         """
         s, sk = self.s, SKINS[self.skin]
-        w = max(1, round(1.5 * s))
+        line = sk.get("line_art", False)                  # outline drawing (no fills, shading or shadows)
+        w = max(1, round((2 if line else 1.5) * s))
         P = lambda *xy: [(v + (ox if i % 2 == 0 else 0)) * s for i, v in enumerate(xy)]
         body = P(*[v for pt in BODY for v in pt])
-        if mode == "home":                                  # soft violet glow under the controller
+        if mode == "home" and not line:                     # soft glow under the controller
             for k in range(10):
                 t = k / 9
                 rx, ry = 250 - 140 * t, 46 - 26 * t
                 c.create_oval(P(220 - rx, 262 - ry, 220 + rx, 262 + ry), outline="", fill=mix(BG, sk["glow"], .15 + .55 * t))
-        c.create_polygon([v + (4 if i % 2 else 0) * s for i, v in enumerate(body)], smooth=True,
-                         fill=mix(BG, "#000000", .45), outline="")
+        if not line:
+            c.create_polygon([v + (4 if i % 2 else 0) * s for i, v in enumerate(body)], smooth=True,
+                             fill=mix(BG, "#000000", .45), outline="")
         parts = {}
         shadow = mix(sk["body"][1], "#000000", .38)
 
@@ -46,7 +48,7 @@ class ControllerView:
             pts = None
             if name in ("L3", "R3"):
                 xy = (xy[0], xy[1], xy[2] - 7)          # the cap moves inside its well
-            raised = ROLES.get(name, "btn") in ("face", "btn", "home", "dpad") and name not in ("P1", "P2")
+            raised = not line and ROLES.get(name, "btn") in ("face", "btn", "home", "dpad") and name not in ("P1", "P2")
             if raised:                                      # soft drop shadow on the body below the button
                 sx, sy = (1.2, 2.2) if shape != "poly" else (0, 0)
                 if shape == "circle":
@@ -86,7 +88,8 @@ class ControllerView:
                                        outline=mix(base[0], "#000000", .22), width=max(1, round(1.6 * s)), tags=tag),
                           c.create_oval(x1 + rr * .45, y1 + rr * .28, x1 + rr * 1.05, y1 + rr * .7,
                                         fill=mix(base[0], "#ffffff", .7), outline="", tags=tag)]
-            text = c.create_text(cx, cy, text=label, fill=base[2], font=theme.font(7, "bold"), tags=tag) if label else None
+            size = 10 if line and ROLES.get(name) == "face" else 7
+            text = c.create_text(cx, cy, text=label, fill=base[2], font=theme.font(size, "bold"), tags=tag) if label else None
             bx, by = (cx + 14 * s, cy - 6 * s) if shape == "poly" else (box[2], box[1])
             badge = c.create_oval(bx - 3 * s, by - 3 * s, bx + 3 * s, by + 3 * s, fill=ACCENT, outline=BODY_FILL, state="hidden")
             parts[name] = dict(body=part, text=text, glow=glow, badge=badge, extra=extra, box=box, shape=shape,
@@ -98,15 +101,21 @@ class ControllerView:
 
         for name in BEHIND:
             make(name)
-        self._imgs[c] = gradient_fill(c, smooth_outline([(x * s, y * s) for x, y in BODY]),
-                                      int(WIDTH * s), int(HEIGHT * s), sk["body"], bevel=round(20 * s))
-        c.create_image(ox * s, 0, image=self._imgs[c], anchor="nw")
-        c.create_polygon(body, smooth=True, fill="", outline=sk["line"], width=max(1, round(2 * s)))
-        for x, y, r in STICK_WELLS:
-            c.create_oval(P(x - r, y - r, x + r, y + r), fill=sk["well"], outline="")
         dx0, dy0 = DPAD_CENTER
-        rounded(c, *P(dx0 - 9, dy0 - 8, dx0 + 11, dy0 + 12), 5 * s, fill=shadow, outline="")              # hub shadow
-        rounded(c, *P(dx0 - 10, dy0 - 10, dx0 + 10, dy0 + 10), 5 * s, fill=sk["dpad"][0], outline="")   # d-pad hub
+        if line:
+            c.create_polygon(body, smooth=True, fill=BG, outline=sk["line"], width=max(2, round(2.6 * s)))
+            self.line_details(c, P, sk)
+            for x, y, r in STICK_WELLS:
+                c.create_oval(P(x - r, y - r, x + r, y + r), fill=BG, outline=sk["line"], width=w)
+        else:
+            self._imgs[c] = gradient_fill(c, smooth_outline([(x * s, y * s) for x, y in BODY]),
+                                          int(WIDTH * s), int(HEIGHT * s), sk["body"], bevel=round(20 * s))
+            c.create_image(ox * s, 0, image=self._imgs[c], anchor="nw")
+            c.create_polygon(body, smooth=True, fill="", outline=sk["line"], width=max(1, round(2 * s)))
+            for x, y, r in STICK_WELLS:
+                c.create_oval(P(x - r, y - r, x + r, y + r), fill=sk["well"], outline="")
+            rounded(c, *P(dx0 - 9, dy0 - 8, dx0 + 11, dy0 + 12), 5 * s, fill=shadow, outline="")          # hub shadow
+            rounded(c, *P(dx0 - 10, dy0 - 10, dx0 + 10, dy0 + 10), 5 * s, fill=sk["dpad"][0], outline="")  # d-pad hub
         if sk["emblem"]:                                    # flower emblem around Home
             ex, ey = EMBLEM
             for k in range(8):
@@ -119,7 +128,7 @@ class ControllerView:
         for ring, (x, y, r) in enumerate(RINGS):          # soft halo behind the light ring
             for i in range(12):
                 glow.append(c.create_arc(P(x - r, y - r, x + r, y + r), start=90 - 30 * i - 15, extent=30, style="arc",
-                                         outline=sk["led_off"], width=11 * s))
+                                         outline=sk["led_off"], width=(2 if line else 11) * s))
         for ring, (x, y, r) in enumerate(RINGS):
             for i in range(12):
                 item = c.create_arc(P(x - r, y - r, x + r, y + r), start=90 - 30 * i - 15.5, extent=31, style="arc",
@@ -134,8 +143,17 @@ class ControllerView:
         for name in PARTS:
             if name not in BEHIND:
                 make(name)
-        c.create_oval(P(dx0 - 4, dy0 - 4, dx0 + 4, dy0 + 4), fill="#a6a6ae", outline="#d8d8de")   # metal centre
-        arrows = {(0, -1): "Up", (0, 1): "Down", (-1, 0): "Left", (1, 0): "Right"}
+        if line:                                            # hollow cross with an X, drawn over the d-pad parts
+            arm, half = 26, 8
+            cross = [(-half, -arm), (half, -arm), (half, -half), (arm, -half), (arm, half), (half, half), (half, arm),
+                     (-half, arm), (-half, half), (-arm, half), (-arm, -half), (-half, -half)]
+            c.create_polygon(P(*[v for x, y in cross for v in (dx0 + x, dy0 + y)]), fill="", outline=sk["line"],
+                             width=w, joinstyle="round")
+            for sx in (-1, 1):
+                c.create_line(P(dx0 - half, dy0 - half * sx, dx0 + half, dy0 + half * sx), fill=sk["line"], width=w)
+        arrows = {} if line else {(0, -1): "Up", (0, 1): "Down", (-1, 0): "Left", (1, 0): "Right"}
+        if not line:
+            c.create_oval(P(dx0 - 4, dy0 - 4, dx0 + 4, dy0 + 4), fill="#a6a6ae", outline="#d8d8de")   # metal centre
         for (dx, dy), name in arrows.items():
             x, y = dx0 + 20 * dx, dy0 + 20 * dy
             c.create_polygon(P(x + 3 * dx, y + 3 * dy, x - 3 * dy - 2 * dx, y - 3 * dx - 2 * dy,
@@ -147,6 +165,14 @@ class ControllerView:
                 c.tag_raise(item)
         self.ctrl[c] = (parts, mode)
         return parts
+
+    def line_details(self, c, P, sk):
+        """Thin grey construction lines of the outline drawing: grip contours and the inner arch."""
+        g, w = sk["detail"], max(1, round(1.3 * self.s))
+        for pts in (((92, 126), (66, 168), (46, 228), (50, 266)),                  # left grip contour
+                    ((302, 180), (360, 196), (392, 236), (392, 266)),               # right grip contour
+                    ((70, 262), (96, 214), (124, 198), (316, 198), (344, 214), (370, 262))):   # inner arch
+            c.create_line(P(*[v for pt in pts for v in pt]), fill=g, width=w, smooth=True, capstyle="round")
 
     def callouts(self, c, ox):
         """Labels around the home drawing, linked to their part; clicking one opens its page."""
