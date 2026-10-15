@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Ultimate Pad Config
+Comment=Configure the 8BitDo Ultimate 2 Wireless controller
+Exec=u2gui
+Icon=io.github.miguelsanzbr._8bitdo-ultimate2-linux
+Terminal=false
+Categories=Settings;HardwareSettings;Game;
+Keywords=8bitdo;gamepad;controller;joystick;remap;
+StartupNotify=true

@@ -1,0 +1,75 @@
+# Builds the .flatpak bundle attached to the GitHub releases, from this checkout:
+#   flatpak run org.flatpak.Builder --repo=repo --force-clean build packaging/flatpak/bundle.yml
+#   flatpak build-bundle repo app.flatpak io.github.miguelsanzbr._8bitdo-ultimate2-linux --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo
+# It is not a Flathub manifest.
+id: io.github.miguelsanzbr._8bitdo-ultimate2-linux
+runtime: org.freedesktop.Platform
+runtime-version: '25.08'
+sdk: org.freedesktop.Sdk
+command: u2gui
+finish-args:
+  - --socket=x11            # Tk draws through X11 (XWayland on Wayland sessions)
+  - --share=ipc
+  - --device=all            # the device's /dev/hidraw node: no portal gives raw HID access
+  - --filesystem=xdg-documents   # backups (Tk's file dialog cannot use the file chooser portal)
+  - --filesystem=xdg-download
+cleanup:
+  - /include
+  - /lib/pkgconfig
+  - /man
+  - /share/man
+  - '*.a'
+modules:
+  - name: tkinter
+    buildsystem: simple
+    build-commands:
+      # the Freedesktop runtime's Python has no tkinter; build it against Tcl/Tk 8.6 (the version the app is tested with)
+      - sed -i 's/"tcl9.0", "tcl9tk9.0"/"tcl8.6", "tk8.6"/' pyproject.toml
+      - pip3 install --prefix=${FLATPAK_DEST} --no-build-isolation --no-deps .
+    sources:
+      - type: git
+        url: https://github.com/iwalton3/tkinter-standalone
+        commit: 8e78e38ef0cceb44a3a0062e1c314a4ff3f981db
+    modules:
+      - name: tcl
+        buildsystem: autotools
+        subdir: unix
+        build-options:
+          cflags: -DTCL_UTF_MAX=4
+        post-install:
+          - chmod +w ${FLATPAK_DEST}/lib/libtcl*.so
+        cleanup:
+          - /bin
+        sources:
+          - type: archive
+            url: https://prdownloads.sourceforge.net/tcl/tcl8.6.18-src.tar.gz
+            sha256: 14f9af32b1767ff718477a8f974ad03c34341097e6b43f4ce54644ee974e268e
+      - name: tk
+        buildsystem: autotools
+        subdir: unix
+        build-options:
+          cflags: -DTCL_UTF_MAX=4
+        post-install:
+          - chmod +w ${FLATPAK_DEST}/lib/libtk*.so
+        cleanup:
+          - /bin
+        sources:
+          - type: archive
+            url: https://prdownloads.sourceforge.net/tcl/tk8.6.18-src.tar.gz
+            sha256: 95cd528a80f5e4bdb557af9b14a7197d6860793a3894e25e7c9fad2ed05d4c3c
+
+  - name: 8bitdo-ultimate2-linux
+    buildsystem: simple
+    build-commands:
+      - pip3 install --prefix=${FLATPAK_DEST} --no-build-isolation --no-deps .
+      - install -Dm644 packaging/flatpak/io.github.miguelsanzbr._8bitdo-ultimate2-linux.desktop -t ${FLATPAK_DEST}/share/applications/
+      - install -Dm644 packaging/flatpak/io.github.miguelsanzbr._8bitdo-ultimate2-linux.metainfo.xml -t ${FLATPAK_DEST}/share/metainfo/
+      - install -Dm644 packaging/flatpak/io.github.miguelsanzbr._8bitdo-ultimate2-linux.svg -t ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/
+      - install -Dm644 LICENSE -t ${FLATPAK_DEST}/share/licenses/io.github.miguelsanzbr._8bitdo-ultimate2-linux/
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .venv
+          - dist
+          - .flatpak-builder
