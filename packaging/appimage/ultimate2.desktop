@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=8BitDo-Ultimate-2
+GenericName=Gamepad configurator
+Comment=Configure the 8BitDo Ultimate 2 Wireless controller
+Comment[pt_BR]=Configure o controle 8BitDo Ultimate 2 Wireless
+Exec=u2gui
+Icon=ultimate2
+Terminal=false
+Categories=Settings;HardwareSettings;Game;
+Keywords=8bitdo;gamepad;controller;joystick;ultimate;

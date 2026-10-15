@@ -42,7 +42,7 @@ Download `ultimate2_<version>_all.deb` from the
 [Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases), then:
 
 ```bash
-sudo apt install ./ultimate2_0.1.0-beta4_all.deb
+sudo apt install ./ultimate2_0.1.0-beta5_all.deb
 ```
 
 This installs the `u2ctl` and `u2gui` commands, the menu entry "8BitDo Ultimate 2" and the udev rule.
@@ -54,11 +54,26 @@ Download `8bitdo-ultimate2-<version>-any.pkg.tar.zst` from the
 [Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases), then:
 
 ```bash
-sudo pacman -U ./8bitdo-ultimate2-0.1.0beta4-1-any.pkg.tar.zst
+sudo pacman -U ./8bitdo-ultimate2-0.1.0beta5-1-any.pkg.tar.zst
 ```
 
 Or build it yourself from the [`PKGBUILD`](packaging/aur/PKGBUILD) (`makepkg -si` in `packaging/aur`). Replug the
 controller afterwards.
+
+### AppImage (any distribution)
+
+Download `ultimate2-appimage.zip` from the [Releases page](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases)
+and extract it. It contains the AppImage, `install-udev.sh` and the udev rule. **The first time only**, install the
+rule, because an AppImage cannot do it by itself:
+
+```bash
+chmod +x install-udev.sh 8BitDo-Ultimate-2-*.AppImage   # a zip download loses the executable bit
+./install-udev.sh                                       # asks for your password
+```
+
+Then unplug and replug the controller (or its 2.4G adapter) and start the AppImage. Without the rule the app cannot
+open the controller. If it refuses to start because FUSE is missing, run it with
+`APPIMAGE_EXTRACT_AND_RUN=1 ./8BitDo-Ultimate-2-*.AppImage`.
 
 ### From source
 
@@ -180,6 +195,8 @@ de LEDs com roda de cores.
 
 - **Instalar**: baixe o `.deb` em [Releases](https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/releases) e rode
   `sudo apt install ./ultimate2_*_all.deb`. Depois reconecte o controle. O app aparece no menu como "8BitDo Ultimate 2".
+  Com o **AppImage** (qualquer distribuição), rode uma vez o `install-udev.sh` que vem no zip (veja *AppImage*
+  acima) e reconecte o controle.
 - **Usar**: `u2gui`. As mudanças são salvas sozinhas. As cores ficam por perfil, então ative o perfil no botão de
   perfil do controle (o ● mostra qual está ativo).
 - **Idioma**: a interface está disponível em inglês e português do Brasil. Ela segue o idioma do sistema e dá para

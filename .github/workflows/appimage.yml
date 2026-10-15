@@ -1,0 +1,40 @@
+name: appimage
+
+# Manual only: Actions tab > appimage > Run workflow; the maintainer attaches the zip to the release.
+on:
+  workflow_dispatch:
+    inputs:
+      python:
+        description: Python version bundled in the AppImage
+        default: "3.12"
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build the wheel and the recipe
+        run: |
+          pip install build python-appimage
+          python -m build --wheel
+          cp -r packaging/appimage recipe
+          echo "$PWD/$(ls dist/*.whl)" > recipe/requirements.txt
+      - name: Build the AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"   # appimagetool is itself an AppImage and the runner has no FUSE
+          PYTHON_VERSION: ${{ inputs.python }}   # through the environment, never pasted into the script
+        run: python-appimage build app -p "$PYTHON_VERSION" recipe
+      - name: Add the udev rule, its installer and the notice
+        run: |
+          mkdir out
+          cp *.AppImage udev/70-8bitdo-u2.rules packaging/appimage-extras/install-udev.sh \
+             packaging/appimage-extras/README.txt out/
+          chmod +x out/install-udev.sh out/*.AppImage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ultimate2-appimage
+          path: out/
+          if-no-files-found: error
