@@ -1,6 +1,6 @@
 pkgbase = 8bitdo-ultimate2
 	pkgdesc = Open-source Linux configurator for the 8BitDo Ultimate 2 Wireless controller (CLI + GUI)
-	pkgver = 0.1.0beta5
+	pkgver = 0.1.0beta6
 	pkgrel = 1
 	url = https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux
 	install = 8bitdo-ultimate2.install
@@ -13,7 +13,7 @@ pkgbase = 8bitdo-ultimate2
 	depends = python
 	depends = tk
 	depends = hicolor-icon-theme
-	source = 8bitdo-ultimate2-0.1.0-beta.5.tar.gz::https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/archive/refs/tags/v0.1.0-beta.5.tar.gz
-	sha256sums = 1fd027dc2947fbffcf07d6c121c80a997726604392da7dba168af74c899a2d34
+	source = 8bitdo-ultimate2-0.1.0-beta.6.tar.gz::https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/archive/refs/tags/v0.1.0-beta.6.tar.gz
+	sha256sums = d229e56e48f74df8d763a7bae36445263b89bff36c7cddf5fad6c11f1380fef6
 
 pkgname = 8bitdo-ultimate2
