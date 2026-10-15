@@ -2,8 +2,11 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0-beta.5 — 2026-10-15
 
+* AppImage for any distribution: `ultimate2-appimage.zip` on the Releases page holds the AppImage, `install-udev.sh`
+  (installs the udev rule once, with sudo or pkexec), the rule and a short notice. Built by the manual `appimage`
+  workflow (python-appimage), as in the GameSir Cyclone 2 configurator.
 * Arch Linux package: `packaging/aur/PKGBUILD` (package `8bitdo-ultimate2`), with a built `.pkg.tar.zst` on the
   Releases page.
 
