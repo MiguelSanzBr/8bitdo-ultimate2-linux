@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Miguel Sanz -->
+<component type="desktop-application">
+  <id>io.github.miguelsanzbr._8bitdo-ultimate2-linux</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Ultimate Pad Config</name>
+  <summary>Configure the 8BitDo Ultimate 2 Wireless controller</summary>
+  <developer id="io.github.miguelsanzbr">
+    <name>Miguel Sanz</name>
+  </developer>
+  <description>
+    <p>Ultimate Pad Config sets up the 8BitDo Ultimate 2 Wireless controller on Linux, without the vendor's software. It talks to the controller directly, through the 2.4G adapter or the USB cable, and saves every change on the controller itself.</p>
+    <ul>
+      <li>Three custom profiles: create, rename, enable or disable</li>
+      <li>Button remapping, including L4/R4 and the PL/PR back buttons</li>
+      <li>Stick dead zones and range, trigger ranges, rumble strength and gyro mapping</li>
+      <li>LED rings: theme, colours, speed and a colour per LED</li>
+      <li>Live view of the pressed buttons, sticks and triggers, with the battery level</li>
+      <li>Backup and restore of the whole configuration</li>
+      <li>English and Brazilian Portuguese interface</li>
+    </ul>
+    <p>The device is reached through its hidraw node, which needs a udev rule installed once on the host system. The
+      project page explains it and ships an installer script.</p>
+    <p>This is an independent project, not affiliated with or endorsed by 8BitDo. The protocol was
+      reverse-engineered for interoperability.</p>
+  </description>
+  <launchable type="desktop-id">io.github.miguelsanzbr._8bitdo-ultimate2-linux.desktop</launchable>
+  <provides>
+    <binary>u2gui</binary>
+    <binary>u2ctl</binary>
+  </provides>
+  <url type="homepage">https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux</url>
+  <url type="bugtracker">https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux/issues</url>
+  <url type="vcs-browser">https://github.com/MiguelSanzBr/8bitdo-ultimate2-linux</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/MiguelSanzBr/8bitdo-ultimate2-linux/v0.1.0-beta.6/docs/screenshots/home.png</image>
+      <caption>Home page: live drawing of the controller, connection and battery</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/MiguelSanzBr/8bitdo-ultimate2-linux/v0.1.0-beta.6/docs/screenshots/buttons.png</image>
+      <caption>Button remapping</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/MiguelSanzBr/8bitdo-ultimate2-linux/v0.1.0-beta.6/docs/screenshots/leds.png</image>
+      <caption>LED colours</caption>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1"/>
+  <branding>
+    <color type="primary" scheme_preference="light">#d9c7f0</color>
+    <color type="primary" scheme_preference="dark">#3b2d4f</color>
+  </branding>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+  <keywords>
+    <keyword>8bitdo</keyword>
+    <keyword>gamepad</keyword>
+    <keyword>controller</keyword>
+    <keyword>joystick</keyword>
+    <keyword>remap</keyword>
+  </keywords>
+  <categories>
+    <category>Settings</category>
+    <category>HardwareSettings</category>
+  </categories>
+  <releases>
+    <release version="0.1.0-beta.6" date="2026-10-15" type="development">
+      <description>
+        <p>Flatpak packaging and AppStream metadata.</p>
+      </description>
+    </release>
+    <release version="0.1.0-beta.5" date="2026-10-15" type="development">
+      <description>
+        <p>AppImage for any distribution.</p>
+      </description>
+    </release>
+    <release version="0.1.0-beta.4" date="2026-10-12" type="development">
+      <description>
+        <p>Battery and connection badge, rounded d-pad, outline drawing by default.</p>
+      </description>
+    </release>
+    <release version="0.1.0-beta.3" date="2026-10-12" type="development">
+      <description>
+        <p>Shoulder and back buttons in the drawing, interface in English.</p>
+      </description>
+    </release>
+    <release version="0.1.0-beta.2" date="2026-10-12" type="development">
+      <description>
+        <p>Fixed udev rule ordering.</p>
+      </description>
+    </release>
+    <release version="0.1.0-beta.1" date="2026-10-12" type="development">
+      <description>
+        <p>First public beta.</p>
+      </description>
+    </release>
+  </releases>
+</component>

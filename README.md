@@ -75,6 +75,17 @@ Then unplug and replug the controller (or its 2.4G adapter) and start the AppIma
 open the controller. If it refuses to start because FUSE is missing, run it with
 `APPIMAGE_EXTRACT_AND_RUN=1 ./8BitDo-Ultimate-2-*.AppImage`.
 
+### Flatpak
+
+Submitted to Flathub as `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (waiting for review). The sandbox reaches the device through its hidraw node, so
+the udev rule is still installed once on the host, from a clone of this repository or with `install-udev.sh` from the AppImage zip:
+
+```bash
+sudo install -m644 udev/70-8bitdo-u2.rules /etc/udev/rules.d/ && sudo udevadm control --reload && sudo udevadm trigger --action=add --subsystem-match=hidraw
+```
+
+The AppStream metadata, desktop entry and icon for Flatpak are in `packaging/flatpak/`.
+
 ### From source
 
 Requirements: Python ≥ 3.8 and Tk (`python3-tk` on Debian/Ubuntu) for the GUI. There are no other
