@@ -77,7 +77,7 @@ open the controller. If it refuses to start because FUSE is missing, run it with
 
 ### Flatpak
 
-Submitted to Flathub as `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (waiting for review). The sandbox reaches the device through its hidraw node, so
+App ID `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (not on Flathub yet). Inside the sandbox the app reaches the device through its hidraw node, so
 the udev rule is still installed once on the host, from a clone of this repository or with `install-udev.sh` from the AppImage zip:
 
 ```bash

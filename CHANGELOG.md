@@ -4,7 +4,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## 0.1.0-beta.6 — 2026-10-15
 
-* Flatpak: AppStream metadata, desktop entry and icon under the app ID `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (`packaging/flatpak/`), for the
+* Flatpak: AppStream metadata, desktop entry and icon under the app ID `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (`packaging/flatpak/`), ready for a
   Flathub submission. The Flatpak build bundles Tcl/Tk 8.6 and tkinter, which the Freedesktop runtime lacks.
 
 ## 0.1.0-beta.5 — 2026-10-15
