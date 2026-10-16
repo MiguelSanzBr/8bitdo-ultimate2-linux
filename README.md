@@ -34,6 +34,12 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 Tested with an Ultimate 2 Wireless (firmware 1.10) over USB (`2dc8:310b`). The 2.4G dongle (`2dc8:6013`) speaks
 the same protocol once the controller is paired, but this has not been tested yet.
 
+**1st-gen Ultimate Bluetooth Controller** (the one with the charging dock and Nintendo layout, firmware 1.02):
+`u2ctl` only for now, with the pad on a USB cable straight to the PC (not through the dock). It switches the pad to
+its config mode and back on every command, so `info`, `dump`, `apply`, `new-slot`, `backup` and `restore` work as
+usual (button remapping incl. P1/P2, sticks, triggers, rumble; no LEDs, no gyro). Now and then the pad turns off
+while switching modes: press Home and run the command again. Details in [docs/ULTIMATE_BT.md](docs/ULTIMATE_BT.md).
+
 ## Web version
 
 The same configurator also runs in the browser, with nothing to install: <https://miguelsanzbr.github.io/8bitdo-ultimate2-linux/> (Chrome, Edge or another Chromium browser, because it talks to the device through WebHID). From the terminal, `u2gui web` opens it. Its source is in [`web/`](web/) (React + TypeScript); its tests run in `.github/workflows/web.yml` and the deploy in `.github/workflows/pages.yml`.

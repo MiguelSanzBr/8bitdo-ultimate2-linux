@@ -2,6 +2,16 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+* Support for the 1st-gen **8BitDo Ultimate Bluetooth Controller** (charging dock, Nintendo layout), on a USB cable
+  straight to the PC. Reverse-engineered from a USB capture of *Ultimate Software V1*, which is the app that
+  configures it (V2 no longer detects it); tested on a real pad, firmware 1.02.
+  * `u2ctl` switches the pad to its config mode (a rumble sequence through `xpad`'s force feedback, no root needed)
+    and back on every command: `info`, `dump`, `apply`, `new-slot`, `backup`, `restore`.
+  * Now and then the pad powers off while switching modes; pressing Home brings it back.
+  * Protocol notes: `docs/ULTIMATE_BT.md` and a summary at the end of `docs/PROTOCOL.md`.
+
 ## 0.1.0-beta.6 — 2026-10-15
 
 * Flatpak: AppStream metadata, desktop entry and icon under the app ID `io.github.miguelsanzbr._8bitdo-ultimate2-linux` (`packaging/flatpak/`), ready for a

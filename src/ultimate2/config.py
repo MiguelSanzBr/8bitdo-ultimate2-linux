@@ -1,18 +1,21 @@
-"""The 1592-byte configuration record (``custom_config_record_t_u2`` in the official app).
+"""The configuration record: 1592 bytes on the Ultimate 2 (``custom_config_record_t_u2`` in the official app),
+1652 bytes on the 1st-gen Ultimate Bluetooth (``UltimateBTAdvance.custom_config_record_t`` of Ultimate Software V1).
 
 Three profile slots, MSVC natural alignment, little endian. :func:`decode` turns the bytes into a
 readable nested dict; :func:`encode` writes an edited dict back over the original bytes, touching only
-the fields that changed so everything else round-trips exactly. ``docs/PROTOCOL.md`` lists every offset.
+the fields that changed so everything else round-trips exactly. The layout is picked from the record size.
+``docs/PROTOCOL.md`` and ``docs/ULTIMATE_BT.md`` list every offset.
 """
 import math
 import struct
 
-from .protocol import CFG_SIZE, crc16
+from .protocol import CFG_SIZE, CFG_SIZE_BT, crc16
 
 FLAGS = {0x20200911: "enabled", 0x20190000: "disabled", 0: "off"}
 # physical buttons, in map_key.key[] order (app: P1 = PR, P2 = PL back paddles, P3 = L4, P4 = R4)
 BUTTONS = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Select", "Start", "Star",
            "Home", "Up", "Down", "Left", "Right", "P1", "P2", "P3", "P4"]
+BUTTONS_BT = BUTTONS[:20]   # Ultimate Bluetooth: same order, two back paddles (P1, P2), no L4/R4
 # output codes a button can be remapped to
 KEYCODES = {0: "None", 0x1: "Start", 0x2: "L3", 0x4: "R3", 0x8: "Select", 0x10: "X", 0x20: "Y",
             0x40: "Right", 0x80: "Left", 0x100: "Down", 0x200: "Up", 0x400: "LB", 0x800: "RB",
@@ -26,7 +29,7 @@ FEATURES = {0x1: "invert_LS_X", 0x2: "invert_LS_Y", 0x4: "invert_RS_X", 0x8: "in
 CRC_FIELD = (12, 16)     # byte range of crc_value
 
 # Field kinds: B/H/I = unsigned ints, f = float, str32 = UTF-16BE name, F = flag, K = key code,
-# M = feature bitmask, X = raw hex u32, C = #rrggbb color.
+# M = feature bitmask, X = raw hex u32, C = #rrggbb color, r<N> = N raw bytes as a hex string.
 
 
 def _from_names(table, val):
@@ -36,31 +39,56 @@ def _from_names(table, val):
     return rev[val] if val in rev else int(val, 16)
 
 
+def _common(f, s, buttons, map_size, macros=None, xrumble=None):
+    """Fields of slot ``s`` shared by both records; the sections after ``special`` move with the layout
+    (``None``: the record has no such section)."""
+    p = ("slots", s)
+    f.append((p + ("flag",), 4 * s, "F"))
+    f.append((p + ("name",), 20 + 32 * s, "str32"))
+    o = 116 + 12 * s
+    f += [(p + ("rumble", "flag"), o, "F"), (p + ("rumble", "left"), o + 4, "f"), (p + ("rumble", "right"), o + 8, "f")]
+    for sec, base in (("sticks", 152), ("triggers", 176), ("xinput_rumble", xrumble)):
+        if base is None:
+            continue
+        o = base + 8 * s
+        f += [(p + (sec, "flag"), o, "F"), (p + (sec, "left_start"), o + 4, "B"), (p + (sec, "left_end"), o + 5, "B"),
+              (p + (sec, "right_start"), o + 6, "B"), (p + (sec, "right_end"), o + 7, "B")]
+    o = 200 + 8 * s
+    f += [(p + ("special", "flag"), o, "F"), (p + ("special", "features"), o + 4, "M")]
+    o = 224 + map_size * s
+    f.append((p + ("mapping", "flag"), o, "F"))
+    f += [(p + ("mapping", b), o + 4 + 4 * i, "K") for i, b in enumerate(buttons)]
+    if macros is None:
+        return
+    o = macros + 216 * s
+    f += [(p + ("macros", "flag"), o, "F"), (p + ("macros", "total_cnt"), o + 4, "B")]
+    for r in range(4):
+        q, ro = p + ("macros", "records", r), o + 8 + 52 * r
+        f += [(q + ("name",), ro, "str32"), (q + ("gamepad_mode",), ro + 32, "B"), (q + ("special_flag",), ro + 33, "B"),
+              (q + ("max_steps",), ro + 34, "H"), (q + ("offset",), ro + 36, "H"), (q + ("key_map",), ro + 40, "X"),
+              (q + ("cycles_num",), ro + 44, "I"), (q + ("interval_ms",), ro + 48, "I")]
+
+
+def _fields_bt():
+    """``[(path, offset, kind)]`` of the Ultimate Bluetooth record."""
+    f = [(("crc_value",), 12, "I"), (("gamepad_mode",), 16, "H"), (("cur_slot",), 18, "H")]
+    for s in range(3):
+        _common(f, s, BUTTONS_BT, 84)
+        p, o = ("slots", s, "button_macros"), 476 + 392 * s     # macro_fun_record_t_Pro2: 18-step key macros
+        f += [(p + ("flag",), o, "F"), (p + ("total_cnt",), o + 4, "B")]
+        for r in range(4):
+            q, ro = p + ("records", r), o + 8 + 96 * r
+            f += [(q + ("key_map",), ro, "X"), (q + ("interval_time_index",), ro + 4, "r36"),
+                  (q + ("key_index",), ro + 40, "r36"), (q + ("digital_joy",), ro + 76, "r18"), (q + ("max_index",), ro + 94, "B")]
+    return f
+
+
 def _fields():
-    """``[(path, offset, kind)]`` for every field of the record."""
+    """``[(path, offset, kind)]`` for every field of the Ultimate 2 record."""
     f = [(("crc_value",), 12, "I"), (("gamepad_mode",), 16, "H"), (("cur_slot",), 18, "H")]
     for s in range(3):
         p = ("slots", s)
-        f.append((p + ("flag",), 4 * s, "F"))
-        f.append((p + ("name",), 20 + 32 * s, "str32"))
-        o = 116 + 12 * s
-        f += [(p + ("rumble", "flag"), o, "F"), (p + ("rumble", "left"), o + 4, "f"), (p + ("rumble", "right"), o + 8, "f")]
-        for sec, base in (("sticks", 152), ("triggers", 176), ("xinput_rumble", 1148)):
-            o = base + 8 * s
-            f += [(p + (sec, "flag"), o, "F"), (p + (sec, "left_start"), o + 4, "B"), (p + (sec, "left_end"), o + 5, "B"),
-                  (p + (sec, "right_start"), o + 6, "B"), (p + (sec, "right_end"), o + 7, "B")]
-        o = 200 + 8 * s
-        f += [(p + ("special", "flag"), o, "F"), (p + ("special", "features"), o + 4, "M")]
-        o = 224 + 92 * s
-        f.append((p + ("mapping", "flag"), o, "F"))
-        f += [(p + ("mapping", BUTTONS[i]), o + 4 + 4 * i, "K") for i in range(22)]
-        o = 500 + 216 * s
-        f += [(p + ("macros", "flag"), o, "F"), (p + ("macros", "total_cnt"), o + 4, "B")]
-        for r in range(4):
-            q, ro = p + ("macros", "records", r), o + 8 + 52 * r
-            f += [(q + ("name",), ro, "str32"), (q + ("gamepad_mode",), ro + 32, "B"), (q + ("special_flag",), ro + 33, "B"),
-                  (q + ("max_steps",), ro + 34, "H"), (q + ("offset",), ro + 36, "H"), (q + ("key_map",), ro + 40, "X"),
-                  (q + ("cycles_num",), ro + 44, "I"), (q + ("interval_ms",), ro + 48, "I")]
+        _common(f, s, BUTTONS, 92, 500, 1148)
         o = 1172 + 12 * s
         f += [(p + ("sixaxis", "flag"), o, "F"), (p + ("sixaxis", "keys_map"), o + 4, "X"), (p + ("sixaxis", "trigger_mode"), o + 8, "B"),
               (p + ("sixaxis", "sensitivity"), o + 9, "B"), (p + ("sixaxis", "dead_compensate"), o + 10, "B"),
@@ -77,9 +105,21 @@ def _fields():
 
 
 FIELDS = _fields()
+FIELDS_BT = _fields_bt()
+
+
+def _layout(buf):
+    """Fields of the record ``buf`` (picked from its size)."""
+    if len(buf) == CFG_SIZE_BT:
+        return FIELDS_BT
+    if len(buf) == CFG_SIZE:
+        return FIELDS
+    raise ValueError(f"unknown config record size {len(buf)}")
 
 
 def _get(buf, off, kind):
+    if kind[0] == "r":
+        return buf[off:off + int(kind[1:])].hex()
     if kind == "str32":   # UTF-16BE, max 16 chars, 0x0000-terminated; any 0xFF byte = erased
         raw = buf[off:off + 32]
         if b"\xff" in raw:
@@ -104,7 +144,13 @@ def _get(buf, off, kind):
 
 
 def _put(buf, off, kind, val):
-    if kind == "str32":
+    if kind[0] == "r":
+        n = int(kind[1:])
+        raw = bytes.fromhex(val)
+        if len(raw) != n:
+            raise ValueError(f"expected {n} bytes of hex, got {len(raw)}")
+        buf[off:off + n] = raw
+    elif kind == "str32":
         buf[off:off + 32] = val[:16].encode("utf-16-be").ljust(32, b"\0")
     elif kind == "f":
         struct.pack_into("<f", buf, off, float("nan") if val is None else float(val))
@@ -125,14 +171,14 @@ def _put(buf, off, kind, val):
 def changed_span(old, new):
     """``(start, end)`` of the bytes that differ, ignoring ``crc_value`` (the app's partial writes never
     refresh it, so the firmware does not check it); ``None`` if nothing changed."""
-    diff = [i for i in range(CFG_SIZE) if old[i] != new[i] and not CRC_FIELD[0] <= i < CRC_FIELD[1]]
+    diff = [i for i in range(len(old)) if old[i] != new[i] and not CRC_FIELD[0] <= i < CRC_FIELD[1]]
     return (diff[0], diff[-1] + 1) if diff else None
 
 
 def decode(buf):
     """Record bytes -> nested dict (``slots`` is a list of 3 profiles)."""
     out = {}
-    for path, off, kind in FIELDS:
+    for path, off, kind in _layout(buf):
         node = out
         for k in path[:-1]:
             node = node.setdefault(k, {})
@@ -157,12 +203,13 @@ def encode(doc, base):
     """Write ``doc`` over the record ``base``; returns ``(new_bytes, changed_paths)``.
 
     Only fields that differ from ``decode(base)`` are written, so untouched bytes round-trip exactly;
-    missing fields are skipped. ``crc_value`` is recomputed like the app's ``ANSI_CRC_16_Ultimate2``.
+    missing fields are skipped. ``crc_value`` is recomputed like the app's ``ANSI_CRC_16_Ultimate2`` /
+    ``ANSI_CRC_16_UltimateBT``.
     """
     buf = bytearray(base)
     cur = decode(base)
     changed = []
-    for path, off, kind in FIELDS:
+    for path, off, kind in _layout(base):
         if path == ("crc_value",):
             continue
         try:
@@ -178,6 +225,8 @@ def encode(doc, base):
 
 def default_slot(doc, n, name):
     """Fill slot ``n`` of ``doc`` with the defaults the Windows app uses for a new profile."""
+    if "button_macros" in doc["slots"][n]:
+        return _default_slot_bt(doc, n, name)
     mode = doc["gamepad_mode"]
     s = doc["slots"][n]
     ident = ["B", "A", "Y", "X"] if mode == 0 else ["A", "B", "X", "Y"]
@@ -200,4 +249,23 @@ def default_slot(doc, n, name):
     s["macros"] = dict(s.get("macros", {}), flag=on, total_cnt=0)
     s["macros"]["records"] = [dict(name="", gamepad_mode=mode, special_flag=0, max_steps=0, offset=0,
                                    key_map="0x00000000", cycles_num=0, interval_ms=0) for _ in range(4)]
+    return doc
+
+
+def _default_slot_bt(doc, n, name):
+    """Ultimate Bluetooth: the app's ``temp_new`` defaults with every section enabled (``enableFlagWithrecord``)."""
+    mode = doc["gamepad_mode"]
+    ident = ["A", "B", "X", "Y"] if mode in (0, 1) else ["B", "A", "Y", "X"]
+    keys = ident + ["LB", "RB", "LT", "RT", "L3", "R3", "Select", "Start",
+                    "Screenshot" if mode == 0 else "Menu", "Home", "Up", "Down", "Left", "Right", "None", "None"]
+    on = "enabled"
+    trig = 77 if mode == 0 else 0
+    doc["slots"][n] = dict(doc["slots"][n], flag=on, name=name,
+        rumble=dict(flag=on, left=1.0, right=1.0),
+        sticks=dict(flag=on, left_start=0, left_end=128, right_start=0, right_end=128),
+        triggers=dict(flag=on, left_start=trig, left_end=255, right_start=trig, right_end=255),
+        special=dict(flag=on, features=[]),
+        mapping=dict(flag=on, **dict(zip(BUTTONS_BT, keys))),
+        button_macros=dict(flag=on, total_cnt=0, records=[dict(key_map="0x00000000", interval_time_index="00" * 36,
+                           key_index="00" * 36, digital_joy="00" * 18, max_index=0) for _ in range(4)]))
     return doc
