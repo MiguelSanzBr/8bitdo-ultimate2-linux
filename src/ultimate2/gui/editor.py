@@ -33,10 +33,12 @@ class Editor:
         self.profile_note.configure(text="" if enabled else
                                     _("Este perfil está vazio: os valores são os padrões do app. Ele é criado assim que você mudar algo."))
         dflt = self._defaults(n)
-        for b in config.BUTTONS:
+        for b in self.buttons:
             k = s["mapping"].get(b)
             v["keys"][b].set(k if k in KEY_NAMES else dflt["mapping"][b])
         for sec, key in (("sticks", "sticks"), ("triggers", "triggers"), ("xr", "xinput_rumble")):
+            if key not in s:                  # the Ultimate Bluetooth has no trigger rumble, gyro or LEDs
+                continue
             for k, var in v[sec].items():
                 var.set(s[key][k] if s[key]["flag"] == "enabled" else dflt[key][k])
         feats = s["special"]["features"] if isinstance(s["special"]["features"], list) else []
@@ -45,6 +47,11 @@ class Editor:
         for side in ("left", "right"):
             x = s["rumble"][side]
             v[f"rumble_{side[0]}"].set(round((x if x is not None else 1.0) * 5))
+        if "sixaxis" not in s:
+            self.colors = {}
+            self.refresh_targets()
+            self.select_button(self.sel_btn)
+            return
         g = s["sixaxis"]
         v["gyro_type"].set(g["mapping_type"] if g["flag"] == "enabled" and g["mapping_type"] in (1, 2) else 0)
         v["gyro_mode"].set(g["trigger_mode"] if g["trigger_mode"] in (1, 2) else 1)
@@ -75,13 +82,17 @@ class Editor:
         on = "enabled"
         s["flag"] = on
         s["name"] = v["name"].get()[:16]
-        s["mapping"] = dict(flag=on, **{b: v["keys"][b].get() for b in config.BUTTONS})
+        s["mapping"] = dict(flag=on, **{b: v["keys"][b].get() for b in self.buttons})
         for sec, key in (("sticks", "sticks"), ("triggers", "triggers"), ("xr", "xinput_rumble")):
-            s[key] = dict(flag=on, **{k: var.get() for k, var in v[sec].items()})
+            if key in s:
+                s[key] = dict(flag=on, **{k: var.get() for k, var in v[sec].items()})
         old = s["special"]["features"] if isinstance(s["special"]["features"], list) else []
         keep = [f for f in old if f not in config.FEATURES.values()]       # unknown bits survive untouched
         s["special"] = dict(flag=on, features=keep + [f for f, var in v["feat"].items() if var.get()])
         s["rumble"] = dict(flag=on, left=v["rumble_l"].get() / 5, right=v["rumble_r"].get() / 5)
+        if "sixaxis" not in s:
+            self.doc["slots"][n] = s
+            return
         t = v["gyro_type"].get()
         s["sixaxis"] = dict(flag=on if t else "disabled", keys_map=f"0x{GYRO_KEYS[v['gyro_key'].get()]:08x}",
                             trigger_mode=v["gyro_mode"].get(), sensitivity=v["gyro_sens"].get(),

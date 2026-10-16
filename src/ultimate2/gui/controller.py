@@ -2,12 +2,11 @@
 import time
 import tkinter.font as tkfont
 
-from .. import config
 from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
-from .geometry import (BEHIND, BODY, CALLOUTS, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_CROSS,
-                       DPAD_HALF, HEART, HEART_PX, HEIGHT, HOME_OFFSET, PARTS, RINGS, ROLES, STICK_WELLS, WIDTH)
+from .geometry import (BEHIND, BODY, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_CROSS, DPAD_HALF, HEART,
+                       HEART_PX, HEIGHT, HOME_OFFSET, ROLES, STICK_WELLS, WIDTH, model)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -25,6 +24,7 @@ class ControllerView:
         button) or ``"leds"`` (LEDs are clickable colour targets). ``ox`` shifts the drawing right (logical units).
         """
         s, sk = self.s, SKINS[self.skin]
+        PARTS, RINGS, callouts = model(self.bt)          # this controller's buttons, LED rings and home callouts
         line = sk.get("line_art", False)                  # outline drawing (no fills, shading or shadows)
         w = max(1, round((2 if line else 1.5) * s))
         P = lambda *xy: [(v + (ox if i % 2 == 0 else 0)) * s for i, v in enumerate(xy)]
@@ -157,7 +157,7 @@ class ControllerView:
             c.create_polygon(P(x + 5 * dx, y + 5 * dy, x - 5 * dy - 3 * dx, y - 5 * dx - 3 * dy,
                                x + 5 * dy - 3 * dx, y + 5 * dx - 3 * dy), fill="#6a6a72", outline="", tags=f"b:{name}")
         if mode == "home":
-            self.callouts(c, ox)
+            self.callouts(c, ox, callouts)
         if mode == "leds":
             for item in leds:
                 c.tag_raise(item)
@@ -170,10 +170,10 @@ class ControllerView:
         for pts in DETAILS:
             c.create_line(P(*[v for pt in pts for v in pt]), fill=g, width=w, smooth=True, capstyle="round")
 
-    def callouts(self, c, ox):
+    def callouts(self, c, ox, callouts):
         """Labels around the home drawing, linked to their part; clicking one opens its page."""
         s = self.s
-        for text, side, y, (tx, ty), target in CALLOUTS:
+        for text, side, y, (tx, ty), target in callouts:
             label = _(text)
             f = tkfont.Font(root=c, font=theme.font(9, "bold"))
             w, h = f.measure(label) / s + 26, 22
@@ -302,10 +302,10 @@ class ControllerView:
     def refresh_mapping(self):
         """Badge every button whose function differs from its default; update the side panel."""
         dflt = self._defaults(self.slot)["mapping"] if self.doc else {}
-        self._remapped = {b for b in config.BUTTONS if dflt and self.v["keys"][b].get() != dflt[b]}
+        self._remapped = {b for b in self.buttons if dflt and self.v["keys"][b].get() != dflt[b]}
         cur = self.v["keys"][self.sel_btn].get()
-        self.map_title.configure(text=_("Botão {}").format(DISPLAY.get(self.sel_btn, self.sel_btn)))
-        self.map_sub.configure(text=_("função atual: {}").format(DISPLAY.get(cur, cur) or "—"))
+        self.map_title.configure(text=_("Botão {}").format(self.display.get(self.sel_btn, self.sel_btn)))
+        self.map_sub.configure(text=_("função atual: {}").format(self.display.get(cur, cur) or "—"))
         now = time.time()
         for c, (parts, mode) in self.ctrl.items():
             self.style(c, parts, mode, now)

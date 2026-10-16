@@ -9,7 +9,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   configures it (V2 no longer detects it); tested on a real pad, firmware 1.02.
   * `u2ctl` switches the pad to its config mode (a rumble sequence through `xpad`'s force feedback, no root needed)
     and back on every command: `info`, `dump`, `apply`, `new-slot`, `backup`, `restore`.
-  * Now and then the pad powers off while switching modes; pressing Home brings it back.
+  * `u2gui` keeps it in config mode while the window is open and adapts to it: Nintendo face layout, back paddles
+    P1/P2, no L4/R4, no gyro, LED or trigger-rumble pages, live view through the pad's own state query.
+  * Now and then the pad powers off while switching modes; pressing Home brings it back and it is picked up again.
   * Protocol notes: `docs/ULTIMATE_BT.md` and a summary at the end of `docs/PROTOCOL.md`.
 
 ## 0.1.0-beta.6 — 2026-10-15

@@ -78,7 +78,8 @@ class Pages:
     def _p_home(self, parent):
         s = self.s
         page = tk.Frame(parent, bg=BG)
-        tk.Label(page, text="Ultimate 2 Wireless", bg=BG, fg=FG, font=theme.font(18)).pack(pady=(int(14 * s), 0))
+        self.home_title = tk.Label(page, text="Ultimate 2 Wireless", bg=BG, fg=FG, font=theme.font(18))
+        self.home_title.pack(pady=(int(14 * s), 0))
         self.home_sub = tk.Label(page, text="", bg=BG, fg=MUTED, font=theme.font(10))
         self.home_sub.pack(pady=(int(2 * s), int(6 * s)))
         self.home_canvas = tk.Canvas(page, width=int((WIDTH + 2 * HOME_OFFSET) * s), height=int(HEIGHT * s), bg=BG,
@@ -92,9 +93,11 @@ class Pages:
         self.set_connected(False)
         tiles = tk.Frame(page, bg=BG)
         tiles.pack(pady=int(10 * s))
+        self.tiles = {}
         for title, key in SECTIONS:
             t = tk.Canvas(tiles, width=int(104 * s), height=int(96 * s), bg=BG, highlightthickness=0, cursor="hand2")
             t.pack(side="left", padx=int(5 * s))
+            self.tiles[key] = t
             rounded(t, 1, 1, 103 * s, 95 * s, 16 * s, fill=TILE, outline="", tags="bg")
             self.icon(t, key, 52, 36)
             t.create_text(52 * s, 74 * s, text=_(title), fill=FG, font=theme.font(9))
@@ -110,9 +113,8 @@ class Pages:
         self.map_canvas = tk.Canvas(left, width=int(WIDTH * s), height=int(HEIGHT * s), bg=BG, highlightthickness=0)
         self.map_canvas.pack(pady=int(20 * s))
         self.map_items = self.draw_controller(self.map_canvas, "map")
-        tk.Label(left, text=_("Clique num botão do controle para escolher a função dele.\n"
-                            "L4/R4: botões extras do ombro · PL/PR: botões traseiros · ★: estrela/turbo."),
-                 bg=BG, fg=MUTED, font=theme.font(9), justify="left").pack(anchor="w")
+        self.map_help = tk.Label(left, text=self.map_help_text(), bg=BG, fg=MUTED, font=theme.font(9), justify="left")
+        self.map_help.pack(anchor="w")
         right = self.card(p, side="left")
         self.map_title = tk.Label(right, bg=TILE, fg=FG, font=theme.font(13, "bold"))
         self.map_title.pack(anchor="w")
@@ -121,8 +123,14 @@ class Pages:
         self.map_choice = tk.StringVar()
         self.map_choice.trace_add("write", lambda *_: self.v["keys"][self.sel_btn].get() != self.map_choice.get()
                                   and self.v["keys"][self.sel_btn].set(self.map_choice.get()))
-        self.chips(right, self.map_choice, [(k, DISPLAY.get(k, k)) for k in KEY_NAMES], 4)
+        self.chips(right, self.map_choice, [(k, DISPLAY.get(k, k)) for k in KEY_NAMES], 4)   # output functions
         self.button(right, _("Restaurar todos os botões"), self.reset_mapping).pack(anchor="w", pady=(int(10 * s), 0))
+
+    def map_help_text(self):
+        if self.bt:
+            return _("Clique num botão do controle para escolher a função dele.\nP1/P2: botões traseiros · ★: estrela/turbo.")
+        return _("Clique num botão do controle para escolher a função dele.\n"
+                 "L4/R4: botões extras do ombro · PL/PR: botões traseiros · ★: estrela/turbo.")
 
     def _p_sticks(self, p):
         pct = lambda v: f"{v * 100 // 128}%"
@@ -155,6 +163,7 @@ class Pages:
         self.slider(c, _("Motor esquerdo"), self.v["rumble_l"], 0, 5, lambda v: f"{v * 20}%")
         self.slider(c, _("Motor direito"), self.v["rumble_r"], 0, 5, lambda v: f"{v * 20}%")
         c = self.card(cols, _("Vibração nos gatilhos"), side="left")
+        self.xr_card = c.master                         # hidden for controllers without trigger rumble
         self.toggle(c, _("Ativar"), self.v["feat"]["trigger_rumble"])
         self.slider(c, _("LT início"), self.v["xr"]["left_start"], 1, 91, pc)
         self.slider(c, _("LT fim"), self.v["xr"]["left_end"], 9, 100, pc)

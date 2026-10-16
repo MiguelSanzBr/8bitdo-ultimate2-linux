@@ -1,5 +1,6 @@
 """Mixin: device I/O on a worker thread — initial read, auto-save, active-profile polling, LED theme, backups."""
 import copy
+import sys
 import threading
 import time
 from tkinter import filedialog, messagebox
@@ -43,11 +44,13 @@ class DeviceSync:
         c.configure(width=c.bbox("all")[2] + 2)
 
     # ------------------------------------------------------------ worker
-    def run(self, label, job, done, quiet=False, fail=None):
+    def run(self, label, job, done, quiet=False, fail=None, knock=False):
         """Run ``job(dev)`` on a worker thread; ``done(result)`` runs on the Tk thread.
 
         ``quiet`` (background polling): no status text and no error dialog, only the connection pill.
         ``fail(error, message)``, when given, handles errors instead (on the Tk thread).
+        ``knock``: switch an Ultimate Bluetooth found in XInput mode to config mode first; it stays there until the
+        window closes (switching takes a USB reconnect, too slow for every job).
         """
         if self.busy:
             return
@@ -58,7 +61,7 @@ class DeviceSync:
         def work():
             dev = None
             try:
-                dev = device.Device()
+                dev = device.Device(knock=knock, stay=True)
                 res = job(dev)
                 self.after(0, lambda: done(res))
             except BaseException as e:     # Device uses sys.exit for user-facing errors
@@ -103,6 +106,8 @@ class DeviceSync:
         if not span:
             self.set_status("")
             return
+        if self.bt:                       # its app always writes the whole record; partial writes are untested there
+            span = (0, len(new))
 
         def job(dev):
             dev.write_config(new, *span)
@@ -118,7 +123,8 @@ class DeviceSync:
     # ------------------------------------------------------------ live state
     def poll(self):
         """Follow the controller's active profile (the user switches it with the profile button)."""
-        if self.doc is not None and not self.busy and self._save_job is None:
+        # a pending re-read owns the device: polling now would postpone it forever (POLL_MS < RETRY_MS)
+        if self.doc is not None and not self.busy and self._save_job is None and self._retry_job is None:
             wireless = bool(self.conn and self.conn[1] is not None)    # battery only exists through the dongle
 
             def done(r):
@@ -130,7 +136,10 @@ class DeviceSync:
                 if slot is not None and slot != self.active_slot:
                     self.active_slot = slot
                     self.refresh_slots()
-            self.run("", lambda dev: (dev.current_slot(), dev.pad_status() if wireless else None), done, quiet=True)
+            # an Ultimate Bluetooth that lost power or was replugged is back in XInput: read (and knock) it again
+            fail = (lambda e, msg: (self.set_connected(None), self.read_device(True))) if self.bt else None
+            self.run("", lambda dev: (dev.current_slot(), dev.pad_status() if wireless else None), done, quiet=True,
+                     fail=fail)
         self.after(theme.POLL_MS, self.poll)
 
     def apply_theme(self):
@@ -162,7 +171,7 @@ class DeviceSync:
 
         def fail(e, msg):
             self.set_connected(None)
-            if isinstance(e, SystemExit) and "permission" in msg:
+            if isinstance(e, SystemExit) and ("permission" in msg or "cannot switch" in msg):
                 self.set_status(msg, True)
                 messagebox.showerror(_("Erro"), msg, parent=self)
                 return
@@ -170,10 +179,14 @@ class DeviceSync:
             self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
 
         def job(dev):
-            return dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition(), dev.pad_status()
+            if dev.bt:                    # no LED themes, no dongle
+                return dev.bt, dev.path, dev.pid, dev.info(), dev.read_config(), None, dev.edition(), None
+            return (dev.bt, dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition(),
+                    dev.pad_status())
 
         def done(r):
-            path, pid, info, cfg, led_theme, edition, pad = r
+            bt, path, pid, info, cfg, led_theme, edition, pad = r
+            self.set_model(bt)
             if pad:                         # through the dongle, info() is the dongle's: use the controller's own
                 edition, info = pad["edition"], pad
             self.edition = edition
@@ -195,7 +208,7 @@ class DeviceSync:
             self.load()
             self.refresh_slots()
             self.set_status(_("Configuração lida do controle. As mudanças são salvas automaticamente."))
-        self.run("" if retry else _("Lendo do controle…"), job, done, quiet=retry, fail=fail)
+        self.run("" if retry else _("Lendo do controle…"), job, done, quiet=retry, fail=fail, knock=True)
 
     # ------------------------------------------------------------ backups
     def backup(self):
@@ -213,8 +226,9 @@ class DeviceSync:
             return
         with open(path, "rb") as f:
             data = f.read()
-        if len(data) != protocol.CFG_SIZE:
-            return messagebox.showerror(_("Erro"), _("Arquivo inválido ({} bytes, esperado {}).").format(len(data), protocol.CFG_SIZE),
+        size = protocol.CFG_SIZE_BT if self.bt else protocol.CFG_SIZE
+        if len(data) != size:
+            return messagebox.showerror(_("Erro"), _("Arquivo inválido ({} bytes, esperado {}).").format(len(data), size),
                                         parent=self)
         if not messagebox.askyesno(_("Restaurar"), _("Substituir toda a configuração do controle por este backup?"), parent=self):
             return

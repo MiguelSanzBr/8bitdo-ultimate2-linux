@@ -39,7 +39,7 @@ The fixed query `81 05 00 51 02` (sent on `6007`) switches it back to `3106` XIn
 
 Now and then (3 times out of about 16 here, with byte-identical knocks) the pad drops off the bus and powers off instead
 of coming back as `6007`; pressing Home turns it on again in XInput mode (it enumerates as a Switch Pro Controller
-for a moment first). `u2ctl` says so.
+for a moment first). `u2ctl` says so; `u2gui` keeps retrying and picks it up once it is on.
 
 ## Protocol in config mode
 
