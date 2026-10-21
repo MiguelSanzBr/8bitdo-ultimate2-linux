@@ -212,7 +212,8 @@ class DeviceSync:
     # ------------------------------------------------------------ backups
     def backup(self):
         path = filedialog.asksaveasfilename(parent=self, defaultextension=".bin",
-                                            initialfile=f"u2-backup-{time.strftime('%Y%m%d-%H%M')}.bin")
+                                            initialfile=f"u2-backup-{time.strftime('%Y%m%d-%H%M')}.bin",
+                                            filetypes=[(_("Backup"), "*.bin")])
         if path:
             def job(dev):
                 with open(path, "wb") as f:

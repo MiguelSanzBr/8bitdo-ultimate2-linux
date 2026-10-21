@@ -154,6 +154,38 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         st = ttk.Style(self)
         st.theme_use("clam")
         st.configure(".", background=BG, foreground=FG, font=theme.font(10))
+        self._style_file_dialog(st)
+
+    def _style_file_dialog(self, st):
+        """Tk's file dialog (backups) in the window's colours: it is the only user of the ttk widgets besides the
+        message boxes. Its file list is a plain canvas, white with black names whatever the theme: recoloured right
+        after Tk builds the dialog. Hidden files are left out, behind its "show hidden" check box."""
+        edge = dict(bordercolor=theme.LINE, lightcolor=TILE, darkcolor=TILE)
+        st.configure("TEntry", fieldbackground=TILE, foreground=FG, insertcolor=FG, selectbackground=theme.SEL_FILL,
+                     selectforeground=FG, **edge)
+        st.map("TEntry", fieldbackground=[("disabled", BG)], foreground=[("disabled", MUTED)])
+        for w in ("TButton", "TMenubutton"):
+            st.configure(w, background=TILE, foreground=FG, arrowcolor=FG, padding=(10, 4), **edge)
+            st.map(w, background=[("disabled", BG), ("active", theme.TILE_HI)], foreground=[("disabled", MUTED)])
+        st.configure("TCheckbutton", indicatorbackground=TILE, indicatorforeground=FG)
+        st.map("TCheckbutton", background=[("active", BG)], indicatorbackground=[("pressed", theme.TILE_HI)])
+        st.configure("TScrollbar", background=TILE, troughcolor=BG, arrowcolor=FG, gripcount=0, **edge)
+        st.map("TScrollbar", background=[("active", theme.TILE_HI)])
+        for k, v in (("background", TILE), ("foreground", FG), ("activeBackground", theme.TILE_HI),
+                     ("activeForeground", FG), ("font", theme.font(10))):
+            self.option_add(f"*TkFDialog*Menu.{k}", v)        # the directory and file type drop-downs
+        self.tk.eval("auto_load ::tk::dialog::file::")
+        self.tk.eval("set ::tk::dialog::file::showHiddenBtn 1; set ::tk::dialog::file::showHiddenVar 0")
+        self.tk.eval(f"""proc ::u2_file_dialog {{cmd args}} {{
+            set icons [lindex $cmd 1].contents.icons
+            $icons.cHull.canvas configure -background {TILE} -width 5.5i -height 2.5i
+            set [info object namespace $icons]::fill {FG}
+        }}""")
+        self.tk.eval("trace add execution ::tk::dialog::file::Create leave ::u2_file_dialog")
+        self.tk.eval("""namespace eval ::tk {
+            ::msgcat::mcset pt "Show &Hidden Files and Directories" "Mostrar arquivos e pastas &ocultos"
+            ::msgcat::mcset pt "Show &Hidden Directories" "Mostrar pastas &ocultas"
+        }""")                                             # Tk's own Portuguese catalog lacks these two
 
     def _vars(self):
         V, I, B = tk.StringVar, tk.IntVar, tk.BooleanVar
