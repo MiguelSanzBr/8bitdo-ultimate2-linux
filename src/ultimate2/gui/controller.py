@@ -6,7 +6,7 @@ from . import theme
 from .catalog import DISPLAY
 from .drawing import gradient_fill, led_frame, mix, rounded, rr_points, set_color, smooth_outline, stadium
 from .geometry import (BEHIND, BODY, DECOR, DECOR_SQUARE, DETAILS, DPAD_ARM, DPAD_CENTER, DPAD_CROSS, DPAD_HALF, HEART,
-                       HEART_PX, HEIGHT, HOME_OFFSET, ROLES, STICK_WELLS, WIDTH, model)
+                       HEART_PX, HEIGHT, HOME_OFFSET, ROLES, STICK_WELLS, WIDTH, drawing)
 from .i18n import _
 from .theme import ACCENT, BG, BODY_FILL, FG, SEL_FILL, SKINS
 
@@ -24,7 +24,7 @@ class ControllerView:
         button) or ``"leds"`` (LEDs are clickable colour targets). ``ox`` shifts the drawing right (logical units).
         """
         s, sk = self.s, SKINS[self.skin]
-        PARTS, RINGS, callouts = model(self.bt)          # this controller's buttons, LED rings and home callouts
+        PARTS, RINGS, callouts = drawing(self.model.key)          # this controller's buttons, LED rings and home callouts
         line = sk.get("line_art", False)                  # outline drawing (no fills, shading or shadows)
         w = max(1, round((2 if line else 1.5) * s))
         P = lambda *xy: [(v + (ox if i % 2 == 0 else 0)) * s for i, v in enumerate(xy)]

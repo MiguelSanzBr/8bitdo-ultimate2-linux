@@ -60,7 +60,7 @@ def _run(a, dev):
         print(f"firmware    {i['firmware'] / 100:.2f}" + (f" beta {i['beta']}" if i["beta"] else ""))
         print(f"report pid  0x{i['device_pid']:04x} ({PIDS.get(i['device_pid'], '?')})")
         print(f"mode/slot   gamepad_mode={mode} cur_slot={slot}")
-        pad = None if dev.bt else dev.pad_status()
+        pad = dev.pad_status() if dev.model.pad_status else None
         if pad:                                    # 2.4G: the controller behind the dongle
             print(f"controller  firmware {pad['firmware'] / 100:.2f}, battery {pad['battery']}%, colorway {pad['edition']}")
     elif a.cmd == "dump":
@@ -85,7 +85,7 @@ def _run(a, dev):
                 sys.exit("verify failed: controller config differs from what was written")
             print("saved and verified")
     elif a.cmd == "theme":
-        if dev.bt:
+        if not dev.model.leds:
             sys.exit("this controller has no LED themes")
         if a.name:
             dev.set_theme(next(k for k, v in THEMES.items() if v == a.name))
@@ -94,12 +94,12 @@ def _run(a, dev):
     elif a.cmd == "backup":
         with open(a.file, "wb") as f:
             f.write(dev.read_config())
-        print(f"saved {dev.cfg_size} bytes to {a.file}")
+        print(f"saved {dev.model.cfg_size} bytes to {a.file}")
     elif a.cmd == "restore":
         with open(a.file, "rb") as f:
             data = f.read()
-        if len(data) != dev.cfg_size:
-            sys.exit(f"{a.file}: expected {dev.cfg_size} bytes, got {len(data)}")
+        if len(data) != dev.model.cfg_size:
+            sys.exit(f"{a.file}: expected {dev.model.cfg_size} bytes, got {len(data)}")
         dev.write_config(data)
         if dev.read_config() != data:
             sys.exit("verify failed: controller config differs from the backup")

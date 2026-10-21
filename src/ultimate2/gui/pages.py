@@ -127,7 +127,7 @@ class Pages:
         self.button(right, _("Restaurar todos os botões"), self.reset_mapping).pack(anchor="w", pady=(int(10 * s), 0))
 
     def map_help_text(self):
-        if self.bt:
+        if "P3" not in self.model.buttons:                # no L4/R4: only the back paddles
             return _("Clique num botão do controle para escolher a função dele.\nP1/P2: botões traseiros · ★: estrela/turbo.")
         return _("Clique num botão do controle para escolher a função dele.\n"
                  "L4/R4: botões extras do ombro · PL/PR: botões traseiros · ★: estrela/turbo.")

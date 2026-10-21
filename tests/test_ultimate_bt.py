@@ -5,7 +5,7 @@ import struct
 import pytest
 
 from fake_device import FakeController
-from ultimate2 import cli, config, device, discovery
+from ultimate2 import cli, config, device, discovery, models
 from ultimate2.device import Device
 from ultimate2.protocol import (BT_KNOCK, CFG_SIZE_BT, CMD_COMMIT, CMD_READ, CMD_REPORT, CMD_WRITE, COMMIT_KEY_BT,
                                 PID_BT_CONFIG, build_request)
@@ -156,7 +156,7 @@ def test_device_knocks_and_switches_back(xinput_then_config, bt):
     with pytest.raises(SystemExit, match="no 8BitDo config interface"):
         Device()                                                 # the GUI never knocks
     d = Device(knock=True)
-    assert d.knocked and d.bt and xinput_then_config["knocked"] == ["/dev/input/event7"]
+    assert d.knocked and d.model is models.ULTIMATE_BT and xinput_then_config["knocked"] == ["/dev/input/event7"]
     d.close()
     import time
     end = time.time() + 2
@@ -197,7 +197,7 @@ def test_close_ignores_a_vanished_device(bt):
 def test_device_reads_and_writes_the_bt_record(bt):
     d = Device()
     try:
-        assert d.bt and d.cfg_size == CFG_SIZE_BT and d.poll_fd is not None
+        assert d.model is models.ULTIMATE_BT and d.model.cfg_size == CFG_SIZE_BT and d.poll_fd is not None
         assert d.info() == {"firmware": 102, "beta": 0, "device_pid": PID_BT_CONFIG} and d.edition() == 0x22
         bt.log.clear()
         assert d.read_config() == CONFIG_BT
@@ -274,7 +274,7 @@ def test_live_reopens_the_session_once(bt):
 
 def test_stay_and_leave(xinput_then_config, bt):
     d = Device(knock=True, stay=True)                            # the GUI: knocked, but keeps config mode
-    assert not d.knocked and d.bt
+    assert not d.knocked and d.model is models.ULTIMATE_BT
     d.close()
     assert not bt.exited
     d = Device()

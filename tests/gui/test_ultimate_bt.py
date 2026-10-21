@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from fake_device import FakeController
-from ultimate2 import device, protocol
+from ultimate2 import device, models, protocol
 from ultimate2.gui import live_input, theme
 from ultimate2.gui.geometry import PARTS
 
@@ -42,7 +42,7 @@ def btapp(shared_app, btfake):
     pump(a)
     clear_timers(a)
     a.doc = None
-    a.set_model(False)                                         # the shared App goes back to the Ultimate 2
+    a.set_model(models.ULTIMATE2)                                         # the shared App goes back to the Ultimate 2
 
 
 def mapped(w):
@@ -56,7 +56,7 @@ def part_xy(a, name):
 
 def test_reads_and_adapts_the_window(btapp, mk):
     a = btapp
-    assert a.bt and a.title() == "8BitDo Ultimate Bluetooth — Linux" and a.home_title.cget("text") == "Ultimate Bluetooth"
+    assert a.model is models.ULTIMATE_BT and a.title() == "8BitDo Ultimate Bluetooth — Linux" and a.home_title.cget("text") == "Ultimate Bluetooth"
     assert a.doc["gamepad_mode"] == 3 and a.active_slot == 6 and a.base == CONFIG_BT and a.sel_btn == "A"
     assert not mapped(a.tiles["gyro"]) and not mapped(a.tiles["leds"]) and mapped(a.tiles["buttons"])
     assert not mapped(a.xr_card) and "P1/P2" in a.map_help.cget("text") and a.colors == {}
@@ -65,9 +65,9 @@ def test_reads_and_adapts_the_window(btapp, mk):
     assert a.map_canvas.coords(part_xy(a, "A")["body"])[0] == pytest.approx((x - 15) * a.s)
     assert a.v["keys"]["A"].get() == "B" and "firmware 1.02" in a.fw_label.cget("text")
     assert "Ultimate Bluetooth (config mode)" in a.info_label.cget("text")
-    a.set_model(True)                                            # same model again: nothing to do
+    a.set_model(models.ULTIMATE_BT)                                            # same model again: nothing to do
     b = mk(BACKUP)                                               # an Ultimate 2 afterwards: everything comes back
-    assert not b.bt and mapped(b.tiles["gyro"]) and mapped(b.xr_card) and part_xy(b, "P3") is not None
+    assert b.model is models.ULTIMATE2 and mapped(b.tiles["gyro"]) and mapped(b.xr_card) and part_xy(b, "P3") is not None
     assert b.title() == "8BitDo Ultimate 2 — Linux" and "L4/R4" in b.map_help.cget("text")
 
 
@@ -115,16 +115,16 @@ def test_read_device_asks_for_a_knock(shared_app, btfake, monkeypatch):
     pump(shared_app)
     assert seen[0] == (True, True)
     shared_app.doc = None
-    shared_app.set_model(False)
+    shared_app.set_model(models.ULTIMATE2)
 
 
 # ------------------------------------------------------------ live state
-def test_bt_state_maps_buttons_and_axes(btapp):
+def test_live_state_maps_buttons_and_axes(btapp):
     a = btapp
-    a.bt_state(0x20000000 | 0x2000 | 0x10000 | 0x4000000, (0, 255, 128, 127, 255, 0))
+    a.live_state(0x20000000 | 0x2000 | 0x10000 | 0x4000000, (0, 255, 128, 127, 255, 0))
     assert a.pad_down == {"A", "Star", "P1"} and set(a.press_t) == {"A", "Star", "P1"}
     assert a.pad_axes == {0: -32767, 1: 32512, 2: -32767, 3: 0, 4: -256, 5: 32767}
-    a.bt_state(0x20000000, (128,) * 4 + (0, 0))
+    a.live_state(0x20000000, (128,) * 4 + (0, 0))
     assert not a.pad_down
 
 
@@ -134,11 +134,11 @@ def quick(monkeypatch):
     monkeypatch.setattr(live_input, "time", SimpleNamespace(sleep=lambda s: real(min(s, .01)), time=time.time))
 
 
-def test_poll_bt_follows_the_pad_until_it_stops_answering(btapp, btfake, quick):
+def test_poll_live_follows_the_pad_until_it_stops_answering(btapp, btfake, quick):
     a = btapp
     btfake.live = bytes.fromhex("00200020 7f80807f 0000 0000")
     a.busy = True                                                # a job is running: no polling
-    t = threading.Thread(target=a._poll_bt, daemon=True)
+    t = threading.Thread(target=a._poll_live, daemon=True)
     t.start()
     time.sleep(.05)
     assert not a.pad_down
@@ -152,21 +152,21 @@ def test_poll_bt_follows_the_pad_until_it_stops_answering(btapp, btfake, quick):
     assert not t.is_alive() and not a.pad_down
 
 
-def test_poll_bt_without_device_and_on_os_error(btapp, monkeypatch, quick):
+def test_poll_live_without_device_and_on_os_error(btapp, monkeypatch, quick):
     a = btapp
 
     def gone(self, path=None, **kw):
         raise SystemExit("no 8BitDo config interface found")
     monkeypatch.setattr(device.Device, "__init__", gone)
-    a._poll_bt()                                                  # returns after a pause
+    a._poll_live()                                                  # returns after a pause
     monkeypatch.undo()
 
 
-def test_poll_bt_os_error(btapp, btfake, monkeypatch, quick):
+def test_poll_live_os_error(btapp, btfake, monkeypatch, quick):
     a = btapp
     monkeypatch.setattr(device.Device, "live", lambda self: (_ for _ in ()).throw(OSError(19, "gone")))
     a.pad_down.add("A")
-    a._poll_bt()
+    a._poll_live()
     assert not a.pad_down
 
 
@@ -177,7 +177,7 @@ def test_read_pad_hands_over_to_the_bt_poller(btapp, monkeypatch):
     def poll():
         calls.append(1)
         a._closing = True
-    monkeypatch.setattr(a, "_poll_bt", poll)
+    monkeypatch.setattr(a, "_poll_live", poll)
     a._read_pad()
     a._closing = False
     assert calls == [1]
@@ -187,21 +187,21 @@ def test_closing_gives_the_pad_back(monkeypatch):
     left = []
     monkeypatch.setattr(device, "leave_config_mode", lambda: left.append(1))
     a = make_app(monkeypatch)
-    a.bt = True
+    a.model = models.ULTIMATE_BT
     a.destroy()
     b = make_app(monkeypatch)
     b.destroy()
     assert left == [1]
 
 
-def test_poll_bt_stops_when_the_model_changes(btapp, quick):
+def test_poll_live_stops_when_the_model_changes(btapp, quick):
     a = btapp
-    t = threading.Thread(target=a._poll_bt, daemon=True)
+    t = threading.Thread(target=a._poll_live, daemon=True)
     t.start()
     time.sleep(.05)
-    a.bt = False                                                 # an Ultimate 2 was read meanwhile
+    a.model = models.ULTIMATE2                                                 # an Ultimate 2 was read meanwhile
     t.join(3)
-    a.bt = True
+    a.model = models.ULTIMATE_BT
     assert not t.is_alive()
 
 

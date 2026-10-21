@@ -6,9 +6,9 @@ import struct
 import sys
 import time
 
-from . import discovery
-from .protocol import (BT_EXIT, BT_KNOCK, CFG_SIZE, CFG_SIZE_BT, CHUNK, CMD_COMMIT, CMD_GET_THEME, CMD_LIVE, CMD_READ,
-                       CMD_REPORT, CMD_SET_THEME, CMD_WRITE, LIVE_SUB, COMMIT_KEY, COMMIT_KEY_BT, PID_BT_CONFIG, QUERY_VERSION, ANSWER_VERSION,
+from . import discovery, models
+from .protocol import (BT_EXIT, BT_KNOCK, CHUNK, CMD_COMMIT, CMD_GET_THEME, CMD_LIVE, CMD_READ,
+                       CMD_REPORT, CMD_SET_THEME, CMD_WRITE, LIVE_SUB, QUERY_VERSION, ANSWER_VERSION,
                        QUERY_PAD, ANSWER_PAD, REPORT_SIZE, build_request, parse_info, parse_reply)
 
 RETRIES = 30             # the app's retry count per chunk
@@ -52,7 +52,7 @@ def _find_or_knock():
     end = time.time() + KNOCK_WAIT
     while time.time() < end:
         time.sleep(0.25)
-        devs = [d for d in discovery.find_devices() if d[1] == PID_BT_CONFIG]
+        devs = [d for d in discovery.find_devices() if models.for_pid(d[1]).knock]
         if devs:
             time.sleep(0.5)                  # let udev apply the hidraw permissions
             return devs, True
@@ -67,9 +67,9 @@ class Device:
     without which the firmware ignores the config endpoint. Exits with a message (``SystemExit``)
     when there is no controller or no permission.
 
-    ``bt`` is true for the 1st-gen Ultimate Bluetooth: with ``knock`` it is switched to config mode first if
-    needed (and back to XInput by :meth:`close`, unless ``stay``: see :func:`leave_config_mode`), and uses length-prefixed requests, a
-    :data:`~ultimate2.protocol.CFG_SIZE_BT`-byte record (``cfg_size``) and its own commit key.
+    ``model`` (:mod:`ultimate2.models`) says how this controller differs. With ``knock``, an Ultimate Bluetooth
+    in XInput mode is switched to config mode first (and back by :meth:`close`, unless ``stay``: see
+    :func:`leave_config_mode`).
     """
 
     def __init__(self, path=None, knock=False, stay=False):
@@ -80,8 +80,7 @@ class Device:
         if not devs:
             sys.exit("no 8BitDo config interface found (is the controller plugged in / paired?)")
         self.path, self.pid, usb_dir = devs[0]
-        self.bt = self.pid == PID_BT_CONFIG
-        self.cfg_size = CFG_SIZE_BT if self.bt else CFG_SIZE
+        self.model = models.for_pid(self.pid)
         self.poll_fd = None
         node = discovery.find_input_node(usb_dir) if usb_dir else None
         if node:
@@ -116,7 +115,7 @@ class Device:
             os.read(self.fd, REPORT_SIZE)
 
     def send(self, cmd, sub=0, data=b"", total=0, offset=0, length=None, with_crc=True):
-        os.write(self.fd, build_request(cmd, sub, data, total, offset, length, with_crc, prefixed=self.bt))
+        os.write(self.fd, build_request(cmd, sub, data, total, offset, length, with_crc, prefixed=self.model.prefixed))
 
     def recv(self, cmd, timeout=0.5):
         """Wait for the answer to ``cmd``; returns ``(length, data)`` or ``None`` on timeout."""
@@ -147,7 +146,7 @@ class Device:
         """``{"firmware", "beta", "device_pid"}`` or ``None``.
 
         The Ultimate Bluetooth ignores ``CMD_INFO`` in config mode; its app reads the version query instead."""
-        if self.bt:
+        if self.model.info_by_version:
             r = self.query(QUERY_VERSION, want=ANSWER_VERSION)
             return {"firmware": r[2] | r[3] << 8, "beta": r[4], "device_pid": self.pid} if r else None
         r = self.query(b"\x81\x04\x00\x01", want=b"\x02\x04\x04\x00\x00\x01")
@@ -203,10 +202,10 @@ class Device:
 
     # ------------------------------------------------------------ config record
     def read_config(self):
-        """The whole config record (``cfg_size`` bytes)."""
-        if self.bt:
+        """The whole config record (``model.cfg_size`` bytes)."""
+        if self.model.session:
             self.report(False)
-        return self._read_record(self.cfg_size)
+        return self._read_record(self.model.cfg_size)
 
     def _read_record(self, size):
         buf = bytearray()
@@ -229,7 +228,7 @@ class Device:
         A sub-range is how the app updates one setting (``writeUltimate2dynamic`` writes 12 bytes at
         ``0x4b8 + 12*slot``). Raises ``IOError`` if a chunk or the save is not acknowledged.
         """
-        size = self.cfg_size
+        size = self.model.cfg_size
         end = size if end is None else end
         assert len(data) == size and 0 <= start < end <= size
         self.report(False)
@@ -245,9 +244,9 @@ class Device:
             tries = 0
             off += r[0]
         time.sleep(0.1)
-        self.send(CMD_COMMIT, sub=COMMIT_KEY_BT if self.bt else COMMIT_KEY, with_crc=False)
+        self.send(CMD_COMMIT, sub=self.model.commit_key, with_crc=False)
         ok = self.recv(CMD_COMMIT, timeout=3.0) is not None
-        if not self.bt:
+        if not self.model.session:
             self.report(True)
         if not ok:
             raise IOError("controller did not confirm the save")
@@ -257,7 +256,7 @@ def leave_config_mode():
     """Switch every Ultimate Bluetooth found in config mode back to XInput (for front ends that opened it with
     ``stay=True``, when they close)."""
     for path, pid, _usb in discovery.find_devices():
-        if pid == PID_BT_CONFIG:
+        if models.for_pid(pid).knock:
             try:
                 fd = os.open(path, os.O_WRONLY)
             except OSError:

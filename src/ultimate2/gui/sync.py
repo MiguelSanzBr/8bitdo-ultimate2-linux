@@ -106,7 +106,7 @@ class DeviceSync:
         if not span:
             self.set_status("")
             return
-        if self.bt:                       # its app always writes the whole record; partial writes are untested there
+        if self.model.whole_writes:       # its app always writes the whole record; partial writes are untested there
             span = (0, len(new))
 
         def job(dev):
@@ -136,8 +136,8 @@ class DeviceSync:
                 if slot is not None and slot != self.active_slot:
                     self.active_slot = slot
                     self.refresh_slots()
-            # an Ultimate Bluetooth that lost power or was replugged is back in XInput: read (and knock) it again
-            fail = (lambda e, msg: (self.set_connected(None), self.read_device(True))) if self.bt else None
+            # a knocked controller that lost power or was replugged is back in XInput: read (and knock) it again
+            fail = (lambda e, msg: (self.set_connected(None), self.read_device(True))) if self.model.knock else None
             self.run("", lambda dev: (dev.current_slot(), dev.pad_status() if wireless else None), done, quiet=True,
                      fail=fail)
         self.after(theme.POLL_MS, self.poll)
@@ -179,14 +179,13 @@ class DeviceSync:
             self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
 
         def job(dev):
-            if dev.bt:                    # no LED themes, no dongle
-                return dev.bt, dev.path, dev.pid, dev.info(), dev.read_config(), None, dev.edition(), None
-            return (dev.bt, dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme(), dev.edition(),
-                    dev.pad_status())
+            m = dev.model
+            return (m, dev.path, dev.pid, dev.info(), dev.read_config(), dev.get_theme() if m.leds else None,
+                    dev.edition(), dev.pad_status() if m.pad_status else None)
 
         def done(r):
-            bt, path, pid, info, cfg, led_theme, edition, pad = r
-            self.set_model(bt)
+            model, path, pid, info, cfg, led_theme, edition, pad = r
+            self.set_model(model)
             if pad:                         # through the dongle, info() is the dongle's: use the controller's own
                 edition, info = pad["edition"], pad
             self.edition = edition
@@ -226,7 +225,7 @@ class DeviceSync:
             return
         with open(path, "rb") as f:
             data = f.read()
-        size = protocol.CFG_SIZE_BT if self.bt else protocol.CFG_SIZE
+        size = self.model.cfg_size
         if len(data) != size:
             return messagebox.showerror(_("Erro"), _("Arquivo inválido ({} bytes, esperado {}).").format(len(data), size),
                                         parent=self)

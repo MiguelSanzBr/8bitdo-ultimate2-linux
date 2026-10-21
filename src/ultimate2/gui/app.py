@@ -8,9 +8,9 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
-from .. import config, device
+from .. import config, device, models
 from . import i18n, theme
-from .catalog import DISPLAY, DISPLAY_BT, SECTIONS, SECTIONS_BT
+from .catalog import DISPLAY_FOR, SECTIONS, sections
 from .controller import ControllerView
 from .editor import Editor
 from .i18n import _
@@ -48,7 +48,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         lang = load_settings().get("lang")
         i18n.LANG = lang if lang in i18n.LANGS else i18n.system_lang()
         self.restart = False
-        self.bt = False          # the 1st-gen Ultimate Bluetooth (set from the controller read, see set_model)
+        self.model = models.ULTIMATE2    # replaced by the controller actually read, see set_model
         self.title("8BitDo Ultimate 2 — Linux")
         self.configure(bg=BG)
         theme.FAMILY = theme.pick_family(self)
@@ -110,29 +110,28 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
     @property
     def buttons(self):
         """Physical buttons of the connected controller, in ``map_key`` order."""
-        return config.BUTTONS_BT if self.bt else config.BUTTONS
+        return self.model.buttons
 
     @property
     def display(self):
         """Names printed on the controller where they differ from the internal ones."""
-        return DISPLAY_BT if self.bt else DISPLAY
+        return DISPLAY_FOR[self.model.key]
 
-    def set_model(self, bt):
-        """Adapt the window to the controller just read: the Ultimate 2, or the 1st-gen Ultimate Bluetooth (Nintendo
-        face layout, back paddles P1/P2, no L4/R4, no gyro, no LEDs, no trigger rumble)."""
-        if bt == self.bt:
+    def set_model(self, model):
+        """Adapt the window to the controller just read (a :class:`ultimate2.models.Model`): its drawing, buttons,
+        pages and cards."""
+        if model == self.model:
             return
-        self.bt = bt
-        name = "Ultimate Bluetooth" if bt else "Ultimate 2 Wireless"
-        self.title("8BitDo Ultimate Bluetooth — Linux" if bt else "8BitDo Ultimate 2 — Linux")
-        self.home_title.configure(text=name)
-        keep = {k for _t, k in (SECTIONS_BT if bt else SECTIONS)}
+        self.model = model
+        self.title(f"8BitDo {model.short_name} — Linux")
+        self.home_title.configure(text=model.name)
+        keep = {k for _t, k in sections(model)}
         for t in self.tiles.values():
             t.pack_forget()
         for _t, k in SECTIONS:
             if k in keep:
                 self.tiles[k].pack(side="left", padx=int(5 * self.s))
-        if bt:
+        if not model.xinput_rumble:
             self.xr_card.pack_forget()
         else:
             self.xr_card.pack(side="left", fill="both", expand=True, padx=int(6 * self.s), pady=int(6 * self.s))
@@ -143,7 +142,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
 
     def destroy(self):
         self._closing = True
-        if self.bt:                              # the GUI kept the Ultimate Bluetooth in config mode: give it back
+        if self.model.knock:                     # the GUI kept the controller in config mode: give it back
             device.leave_config_mode()
         for job in self.tk.splitlist(self.tk.call("after", "info")):   # timers would outlive the window
             self.after_cancel(job)

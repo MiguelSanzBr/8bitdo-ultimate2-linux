@@ -86,10 +86,10 @@ CALLOUTS = [("LT", "l", 13, (96, 12), "LT"), ("L4", "l", 36, (142, 21), "P3"), (
 HOME_OFFSET = 160                # room for the callouts left of the drawing
 
 
-def model(bt):
-    """``(parts, rings, callouts)`` of the drawing for the Ultimate 2 or, with ``bt``, the 1st-gen Ultimate Bluetooth:
-    Nintendo face layout (A right, B bottom, X top, Y left), no L4/R4, no LED rings, back paddles P1/P2."""
-    if not bt:
+def drawing(key):
+    """``(parts, rings, callouts)`` of the drawing for the model ``key``: the Ultimate 2, or the 1st-gen Ultimate
+    Bluetooth (Nintendo face layout: A right, B bottom, X top, Y left; no L4/R4, no LED rings, back paddles P1/P2)."""
+    if key == "ultimate2":
         return PARTS, RINGS, CALLOUTS
     xy = {n: PARTS[n][1] for n in "ABXY"}
     parts = {n: p for n, p in PARTS.items() if n not in ("P3", "P4")}
