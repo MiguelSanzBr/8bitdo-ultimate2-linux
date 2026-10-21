@@ -1,7 +1,7 @@
 # Maintainer: Miguel Sanz <123277580+MiguelSanzBr@users.noreply.github.com>
 pkgname=8bitdo-ultimate2
-_tag=0.1.0-beta.6
-pkgver=0.1.0beta6
+_tag=0.1.0-beta.7
+pkgver=0.1.0beta7
 pkgrel=1
 pkgdesc="Open-source Linux configurator for the 8BitDo Ultimate 2 Wireless controller (CLI + GUI)"
 arch=('any')
@@ -11,7 +11,7 @@ depends=('python' 'tk' 'hicolor-icon-theme')   # tk: the GUI (tkinter)
 makedepends=('python-build' 'python-installer' 'python-setuptools' 'python-wheel')
 install=8bitdo-ultimate2.install
 source=("$pkgname-$_tag.tar.gz::$url/archive/refs/tags/v$_tag.tar.gz")
-sha256sums=('d229e56e48f74df8d763a7bae36445263b89bff36c7cddf5fad6c11f1380fef6')
+sha256sums=('29aa79c5e6b152516eb1e8ceca7c2b3d1050a9235b0ae4d0a11e387409d04b61')
 
 build() {
   cd "8bitdo-ultimate2-linux-$_tag"
