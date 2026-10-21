@@ -45,7 +45,9 @@ Details in [docs/ULTIMATE_BT.md](docs/ULTIMATE_BT.md).
 USB cable or its 2.4G receiver. It keeps one configuration per mode: switch on D for the cable (and Bluetooth, which
 has no configuration channel of its own), X for the receiver. On X, `u2ctl` and `u2gui` switch it to its config mode
 the way the Windows app does and back afterwards (the udev rule gives access to its USB node for that). Button
-remapping incl. P1/P2, sticks, triggers, rumble, live view; no LEDs, no gyro, no trigger rumble. Details in
+remapping incl. P1/P2, sticks, triggers, rumble, live view; no LEDs, no gyro, no trigger rumble. On X with no game
+open, its receiver switches the controller off after a profile change unless something reads the pad: `u2ctl
+keepalive` does (the .deb runs it as the `ultimate2-keepalive` user service). Details in
 [docs/ULTIMATE_24G.md](docs/ULTIMATE_24G.md).
 
 ## Web version

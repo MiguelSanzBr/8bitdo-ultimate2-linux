@@ -92,6 +92,15 @@ then `enableFlagWithrecord`): identity mapping with Star = Menu (Screenshot in `
 rumble 1.0/1.0, sticks 0..128, triggers 0..255, no features, the macro records zeroed; the slot flag and every section
 flag set to `0x20200911`.
 
+## Staying connected on X
+
+On X, a profile switch (the button above the LEDs) makes the receiver re-enumerate (`3106` → `3109` → `3106`).
+Windows polls the pad's interrupt endpoint all the time; Linux' `xpad` only does while a program has the input node
+open. With no game open, the receiver then drops the controller again ~5 s after each reconnection and finally
+switches it off. Keeping the joystick node open fixes it: `u2ctl keepalive` holds the `js` node of every `2dc8:3106`
+pad open and drained, reopening it after each reconnection. The .deb runs it as a systemd user service
+(`ultimate2-keepalive.service`, enabled for every user at install time; it starts at the next login).
+
 ## Live input
 
 In config mode the pad keeps sending gamepad reports through a generic HID gamepad, so `/dev/input/jsN` works,

@@ -16,6 +16,9 @@ This project follows [Semantic Versioning](https://semver.org/).
     `knock` says how the pad is switched (`"rumble"` or `"usb"`). `config.decode`/`encode`/`default_slot` take the
     model's layout, `config.same` verifies a write without the bytes the firmware owns.
   * Protocol notes: `docs/ULTIMATE_24G.md` and a summary at the end of `docs/PROTOCOL.md`.
+* `u2ctl keepalive`: keeps Ultimate 2.4G pads on X read, as Windows does, so a profile change through the receiver no
+  longer switches the controller off when no game is open. The .deb installs it as the systemd user service
+  `ultimate2-keepalive` and enables it for every user.
 
 ## 0.1.0-beta.7 — 2026-10-20
 

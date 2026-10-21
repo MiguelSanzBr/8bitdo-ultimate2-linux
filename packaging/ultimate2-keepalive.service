@@ -1,0 +1,10 @@
+[Unit]
+Description=8BitDo Ultimate 2.4G: keep the pad read on X so it stays connected (u2ctl keepalive)
+
+[Service]
+ExecStart=/usr/bin/u2ctl keepalive
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

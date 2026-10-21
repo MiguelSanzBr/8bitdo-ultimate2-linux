@@ -4,7 +4,7 @@ import json
 import struct
 import sys
 
-from . import config, device, discovery
+from . import config, device, discovery, keepalive
 from .protocol import PID_BT_XINPUT, PIDS, THEMES, VID
 
 
@@ -26,6 +26,7 @@ def parser():
     p.add_argument("-n", "--dry-run", action="store_true")
     p = sub.add_parser("theme", help="show or set the active LED theme")
     p.add_argument("name", nargs="?", choices=list(THEMES.values()))
+    sub.add_parser("keepalive", help="keep Ultimate 2.4G pads on X read so they stay connected (systemd user service)")
     p = sub.add_parser("backup", help="save raw config record")
     p.add_argument("file")
     p = sub.add_parser("restore", help="write raw config record")
@@ -47,6 +48,10 @@ def main(argv=None):
             print(f"{u24}  {VID:04x}:{PID_BT_XINPUT:04x}  Ultimate 2.4G (XInput)  (switched to config mode on use)")
         if discovery.bluetooth_24g():
             print("Ultimate 2.4G over Bluetooth: no configuration channel there (use the cable or the receiver)")
+        return
+
+    if a.cmd == "keepalive":
+        keepalive.run()
         return
 
     dev = device.Device(a.device, knock=True)
