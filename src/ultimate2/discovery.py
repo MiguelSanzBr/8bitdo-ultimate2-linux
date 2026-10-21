@@ -84,3 +84,12 @@ def bluetooth_24g():
     want = tuple(f"HID_ID=0005:0000{protocol.VID:04X}:0000{p:04X}" for p in protocol.PIDS_24G)
     return any(l.upper().startswith(want) for d in sorted(glob.glob(SYS + "/class/hidraw/hidraw*"))
                for l in _read(d + "/device/uevent").decode(errors="replace").splitlines())
+
+
+def bluetooth_24g_input():
+    """Joystick node of an Ultimate 2.4G on Bluetooth (numbered like its config mode over USB), or ``None``."""
+    want = tuple(f"HID_ID=0005:0000{protocol.VID:04X}:0000{p:04X}" for p in protocol.PIDS_24G)
+    for d in sorted(glob.glob(SYS + "/class/hidraw/hidraw*")):
+        if any(l.upper().startswith(want) for l in _read(d + "/device/uevent").decode(errors="replace").splitlines()):
+            return find_input_node(os.path.realpath(d + "/device"))
+    return None

@@ -29,6 +29,8 @@ class PadInput:
                 dev = next(discovery.find_devices(), None)
                 # a live_by_query controller sends no js events: wait for the read to set self.model
                 node = dev and not models.for_pid(dev[1]).live_by_query and discovery.find_input_node(dev[2])
+                if not dev and self.model is models.ULTIMATE_24G:     # only on Bluetooth: no config channel there
+                    node = discovery.bluetooth_24g_input()
             except OSError:
                 pass
             fd = None

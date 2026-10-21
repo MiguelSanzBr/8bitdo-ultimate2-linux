@@ -16,6 +16,10 @@ This project follows [Semantic Versioning](https://semver.org/).
     `knock` says how the pad is switched (`"rumble"` or `"usb"`). `config.decode`/`encode`/`default_slot` take the
     model's layout, `config.same` verifies a write without the bytes the firmware owns.
   * Protocol notes: `docs/ULTIMATE_24G.md` and a summary at the end of `docs/PROTOCOL.md`.
+* Ultimate 2.4G over Bluetooth: `u2ctl battery` (also in `u2ctl list`) and the `u2gui` badge show its battery (the
+  kernel's `power_supply` of the HID pad); `u2gui` shows read-only the D configuration kept from the last cable read
+  (the one Bluetooth uses), and `u2ctl info` and `u2gui` warn when the X configuration is edited while the pad is on
+  Bluetooth.
 * `u2ctl keepalive`: keeps Ultimate 2.4G pads on X read, as Windows does, so a profile change through the receiver no
   longer switches the controller off when no game is open. The .deb installs it as the systemd user service
   `ultimate2-keepalive` and enables it for every user.

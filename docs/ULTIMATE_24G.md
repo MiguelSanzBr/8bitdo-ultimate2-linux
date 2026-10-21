@@ -101,6 +101,18 @@ switches it off. Keeping the joystick node open fixes it: `u2ctl keepalive` hold
 pad open and drained, reopening it after each reconnection. The .deb runs it as a systemd user service
 (`ultimate2-keepalive.service`, enabled for every user at install time; it starts at the next login).
 
+## Bluetooth: battery, and which record applies
+
+Over Bluetooth there is no config channel, but that descriptor has the HID Battery Strength usage (`05 06 09 20`,
+0..100) in the gamepad report, which the kernel exposes as `/sys/class/power_supply/hid-<mac>-battery`
+(`ultimate2.battery`; UPower and desktop applets show it too). The receiver's descriptor (`3013`) has no such field and
+it does not answer the Ultimate 2's `81 04 21 01 00 00 06`, so the battery is only known over Bluetooth.
+
+Bluetooth uses the D record. When the pad is on Bluetooth while the X record is being edited through the receiver,
+`u2ctl info` and `u2gui` warn that the changes do not apply there. With only Bluetooth, `u2gui` shows read-only the
+copy of the D record it kept from the last cable read (`$XDG_DATA_HOME/ultimate2/ultimate24g-d.bin`). A profile
+switch over Bluetooth sends no event, so the active profile is not shown there.
+
 ## Live input
 
 In config mode the pad keeps sending gamepad reports through a generic HID gamepad, so `/dev/input/jsN` works,

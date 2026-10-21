@@ -4,8 +4,11 @@ import json
 import struct
 import sys
 
-from . import config, device, discovery, keepalive
+from . import battery, config, device, discovery, keepalive, models
 from .protocol import PID_BT_XINPUT, PIDS, THEMES, VID
+
+BT_CONFLICT = ("warning: the controller is also connected over Bluetooth, which uses the D-mode configuration: "
+               "changes made here (X mode) do not apply there")
 
 
 def parser():
@@ -26,6 +29,7 @@ def parser():
     p.add_argument("-n", "--dry-run", action="store_true")
     p = sub.add_parser("theme", help="show or set the active LED theme")
     p.add_argument("name", nargs="?", choices=list(THEMES.values()))
+    sub.add_parser("battery", help="battery of the controller over Bluetooth (Ultimate 2.4G)")
     sub.add_parser("keepalive", help="keep Ultimate 2.4G pads on X read so they stay connected (systemd user service)")
     p = sub.add_parser("backup", help="save raw config record")
     p.add_argument("file")
@@ -48,6 +52,15 @@ def main(argv=None):
             print(f"{u24}  {VID:04x}:{PID_BT_XINPUT:04x}  Ultimate 2.4G (XInput)  (switched to config mode on use)")
         if discovery.bluetooth_24g():
             print("Ultimate 2.4G over Bluetooth: no configuration channel there (use the cable or the receiver)")
+            b = battery.bluetooth()
+            if b:
+                print(f"battery     {b['capacity']}% ({b['status'].lower()})")
+        return
+
+    if a.cmd == "battery":
+        b = battery.bluetooth() or sys.exit("no 8BitDo controller reporting its battery: it is only known over "
+                                            "Bluetooth (the 2.4G receiver does not report it)")
+        print(f"{b['name']}: {b['capacity']}% ({b['status'].lower()})")
         return
 
     if a.cmd == "keepalive":
@@ -71,6 +84,8 @@ def _run(a, dev):
         print(f"firmware    {i['firmware'] / 100:.2f}" + (f" beta {i['beta']}" if i["beta"] else ""))
         print(f"report pid  0x{i['device_pid']:04x} ({PIDS.get(i['device_pid'], '?')})")
         print(f"mode/slot   gamepad_mode={mode} cur_slot={slot}")
+        if dev.model is models.ULTIMATE_24G and mode == 3 and discovery.bluetooth_24g():
+            print(BT_CONFLICT)
         pad = dev.pad_status() if dev.model.pad_status else None
         if pad:                                    # 2.4G: the controller behind the dongle
             print(f"controller  firmware {pad['firmware'] / 100:.2f}, battery {pad['battery']}%, colorway {pad['edition']}")

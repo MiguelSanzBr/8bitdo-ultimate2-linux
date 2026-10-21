@@ -26,3 +26,9 @@ def no_real_hardware(request, monkeypatch, tmp_path):
     from ultimate2 import discovery
     if request.module.__name__ != "test_discovery":
         monkeypatch.setattr(discovery, "SYS", str(tmp_path / "no-sys"))
+
+
+@pytest.fixture(autouse=True)
+def no_real_data_folder(monkeypatch, tmp_path):
+    """u2gui keeps a copy of the Ultimate 2.4G's configuration in XDG_DATA_HOME: never the real one in tests."""
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))

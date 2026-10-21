@@ -47,7 +47,9 @@ has no configuration channel of its own), X for the receiver. On X, `u2ctl` and 
 the way the Windows app does and back afterwards (the udev rule gives access to its USB node for that). Button
 remapping incl. P1/P2, sticks, triggers, rumble, live view; no LEDs, no gyro, no trigger rumble. On X with no game
 open, its receiver switches the controller off after a profile change unless something reads the pad: `u2ctl
-keepalive` does (the .deb runs it as the `ultimate2-keepalive` user service). Details in
+keepalive` does (the .deb runs it as the `ultimate2-keepalive` user service). Over Bluetooth, `u2ctl battery`
+and the `u2gui` badge show its battery, and `u2gui` shows read-only the D configuration it kept from the last cable
+read. Details in
 [docs/ULTIMATE_24G.md](docs/ULTIMATE_24G.md).
 
 ## Web version
