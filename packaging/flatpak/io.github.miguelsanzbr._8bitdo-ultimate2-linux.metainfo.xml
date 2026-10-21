@@ -71,6 +71,11 @@
     <category>HardwareSettings</category>
   </categories>
   <releases>
+    <release version="0.1.0-beta.7" date="2026-10-20" type="development">
+      <description>
+        <p>Support for the 1st-gen Ultimate Bluetooth controller and u2gui web.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.6" date="2026-10-15" type="development">
       <description>
         <p>Flatpak packaging and AppStream metadata.</p>

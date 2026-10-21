@@ -2,7 +2,7 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0-beta.7 — 2026-10-20
 
 * Support for the 1st-gen **8BitDo Ultimate Bluetooth Controller** (charging dock, Nintendo layout), on a USB cable
   straight to the PC. Reverse-engineered from a USB capture of *Ultimate Software V1*, which is the app that
@@ -13,6 +13,9 @@ This project follows [Semantic Versioning](https://semver.org/).
     P1/P2, no L4/R4, no gyro, LED or trigger-rumble pages, live view through the pad's own state query.
   * Now and then the pad powers off while switching modes; pressing Home brings it back and it is picked up again.
   * Protocol notes: `docs/ULTIMATE_BT.md` and a summary at the end of `docs/PROTOCOL.md`.
+  * Contributed by @thiagonl (#7).
+* `u2gui web` opens the browser version (WebHID). Its source moved into `web/` of this repository and it is served at <https://miguelsanzbr.github.io/8bitdo-ultimate2-linux/>.
+* Internal: one `models.Model` per controller holds everything that differs between them.
 
 ## 0.1.0-beta.6 — 2026-10-15
 
