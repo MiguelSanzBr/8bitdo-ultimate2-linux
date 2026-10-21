@@ -10,7 +10,8 @@ from ultimate2 import discovery, protocol as u
 
 class FakeController:
     def __init__(self, cfg=None, firmware=110, beta=0, report_pid=0x6012, usb_pid=0x310B):
-        self.cfg = bytearray(cfg if cfg is not None else b"\xff" * u.CFG_SIZE)
+        self.bt = usb_pid == u.PID_BT_CONFIG    # Ultimate Bluetooth in config mode: length-prefixed requests
+        self.cfg = bytearray(cfg if cfg is not None else b"\xff" * (u.CFG_SIZE_BT if self.bt else u.CFG_SIZE))
         self.pending = bytearray(self.cfg)
         self.firmware, self.beta, self.report_pid, self.usb_pid = firmware, beta, report_pid, usb_pid
         self.path, self.js_path = "/dev/hidraw-fake", "/dev/input/js-fake"
@@ -21,6 +22,8 @@ class FakeController:
         self.theme = 2
         self.edition = 3
         self.pad = None            # through the dongle: {"battery", "firmware", "edition"} of the controller
+        self.exited = False        # Ultimate Bluetooth: got the "back to XInput" query
+        self.live = bytes.fromhex("00000020 7f80807f 0000 0000")   # its config-mode live state (idle)
         self.host, self._dev = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
         self._t = threading.Thread(target=self._serve, daemon=True)
         self._t.start()
@@ -39,6 +42,7 @@ class FakeController:
         monkeypatch.setattr(os, "open", fake_open)
         monkeypatch.setattr(discovery, "find_devices", lambda: iter([(self.path, self.usb_pid, "/fake/usb")]))
         monkeypatch.setattr(discovery, "find_input_node", lambda usb_dir: self.js_path)
+        monkeypatch.setattr(discovery, "find_bt_xinput", lambda: None)     # never the real sysfs
         return self
 
     def close(self):
@@ -59,6 +63,9 @@ class FakeController:
                 return
             if not pkt:
                 return
+            if pkt[:5] == u.BT_EXIT:
+                self.exited = True
+                continue
             if pkt[:5] == b"\x81\x05\x00\x21\x01":       # version / colorway query
                 self._dev.send(bytes([0x02, 0x22, self.firmware & 0xFF, self.firmware >> 8, self.beta, 0,
                                       self.edition]).ljust(64, b"\0"))
@@ -69,6 +76,10 @@ class FakeController:
                     self._dev.send((u.ANSWER_PAD + bytes(12) + bytes([p["battery"], p["firmware"] & 0xFF,
                                     p["firmware"] >> 8, 0, 0, p["edition"]])).ljust(64, b"\0"))
                 continue
+            if self.bt:                                  # 81 <n+1> 04 <header>: drop the length byte
+                if pkt[0] != 0x81 or pkt[2] != 0x04 or pkt[1] != 17 + struct.unpack_from("<H", pkt, 7)[0]:
+                    continue
+                pkt = pkt[:1] + pkt[2:]
             if pkt[:2] != b"\x81\x04" or len(pkt) < 18:
                 continue
             cmd, sub, length, _crc, total, off = struct.unpack_from("<HHHHII", pkt, 2)
@@ -78,6 +89,8 @@ class FakeController:
                 self.drop -= 1
                 continue
             if cmd in self.silent:
+                continue
+            if cmd == 0x0100 and self.bt:   # not answered in the Ultimate Bluetooth's config mode
                 continue
             if cmd == 0x0100:           # device info
                 body = bytearray(8)
@@ -89,12 +102,16 @@ class FakeController:
                 self.pending[off:off + length] = data
                 self._reply(cmd, length=length, total=total, offset=off)
             elif cmd == u.CMD_COMMIT:
+                if sub != (u.COMMIT_KEY_BT if self.bt else u.COMMIT_KEY):
+                    continue                    # wrong key: stays in RAM, no answer (like the real pad)
                 self.cfg[:] = self.pending
                 if self.corrupt_commit:
                     self.cfg[100] ^= 0xFF
                 self._reply(cmd)
             elif cmd == u.CMD_REPORT:
                 self._reply(cmd)
+            elif cmd == u.CMD_LIVE and sub == u.LIVE_SUB:
+                self._reply(cmd, self.live)
             elif cmd == u.CMD_SET_THEME:
                 self.theme = sub
                 self._reply(cmd)

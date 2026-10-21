@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from ultimate2 import models
 from ultimate2.gui import app as app_mod, catalog, geometry, i18n, theme, widgets
 
 from .conftest import click, make_app, texts, walk
@@ -61,7 +62,8 @@ def _literals():
 def _constants():
     """Portuguese labels of the module-level constants that are translated where they are displayed."""
     return ({t for t, _k in catalog.SECTIONS} | set(theme.THEME_NAMES.values()) | {sk["name"] for sk in theme.SKINS.values()}
-            | {label for _k, label, _t in catalog.LED_TARGETS} | {c[0] for c in geometry.CALLOUTS}) - NEUTRAL
+            | {label for _k, label, _t in catalog.LED_TARGETS}
+            | {c[0] for m in models.MODELS for c in geometry.drawing(m.key)[2]}) - NEUTRAL
 
 
 def test_every_wrapped_literal_is_in_en_and_en_has_no_unused_keys():

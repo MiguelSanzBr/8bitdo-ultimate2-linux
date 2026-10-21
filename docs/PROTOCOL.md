@@ -12,6 +12,9 @@ This was reverse-engineered from *8BitDo Ultimate Software V2* (v1.37) for inter
 | `2dc8:6013` | 2.4G dongle (`Ultimate2RR`) | HID interface 0, usage page `0xFFA0` |
 | `0x6012` | PID the controller reports internally (`PID_Ultimate2`) | — |
 
+The 1st-gen *Ultimate Bluetooth Controller* (charging dock, Nintendo layout) speaks a variant of this protocol:
+see [Ultimate Bluetooth](#ultimate-bluetooth-1st-gen) at the end.
+
 The config channel is a vendor HID collection with output report `0x81` and input report `0x02`, 63 bytes
 each (64 including the report ID). On Linux it shows up as a `/dev/hidrawN` node.
 
@@ -112,3 +115,17 @@ triggers, `0x100` swap LS/d-pad, `0x8000` trigger rumble. Other bits are not ful
 
 With `xpad`, `/dev/input/jsN` reports 11 buttons (`A B X Y LB RB Select Start Home L3 R3`) and 8 axes (LX, LY, LT, RX,
 RY, RT, d-pad X, d-pad Y). Star, L4/R4 and the PL/PR back buttons are not reported as separate inputs.
+
+## Ultimate Bluetooth (1st gen)
+
+Same frames, commands and answers, with these differences (full notes in [ULTIMATE_BT.md](ULTIMATE_BT.md)):
+
+| | Ultimate 2 | Ultimate Bluetooth |
+|---|---|---|
+| config channel | own HID interface next to XInput | none in XInput (`2dc8:3106`); a rumble "knock" switches the pad to config mode (`2dc8:6007`), `81 05 00 51 02` switches it back |
+| request frame | `81 04 <header> <data>` | `81 <n+1> 04 <header> <data>` (length byte, n = 16 + data) |
+| record | 1592 bytes | 1652 bytes, 20 buttons (P1/P2, no L4/R4), no gyro/LEDs |
+| save | `CMD_COMMIT` sub `0x123` | `CMD_COMMIT` sub `0x15` |
+| reports | `CMD_REPORT` 0/1 around writes | `CMD_REPORT` 0 opens the session; once 1, config requests go unanswered |
+| version | `CMD_INFO` | `81 05 00 21 01` only (`CMD_INFO` unanswered) |
+| live input | XInput / js node | `CMD_LIVE` (`3`, sub `0x15`): u32 button key codes, LX LY RX RY RT LT |

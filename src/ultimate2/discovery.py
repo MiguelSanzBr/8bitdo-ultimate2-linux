@@ -26,7 +26,10 @@ def find_devices():
             _, vid, pid = (int(x, 16) for x in hid_id.split(":"))
         except ValueError:
             continue
-        if vid != protocol.VID or _read(d + "/device/report_descriptor")[:3] not in CONFIG_DESCRIPTORS:
+        if vid != protocol.VID:
+            continue
+        # the Ultimate Bluetooth's config mode has one gamepad interface; its config reports sit inside it
+        if pid != protocol.PID_BT_CONFIG and _read(d + "/device/report_descriptor")[:3] not in CONFIG_DESCRIPTORS:
             continue
         usb_dir = os.path.dirname(os.path.dirname(os.path.realpath(d + "/device")))
         yield DEV + "/" + os.path.basename(d), pid, usb_dir
@@ -42,4 +45,17 @@ def find_input_node(usb_dir):
         for n in sorted(glob.glob(pat)):
             if os.path.realpath(n + "/device").startswith(usb_dir + "/"):
                 return DEV + "/input/" + os.path.basename(n)
+    return None
+
+
+def find_bt_xinput():
+    """Event node of a 1st-gen Ultimate Bluetooth on a cable in XInput mode (``2dc8:3106``, product
+    :data:`~ultimate2.protocol.BT_PRODUCT`), or ``None``. Its 2.4G receiver shares the PID, not the name."""
+    for n in sorted(glob.glob(SYS + "/class/input/event*")):
+        usb = os.path.realpath(n + "/device")
+        while usb != "/" and not os.path.exists(usb + "/idVendor"):
+            usb = os.path.dirname(usb)
+        ids = (_read(usb + "/idVendor").strip(), _read(usb + "/idProduct").strip(), _read(usb + "/product").strip())
+        if ids == (b"%04x" % protocol.VID, b"%04x" % protocol.PID_BT_XINPUT, protocol.BT_PRODUCT.encode()):
+            return DEV + "/input/" + os.path.basename(n)
     return None

@@ -3,9 +3,11 @@
 ```
 src/ultimate2/
 ├── protocol.py     constants, CRC-16, request/answer frames (pure functions)
-├── discovery.py    sysfs scan: config hidraw node + joystick node of the same USB device
-├── device.py       Device: open/close, read/write/commit the record, theme, slot, info, edition
-├── config.py       1592-byte record <-> nested dict (FIELDS table), encode only what changed, defaults
+├── discovery.py    sysfs scan: config hidraw node + joystick node of the same USB device; Ultimate Bluetooth in XInput
+├── device.py       Device: open/close, read/write/commit the record, theme, slot, info, edition;
+│                   Ultimate Bluetooth: rumble knock into config mode, live state, leave
+├── models.py       one Model per controller: every difference (record size, commit key, frames, LEDs, gyro...)
+├── config.py       record <-> nested dict (FIELDS / FIELDS_BT tables, picked by size), encode only what changed, defaults
 ├── cli.py          u2ctl (argparse)
 └── gui/
     ├── theme.py        palette, fonts, timings, controller skins

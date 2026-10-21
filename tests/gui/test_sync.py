@@ -97,7 +97,7 @@ def test_read_device_unplugged_retries_and_permission_opens_dialog(app, dlg, mon
     app.read_device()
     pump(app)
     assert not dlg.errors and app._retry_job
-    def denied(self, path=None):
+    def denied(self, path=None, **kw):
         raise SystemExit("permission denied on /dev/hidraw0")
     monkeypatch.setattr(device.Device, "__init__", denied)
     app.read_device()                                       # Reload cancels the pending retry

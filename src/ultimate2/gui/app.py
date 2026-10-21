@@ -8,9 +8,9 @@ import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk
 
-from .. import config
+from .. import config, device, models
 from . import i18n, theme
-from .catalog import SECTIONS
+from .catalog import DISPLAY_FOR, SECTIONS, sections
 from .controller import ControllerView
 from .editor import Editor
 from .i18n import _
@@ -48,6 +48,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         lang = load_settings().get("lang")
         i18n.LANG = lang if lang in i18n.LANGS else i18n.system_lang()
         self.restart = False
+        self.model = models.ULTIMATE2    # replaced by the controller actually read, see set_model
         self.title("8BitDo Ultimate 2 — Linux")
         self.configure(bg=BG)
         theme.FAMILY = theme.pick_family(self)
@@ -106,8 +107,43 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         if want != self.skin:
             self.apply_skin(want)
 
+    @property
+    def buttons(self):
+        """Physical buttons of the connected controller, in ``map_key`` order."""
+        return self.model.buttons
+
+    @property
+    def display(self):
+        """Names printed on the controller where they differ from the internal ones."""
+        return DISPLAY_FOR[self.model.key]
+
+    def set_model(self, model):
+        """Adapt the window to the controller just read (a :class:`ultimate2.models.Model`): its drawing, buttons,
+        pages and cards."""
+        if model == self.model:
+            return
+        self.model = model
+        self.title(f"8BitDo {model.short_name} — Linux")
+        self.home_title.configure(text=model.name)
+        keep = {k for _t, k in sections(model)}
+        for t in self.tiles.values():
+            t.pack_forget()
+        for _t, k in SECTIONS:
+            if k in keep:
+                self.tiles[k].pack(side="left", padx=int(5 * self.s))
+        if not model.xinput_rumble:
+            self.xr_card.pack_forget()
+        else:
+            self.xr_card.pack(side="left", fill="both", expand=True, padx=int(6 * self.s), pady=int(6 * self.s))
+        self.map_help.configure(text=self.map_help_text())
+        if self.sel_btn not in self.buttons:
+            self.sel_btn = "A"
+        self.apply_skin(self.skin)
+
     def destroy(self):
         self._closing = True
+        if self.model.knock:                     # the GUI kept the controller in config mode: give it back
+            device.leave_config_mode()
         for job in self.tk.splitlist(self.tk.call("after", "info")):   # timers would outlive the window
             self.after_cancel(job)
         super().destroy()

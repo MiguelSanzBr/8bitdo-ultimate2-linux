@@ -84,3 +84,16 @@ CALLOUTS = [("LT", "l", 13, (96, 12), "LT"), ("L4", "l", 36, (142, 21), "P3"), (
             ("Botões ABXY", "r", 104, (394, 104), "A"), ("Analógico direito", "r", 177, (313, 177), "sticks"),
             ("Traseiros PL / PR", "r", 308, (264, 308), "P1")]
 HOME_OFFSET = 160                # room for the callouts left of the drawing
+
+
+def drawing(key):
+    """``(parts, rings, callouts)`` of the drawing for the model ``key``: the Ultimate 2, or the 1st-gen Ultimate
+    Bluetooth (Nintendo face layout: A right, B bottom, X top, Y left; no L4/R4, no LED rings, back paddles P1/P2)."""
+    if key == "ultimate2":
+        return PARTS, RINGS, CALLOUTS
+    xy = {n: PARTS[n][1] for n in "ABXY"}
+    parts = {n: p for n, p in PARTS.items() if n not in ("P3", "P4")}
+    parts.update({"A": ("circle", xy["B"], "A"), "B": ("circle", xy["A"], "B"), "X": ("circle", xy["Y"], "X"),
+                  "Y": ("circle", xy["X"], "Y"), "P2": ("rrect", PARTS["P2"][1], "P2"), "P1": ("rrect", PARTS["P1"][1], "P1")})
+    callouts = [("Traseiros P1 / P2", *c[1:]) if c[4] == "P1" else c for c in CALLOUTS if c[4] not in ("P3", "P4")]
+    return parts, [], callouts
