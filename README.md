@@ -34,6 +34,10 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 Tested with an Ultimate 2 Wireless (firmware 1.10) over USB (`2dc8:310b`). The 2.4G dongle (`2dc8:6013`) speaks
 the same protocol once the controller is paired, but this has not been tested yet.
 
+## Web version
+
+The same configurator also runs in the browser, with nothing to install: <https://miguelsanzbr.github.io/8bitdo-ultimate2-linux/> (Chrome, Edge or another Chromium browser, because it talks to the device through WebHID). From the terminal, `u2gui web` opens it. Its source is in [`web/`](web/) (React + TypeScript); its tests run in `.github/workflows/web.yml` and the deploy in `.github/workflows/pages.yml`.
+
 ## Install
 
 ### Debian / Ubuntu (.deb) — recommended

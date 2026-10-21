@@ -1,0 +1,44 @@
+// Bytes gerados rodando o 8bitdo-ultimate2-linux (commit af02fde), colados aqui como literal.
+
+// espelha config.encode(config.default_slot(config.decode(blank), 0, "Demo"), blank), blank = tests/fixtures/blank_config.bin
+export const DEFAULT_SLOT0_HEX =
+  '11092020ffffffffffffffffbc8a00000300030000440065006d006f00000000000000000000000000000000000000000000' +
+  '0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffff110920200000803f0000803fffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffff1109202011801180ffffffffffffffffffffffffffffffff1109202000ff00ffffffffffffffffffffffffffffffffff' +
+  '1109202000000000ffffffffffffffffffffffffffffffff1109202000200000001000001000000020000000000400000008' +
+  '0000004000000080000002000000040000000800000001000000000001000000020000020000000100008000000040000000' +
+  '00000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  '1109202000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff030000000000ffff0000' +
+  '00000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff030000000000ffff' +
+  '000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff030000000000' +
+  'ffff000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff03000000' +
+  '0000ffff000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1109' +
+  '202001640164ffffffffffffffffffffffffffffffff00001920ffffffffff0a28ffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffff1109202032002600504e0800ffffffffffffffffffffffffffffffffffffffffffffffff110920200062' +
+  'cc000000cc0007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1109202000327e00' +
+  '00327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e000032' +
+  '7e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e0000327e00ffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff' +
+  'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+export const hex = (s: string) => Uint8Array.from(s.match(/../g) ?? [], (b) => parseInt(b, 16))
+
+// mesmo conteúdo do tests/fixtures/blank_config.bin: flash apagada, gamepad_mode 3, cur_slot 3
+export function blankRecord(): Uint8Array {
+  const b = new Uint8Array(1592).fill(0xff)
+  b.set([3, 0, 3, 0], 16)
+  return b
+}
