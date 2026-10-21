@@ -1,15 +1,17 @@
 """The configuration record: 1592 bytes on the Ultimate 2 (``custom_config_record_t_u2`` in the official app),
-1652 bytes on the 1st-gen Ultimate Bluetooth (``UltimateBTAdvance.custom_config_record_t`` of Ultimate Software V1).
+1652 bytes on the 1st-gen Ultimate Bluetooth (``UltimateBTAdvance.custom_config_record_t`` of Ultimate Software V1)
+and on the Ultimate 2.4G (``Ultimate2_4Advance.custom_config_record_t``, same offsets, see :data:`LAYOUTS`).
 
 Three profile slots, MSVC natural alignment, little endian. :func:`decode` turns the bytes into a
 readable nested dict; :func:`encode` writes an edited dict back over the original bytes, touching only
-the fields that changed so everything else round-trips exactly. The layout is picked from the record size.
-``docs/PROTOCOL.md`` and ``docs/ULTIMATE_BT.md`` list every offset.
+the fields that changed so everything else round-trips exactly. The layout is picked from the record size, unless a
+model names its own (``layout``). ``docs/PROTOCOL.md``, ``docs/ULTIMATE_BT.md`` and ``docs/ULTIMATE_24G.md`` list
+every offset.
 """
 import math
 import struct
 
-from .protocol import CFG_SIZE, CFG_SIZE_BT, crc16
+from .protocol import CFG_SIZE, CFG_SIZE_BT, crc16, crc16_24g
 
 FLAGS = {0x20200911: "enabled", 0x20190000: "disabled", 0: "off"}
 # physical buttons, in map_key.key[] order (app: P1 = PR, P2 = PL back paddles, P3 = L4, P4 = R4)
@@ -27,9 +29,17 @@ KEYCODES = {0: "None", 0x1: "Start", 0x2: "L3", 0x4: "R3", 0x8: "Select", 0x10: 
 FEATURES = {0x1: "invert_LS_X", 0x2: "invert_LS_Y", 0x4: "invert_RS_X", 0x8: "invert_RS_Y",
             0x10: "swap_sticks", 0x80: "swap_triggers", 0x100: "swap_LS_dpad", 0x8000: "trigger_rumble"}
 CRC_FIELD = (12, 16)     # byte range of crc_value
+# Ultimate 2.4G: the codes of its app's BasicAdvanceUIData.KEY_*_MAP (RT and Home as set by AutoR2AndHome ->
+# changeKey, same as the Ultimate 2): no P3-P5 or stick directions, but Swap
+KEYCODES_24G = {0: "None", 0x1: "Start", 0x2: "L3", 0x4: "R3", 0x8: "Select", 0x10: "X", 0x20: "Y",
+                0x40: "Right", 0x80: "Left", 0x100: "Down", 0x200: "Up", 0x400: "LB", 0x800: "RB",
+                0x1000: "B", 0x2000: "A", 0x4000: "LT", 0x8000: "RT", 0x10000: "Menu", 0x20000: "Home",
+                0x400000: "Screenshot", 0x800000: "TurboSingle", 0x1000000: "TurboAuto", 0x2000000: "P1",
+                0x4000000: "P2", 0x8000000: "Swap"}
 
 # Field kinds: B/H/I = unsigned ints, f = float, str32 = UTF-16BE name, F = flag, K = key code,
-# M = feature bitmask, X = raw hex u32, C = #rrggbb color, r<N> = N raw bytes as a hex string.
+# M = feature bitmask, X = raw hex u32, C = #rrggbb color, r<N> = N raw bytes as a hex string; Ultimate 2.4G:
+# str32le = UTF-16LE name (its app's Encoding.Unicode), k = key code of KEYCODES_24G.
 
 
 def _from_names(table, val):
@@ -39,12 +49,12 @@ def _from_names(table, val):
     return rev[val] if val in rev else int(val, 16)
 
 
-def _common(f, s, buttons, map_size, macros=None, xrumble=None):
+def _common(f, s, buttons, map_size, macros=None, xrumble=None, name="str32", key="K"):
     """Fields of slot ``s`` shared by both records; the sections after ``special`` move with the layout
     (``None``: the record has no such section)."""
     p = ("slots", s)
     f.append((p + ("flag",), 4 * s, "F"))
-    f.append((p + ("name",), 20 + 32 * s, "str32"))
+    f.append((p + ("name",), 20 + 32 * s, name))
     o = 116 + 12 * s
     f += [(p + ("rumble", "flag"), o, "F"), (p + ("rumble", "left"), o + 4, "f"), (p + ("rumble", "right"), o + 8, "f")]
     for sec, base in (("sticks", 152), ("triggers", 176), ("xinput_rumble", xrumble)):
@@ -57,7 +67,7 @@ def _common(f, s, buttons, map_size, macros=None, xrumble=None):
     f += [(p + ("special", "flag"), o, "F"), (p + ("special", "features"), o + 4, "M")]
     o = 224 + map_size * s
     f.append((p + ("mapping", "flag"), o, "F"))
-    f += [(p + ("mapping", b), o + 4 + 4 * i, "K") for i, b in enumerate(buttons)]
+    f += [(p + ("mapping", b), o + 4 + 4 * i, key) for i, b in enumerate(buttons)]
     if macros is None:
         return
     o = macros + 216 * s
@@ -69,11 +79,12 @@ def _common(f, s, buttons, map_size, macros=None, xrumble=None):
               (q + ("cycles_num",), ro + 44, "I"), (q + ("interval_ms",), ro + 48, "I")]
 
 
-def _fields_bt():
-    """``[(path, offset, kind)]`` of the Ultimate Bluetooth record."""
+def _fields_bt(name="str32", key="K"):
+    """``[(path, offset, kind)]`` of the Ultimate Bluetooth record (and, with its name and key kinds, the Ultimate
+    2.4G's)."""
     f = [(("crc_value",), 12, "I"), (("gamepad_mode",), 16, "H"), (("cur_slot",), 18, "H")]
     for s in range(3):
-        _common(f, s, BUTTONS_BT, 84)
+        _common(f, s, BUTTONS_BT, 84, name=name, key=key)
         p, o = ("slots", s, "button_macros"), 476 + 392 * s     # macro_fun_record_t_Pro2: 18-step key macros
         f += [(p + ("flag",), o, "F"), (p + ("total_cnt",), o + 4, "B")]
         for r in range(4):
@@ -106,10 +117,13 @@ def _fields():
 
 FIELDS = _fields()
 FIELDS_BT = _fields_bt()
+FIELDS_24G = _fields_bt("str32le", "k")
 
 
-def _layout(buf):
-    """Fields of the record ``buf`` (picked from its size)."""
+def _layout(buf, layout=None):
+    """Fields of the record ``buf``: those of ``layout`` (a :data:`LAYOUTS` key), else picked from its size."""
+    if layout:
+        return LAYOUTS[layout][0]
     if len(buf) == CFG_SIZE_BT:
         return FIELDS_BT
     if len(buf) == CFG_SIZE:
@@ -120,20 +134,23 @@ def _layout(buf):
 def _get(buf, off, kind):
     if kind[0] == "r":
         return buf[off:off + int(kind[1:])].hex()
-    if kind == "str32":   # UTF-16BE, max 16 chars, 0x0000-terminated; any 0xFF byte = erased
+    if kind in ("str32", "str32le"):   # UTF-16BE (LE), max 16 chars, 0x0000-terminated; any 0xFF byte = erased
         raw = buf[off:off + 32]
         if b"\xff" in raw:
             return ""
         chars = [raw[i:i + 2] for i in range(0, 32, 2)]
-        return b"".join(chars[:chars.index(b"\0\0")] if b"\0\0" in chars else chars).decode("utf-16-be", "replace")
+        return b"".join(chars[:chars.index(b"\0\0")] if b"\0\0" in chars else chars).decode(
+            "utf-16-be" if kind == "str32" else "utf-16-le", "replace")
     if kind == "f":
         v = struct.unpack_from("<f", buf, off)[0]
         return round(v, 4) if math.isfinite(v) else None   # erased flash (0xFFFFFFFF) is NaN
-    v = struct.unpack_from("<" + ("I" if kind in "XCFKM" else kind), buf, off)[0]
+    v = struct.unpack_from("<" + ("I" if kind in "XCFKkM" else kind), buf, off)[0]
     if kind == "F":
         return FLAGS.get(v, f"0x{v:08x}")
     if kind == "K":
         return KEYCODES.get(v, f"0x{v:08x}")
+    if kind == "k":
+        return KEYCODES_24G.get(v, f"0x{v:08x}")
     if kind == "M":
         if v == 0xFFFFFFFF:
             return "0xffffffff"
@@ -150,15 +167,17 @@ def _put(buf, off, kind, val):
         if len(raw) != n:
             raise ValueError(f"expected {n} bytes of hex, got {len(raw)}")
         buf[off:off + n] = raw
-    elif kind == "str32":
-        buf[off:off + 32] = val[:16].encode("utf-16-be").ljust(32, b"\0")
+    elif kind in ("str32", "str32le"):
+        buf[off:off + 32] = val[:16].encode("utf-16-be" if kind == "str32" else "utf-16-le").ljust(32, b"\0")
     elif kind == "f":
         struct.pack_into("<f", buf, off, float("nan") if val is None else float(val))
-    elif kind in "XCFKM":
+    elif kind in "XCFKkM":
         if kind == "F":
             v = _from_names(FLAGS, val)
         elif kind == "K":
             v = _from_names(KEYCODES, val)
+        elif kind == "k":
+            v = _from_names(KEYCODES_24G, val)
         elif kind == "M":
             v = int(val, 16) if isinstance(val, str) else sum(_from_names(FEATURES, x) for x in val)
         else:
@@ -175,10 +194,22 @@ def changed_span(old, new):
     return (diff[0], diff[-1] + 1) if diff else None
 
 
-def decode(buf):
-    """Record bytes -> nested dict (``slots`` is a list of 3 profiles)."""
+def same(written, read, layout=None, span=None):
+    """Did the controller keep ``written`` (only ``span``, a ``(start, end)``, if given)? Models whose firmware owns
+    ``crc_value`` and ``cur_slot`` (see :data:`LAYOUTS`) are compared without them."""
+    a, b = bytearray(written), bytearray(read)
+    if len(a) != len(b):
+        return False
+    for lo, hi in (LAYOUTS[layout][3] if layout else ()):
+        a[lo:hi] = b[lo:hi]
+    lo, hi = span or (0, len(a))
+    return a[lo:hi] == b[lo:hi]
+
+
+def decode(buf, layout=None):
+    """Record bytes -> nested dict (``slots`` is a list of 3 profiles). ``layout``: see :func:`_layout`."""
     out = {}
-    for path, off, kind in _layout(buf):
+    for path, off, kind in _layout(buf, layout):
         node = out
         for k in path[:-1]:
             node = node.setdefault(k, {})
@@ -199,17 +230,17 @@ def _lookup(doc, path):
     return doc
 
 
-def encode(doc, base):
+def encode(doc, base, layout=None):
     """Write ``doc`` over the record ``base``; returns ``(new_bytes, changed_paths)``.
 
     Only fields that differ from ``decode(base)`` are written, so untouched bytes round-trip exactly;
     missing fields are skipped. ``crc_value`` is recomputed like the app's ``ANSI_CRC_16_Ultimate2`` /
-    ``ANSI_CRC_16_UltimateBT``.
+    ``ANSI_CRC_16_UltimateBT`` (or the one of ``layout``).
     """
     buf = bytearray(base)
-    cur = decode(base)
+    cur = decode(base, layout)
     changed = []
-    for path, off, kind in _layout(base):
+    for path, off, kind in _layout(base, layout):
         if path == ("crc_value",):
             continue
         try:
@@ -219,12 +250,14 @@ def encode(doc, base):
         if new != _lookup(cur, path):
             _put(buf, off, kind, new)
             changed.append("/".join(map(str, path)))
-    struct.pack_into("<I", buf, CRC_FIELD[0], crc16(buf))
+    struct.pack_into("<I", buf, CRC_FIELD[0], (LAYOUTS[layout][1] if layout else crc16)(buf))
     return bytes(buf), changed
 
 
-def default_slot(doc, n, name):
+def default_slot(doc, n, name, layout=None):
     """Fill slot ``n`` of ``doc`` with the defaults the Windows app uses for a new profile."""
+    if layout:
+        return LAYOUTS[layout][2](doc, n, name)
     if "button_macros" in doc["slots"][n]:
         return _default_slot_bt(doc, n, name)
     mode = doc["gamepad_mode"]
@@ -269,3 +302,26 @@ def _default_slot_bt(doc, n, name):
         button_macros=dict(flag=on, total_cnt=0, records=[dict(key_map="0x00000000", interval_time_index="00" * 36,
                            key_index="00" * 36, digital_joy="00" * 18, max_index=0) for _ in range(4)]))
     return doc
+
+
+def _default_slot_24g(doc, n, name):
+    """Ultimate 2.4G (``Ultimate2_4AdvanceUI``): sections read with their flag off are reset by its ``clearMapping``,
+    ``clearRumble``, ``clearSticks``, ``clearTriger``, ``clearMacro`` and ``clearfeature`` (identity mapping, Star =
+    Menu or Screenshot in mode 0), then saving enables the slot and every section (``enableFlagWithrecord``)."""
+    keys = ["A", "B", "X", "Y", "LB", "RB", "LT", "RT", "L3", "R3", "Select", "Start",
+            "Screenshot" if doc["gamepad_mode"] == 0 else "Menu", "Home", "Up", "Down", "Left", "Right", "None", "None"]
+    on = "enabled"
+    doc["slots"][n] = dict(doc["slots"][n], flag=on, name=name,
+        rumble=dict(flag=on, left=1.0, right=1.0),
+        sticks=dict(flag=on, left_start=0, left_end=128, right_start=0, right_end=128),
+        triggers=dict(flag=on, left_start=0, left_end=255, right_start=0, right_end=255),
+        special=dict(flag=on, features=[]),
+        mapping=dict(flag=on, **dict(zip(BUTTONS_BT, keys))),
+        button_macros=dict(flag=on, total_cnt=0, records=[dict(key_map="0x00000000", interval_time_index="00" * 36,
+                           key_index="00" * 36, digital_joy="00" * 18, max_index=0) for _ in range(4)]))
+    return doc
+
+
+# records that share a size but not their details: layout -> (fields, record CRC, new-profile defaults, byte ranges
+# the firmware owns). The Ultimate 2.4G firmware stores a save counter in crc_value and keeps its own cur_slot.
+LAYOUTS = {"ultimate_24g": (FIELDS_24G, crc16_24g, _default_slot_24g, (CRC_FIELD, (18, 20)))}

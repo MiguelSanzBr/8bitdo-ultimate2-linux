@@ -136,6 +136,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         else:
             self.xr_card.pack(side="left", fill="both", expand=True, padx=int(6 * self.s), pady=int(6 * self.s))
         self.map_help.configure(text=self.map_help_text())
+        self.build_map_chips()
         if self.sel_btn not in self.buttons:
             self.sel_btn = "A"
         self.apply_skin(self.skin)

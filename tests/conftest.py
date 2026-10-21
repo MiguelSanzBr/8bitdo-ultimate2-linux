@@ -17,3 +17,12 @@ def fake(monkeypatch):
     f = FakeController().install(monkeypatch)
     yield f
     f.close()
+
+
+@pytest.fixture(autouse=True)
+def no_real_hardware(request, monkeypatch, tmp_path):
+    """Tests never see the controllers plugged into the machine running them (test_discovery sets its own roots):
+    a switch to config mode must never reach a real pad."""
+    from ultimate2 import discovery
+    if request.module.__name__ != "test_discovery":
+        monkeypatch.setattr(discovery, "SYS", str(tmp_path / "no-sys"))

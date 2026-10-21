@@ -10,7 +10,7 @@ from .protocol import PID_BT_XINPUT, PIDS, THEMES, VID
 
 def parser():
     ap = argparse.ArgumentParser(prog="u2ctl", description="Configure the 8BitDo Ultimate 2 Wireless (and the 1st-gen "
-                                 "Ultimate Bluetooth, on a USB cable) on Linux.")
+                                 "Ultimate Bluetooth, on a USB cable, and the Ultimate 2.4G) on Linux.")
     ap.add_argument("-d", "--device", help="hidraw node (default: auto-detect)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("list", help="list detected devices")
@@ -42,6 +42,11 @@ def main(argv=None):
         bt = discovery.find_bt_xinput()
         if bt:
             print(f"{bt}  {VID:04x}:{PID_BT_XINPUT:04x}  {PIDS[PID_BT_XINPUT]}  (switched to config mode on use)")
+        u24 = discovery.find_24g_xinput()
+        if u24:
+            print(f"{u24}  {VID:04x}:{PID_BT_XINPUT:04x}  Ultimate 2.4G (XInput)  (switched to config mode on use)")
+        if discovery.bluetooth_24g():
+            print("Ultimate 2.4G over Bluetooth: no configuration channel there (use the cable or the receiver)")
         return
 
     dev = device.Device(a.device, knock=True)
@@ -52,6 +57,7 @@ def main(argv=None):
 
 
 def _run(a, dev):
+    layout = dev.model.layout or None
     if a.cmd == "info":
         i = dev.info() or sys.exit("no answer from controller")
         cfg = dev.read_config()
@@ -64,7 +70,7 @@ def _run(a, dev):
         if pad:                                    # 2.4G: the controller behind the dongle
             print(f"controller  firmware {pad['firmware'] / 100:.2f}, battery {pad['battery']}%, colorway {pad['edition']}")
     elif a.cmd == "dump":
-        text = json.dumps(config.decode(dev.read_config()), indent=2, ensure_ascii=False)
+        text = json.dumps(config.decode(dev.read_config(), layout), indent=2, ensure_ascii=False)
         if a.output:
             with open(a.output, "w") as f:
                 f.write(text + "\n")
@@ -76,12 +82,12 @@ def _run(a, dev):
             with open(a.file) as f:
                 doc = json.load(f)
         else:
-            doc = config.default_slot(config.decode(cur), a.slot, a.name)
-        new, changed = config.encode(doc, cur)
+            doc = config.default_slot(config.decode(cur, layout), a.slot, a.name, layout)
+        new, changed = config.encode(doc, cur, layout)
         print("changed:", *changed or ["(nothing)"], sep="\n  ")
         if changed and not a.dry_run:
             dev.write_config(new)
-            if dev.read_config() != new:
+            if not config.same(new, dev.read_config(), layout):
                 sys.exit("verify failed: controller config differs from what was written")
             print("saved and verified")
     elif a.cmd == "theme":
@@ -101,6 +107,6 @@ def _run(a, dev):
         if len(data) != dev.model.cfg_size:
             sys.exit(f"{a.file}: expected {dev.model.cfg_size} bytes, got {len(data)}")
         dev.write_config(data)
-        if dev.read_config() != data:
+        if not config.same(data, dev.read_config(), layout):
             sys.exit("verify failed: controller config differs from the backup")
         print("restored")

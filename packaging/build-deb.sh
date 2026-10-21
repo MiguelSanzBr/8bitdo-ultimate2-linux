@@ -54,7 +54,7 @@ cat > "$DEST/DEBIAN/postinst" <<'EOF'
 set -e
 if [ "$1" = configure ]; then
     udevadm control --reload-rules 2>/dev/null || true
-    udevadm trigger --subsystem-match=hidraw 2>/dev/null || true
+    udevadm trigger --subsystem-match=hidraw --subsystem-match=usb 2>/dev/null || true
     command -v update-desktop-database >/dev/null && update-desktop-database -q /usr/share/applications || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
 fi

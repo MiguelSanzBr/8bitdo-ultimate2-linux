@@ -2,6 +2,21 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+* Support for the **8BitDo Ultimate 2.4G Wireless Controller** (Xbox layout, X / D switch), over a USB cable or its
+  2.4G receiver, as the `ULTIMATE_24G` model. Reverse-engineered from *Ultimate Software V1* (`8BitDoAdvance.dll`) and
+  USBPcap captures of it; tested on a real pad, firmware 2.04, receiver 1.10.
+  * With the switch on D a cable gives its config channel straight away (`2dc8:3012`). On X (`2dc8:3106`) `u2ctl`
+    and `u2gui` send what Windows sends (xusb22's connect packets and the rumble knock, over usbfs) to reach the X
+    configuration (`3012` / `3013`) and switch it back afterwards; the udev rule now also gives access to that USB
+    node.
+  * Over Bluetooth it has no configuration channel: `u2ctl` and `u2gui` say so.
+  * New model fields: `header_crc`, `reports`, `colorway`, `echo_offset`, `own_slot`, `save_wait`, `layout`;
+    `knock` says how the pad is switched (`"rumble"` or `"usb"`). `config.decode`/`encode`/`default_slot` take the
+    model's layout, `config.same` verifies a write without the bytes the firmware owns.
+  * Protocol notes: `docs/ULTIMATE_24G.md` and a summary at the end of `docs/PROTOCOL.md`.
+
 ## 0.1.0-beta.7 — 2026-10-20
 
 * Support for the 1st-gen **8BitDo Ultimate Bluetooth Controller** (charging dock, Nintendo layout), on a USB cable

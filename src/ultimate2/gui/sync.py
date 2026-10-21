@@ -101,7 +101,8 @@ class DeviceSync:
             self._save_job = self.after(300, self.autosave)
             return
         self.gather()
-        new = config.encode(copy.deepcopy(self.doc), self.base)[0]
+        layout = self.model.layout or None
+        new = config.encode(copy.deepcopy(self.doc), self.base, layout)[0]
         span = config.changed_span(self.base, new)
         if not span:
             self.set_status("")
@@ -111,7 +112,7 @@ class DeviceSync:
 
         def job(dev):
             dev.write_config(new, *span)
-            if dev.read_config()[span[0]:span[1]] != new[span[0]:span[1]]:
+            if not config.same(new, dev.read_config(), layout, span):
                 raise IOError(_("verificação falhou: o controle não guardou o que foi enviado"))
 
         def done(_r):
@@ -195,7 +196,7 @@ class DeviceSync:
             self.theme_dev = led_theme
             self.v["theme"].set(led_theme if led_theme in protocol.THEMES else 0)
             self.base = cfg
-            self.doc = config.decode(cfg)
+            self.doc = config.decode(cfg, model.layout or None)
             self.active_slot = self.doc["cur_slot"]
             fw = f"{info['firmware'] / 100:.2f}" if info else "?"
             self.conn = (fw, pad and pad["battery"])
@@ -234,12 +235,12 @@ class DeviceSync:
 
         def job(dev):
             dev.write_config(data)
-            if dev.read_config() != data:
+            if not config.same(data, dev.read_config(), self.model.layout or None):
                 raise IOError(_("verificação falhou"))
 
         def done(_r):
             self.base = data
-            self.doc = config.decode(data)
+            self.doc = config.decode(data, self.model.layout or None)
             self.load()
             self.set_status(_("Backup restaurado e verificado."))
         self.run(_("Restaurando…"), job, done)
