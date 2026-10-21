@@ -32,3 +32,10 @@ def no_real_hardware(request, monkeypatch, tmp_path):
 def no_real_data_folder(monkeypatch, tmp_path):
     """u2gui keeps a copy of the Ultimate 2.4G's configuration in XDG_DATA_HOME: never the real one in tests."""
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
+
+
+@pytest.fixture(autouse=True)
+def cli_in_english(monkeypatch):
+    """u2ctl follows the system language; the tests read its English text unless they pick Portuguese."""
+    from ultimate2 import mensagens
+    monkeypatch.setattr(mensagens, "LANG", "en")

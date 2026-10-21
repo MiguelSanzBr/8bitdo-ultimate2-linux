@@ -20,6 +20,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   kernel's `power_supply` of the HID pad); `u2gui` shows read-only the D configuration kept from the last cable read
   (the one Bluetooth uses), and `u2ctl info` and `u2gui` warn when the X configuration is edited while the pad is on
   Bluetooth.
+* `u2ctl` speaks Brazilian Portuguese when the system does (messages, help, argparse's own words and device errors;
+  `ultimate2.mensagens`), like `u2gui`. English stays the source text.
 * `u2ctl keepalive`: keeps Ultimate 2.4G pads on X read, as Windows does, so a profile change through the receiver no
   longer switches the controller off when no game is open. The .deb installs it as the systemd user service
   `ultimate2-keepalive` and enables it for every user.

@@ -29,7 +29,7 @@ for Windows/macOS. It talks to the controller directly over `/dev/hidraw`. You g
 | Backup / restore of the whole configuration | ✓ | ✓ |
 | Live view of the buttons you press, sticks and triggers | | ✓ |
 | Auto-save (changes are written ~0.4 s later and verified) | | ✓ |
-| Interface in English or Brazilian Portuguese (system language, changeable) | | ✓ |
+| Interface in English or Brazilian Portuguese (system language; changeable in `u2gui`) | ✓ | ✓ |
 
 Tested with an Ultimate 2 Wireless (firmware 1.10) over USB (`2dc8:310b`). The 2.4G dongle (`2dc8:6013`) speaks
 the same protocol once the controller is paired, but this has not been tested yet.
