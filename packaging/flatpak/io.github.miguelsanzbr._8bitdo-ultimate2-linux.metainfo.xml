@@ -71,6 +71,11 @@
     <category>HardwareSettings</category>
   </categories>
   <releases>
+    <release version="0.1.0-beta.8" date="2026-10-22" type="development">
+      <description>
+        <p>Support for the Ultimate 2.4G controller (cable and receiver), u2ctl in Brazilian Portuguese, jscal remaps in the live view.</p>
+      </description>
+    </release>
     <release version="0.1.0-beta.7" date="2026-10-20" type="development">
       <description>
         <p>Support for the 1st-gen Ultimate Bluetooth controller and u2gui web.</p>

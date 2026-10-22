@@ -2,7 +2,7 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0-beta.8 — 2026-10-22
 
 * Support for the **8BitDo Ultimate 2.4G Wireless Controller** (Xbox layout, X / D switch), over a USB cable or its
   2.4G receiver, as the `ULTIMATE_24G` model. Reverse-engineered from *Ultimate Software V1* (`8BitDoAdvance.dll`) and
@@ -15,7 +15,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   * New model fields: `header_crc`, `reports`, `colorway`, `echo_offset`, `own_slot`, `save_wait`, `layout`;
     `knock` says how the pad is switched (`"rumble"` or `"usb"`). `config.decode`/`encode`/`default_slot` take the
     model's layout, `config.same` verifies a write without the bytes the firmware owns.
+  * `2dc8:3106` is shared with other 8BitDo XInput pads and receivers: one that does not switch is left alone
+    afterwards (until it is replugged), so `u2gui`'s retries do not keep rumbling it.
   * Protocol notes: `docs/ULTIMATE_24G.md` and a summary at the end of `docs/PROTOCOL.md`.
+  * Contributed by @alexandreafz (#10–#14).
 * Ultimate 2.4G over Bluetooth: `u2ctl battery` (also in `u2ctl list`) and the `u2gui` badge show its battery (the
   kernel's `power_supply` of the HID pad); `u2gui` shows read-only the D configuration kept from the last cable read
   (the one Bluetooth uses), and `u2ctl info` and `u2gui` warn when the X configuration is edited while the pad is on
@@ -24,7 +27,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   `ultimate2.mensagens`), like `u2gui`. English stays the source text.
 * `u2ctl keepalive`: keeps Ultimate 2.4G pads on X read, as Windows does, so a profile change through the receiver no
   longer switches the controller off when no game is open. The .deb installs it as the systemd user service
-  `ultimate2-keepalive` and enables it for every user.
+  `ultimate2-keepalive` and enables it for every user once (an administrator's `systemctl --global disable` stays).
+* `u2gui`'s live view honours a `jscal` remap of the joystick node (#15, #16).
+* The Backup / Restore file dialogs follow the window's colours, offer `*.bin` and hide hidden files.
 
 ## 0.1.0-beta.7 — 2026-10-20
 
