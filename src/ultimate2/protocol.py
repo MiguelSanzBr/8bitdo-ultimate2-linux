@@ -11,12 +11,20 @@ import struct
 
 VID = 0x2DC8
 PIDS = {0x310B: "wired (XInput)", 0x6012: "Ultimate 2", 0x6013: "2.4G dongle",
-        0x3106: "Ultimate Bluetooth (XInput)", 0x6007: "Ultimate Bluetooth (config mode)"}
+        0x3106: "Ultimate Bluetooth (XInput)", 0x6007: "Ultimate Bluetooth (config mode)",
+        0x3012: "Ultimate 2.4G", 0x3013: "Ultimate 2.4G receiver"}
 # 1st-gen Ultimate Bluetooth (charging dock, Nintendo layout) on a cable: XInput as 0x3106, config channel only
 # after a rumble "knock" switches it to 0x6007. Length-prefixed requests, 1652-byte record, its own commit key.
 # See docs/ULTIMATE_BT.md.
 PID_BT_XINPUT, PID_BT_CONFIG = 0x3106, 0x6007
 BT_PRODUCT = "8BitDo Ultimate Controller"    # USB product string of the pad itself (its 2.4G receiver is also 3106)
+# Ultimate 2.4G (the first Ultimate, Xbox layout; app: PID_Ultimate2_4 / PID_Ultimate2_4RR): with the switch on D a
+# cable shows 0x3012, its config reports inside the gamepad interface; with the switch on X it is an XInput pad
+# (0x3106, cable or receiver) until the Windows connect sequence and the rumble knock bring it to 0x3012 (cable) or
+# 0x3013 (receiver) with the X-mode record. See docs/ULTIMATE_24G.md.
+PIDS_24G = (0x3012, 0x3013)
+PID_24G_IDLE = 0x3109   # its receiver with no pad linked: a vendor interface like the Ultimate 2's, nobody behind it
+CONNECT_24G = (b"\x01\x03\x02", b"\x02\x08\x03", b"\x01\x03\x02", b"\x01\x03\x06")   # xusb22's packets at connect
 CFG_SIZE = 1592          # sizeof(custom_config_record_t_u2)
 CFG_SIZE_BT = 1652       # sizeof(UltimateBTAdvance.custom_config_record_t) in Ultimate Software V1 (2.16)
 CHUNK = 45               # max payload per packet (61-byte frame - 16-byte header)
@@ -52,11 +60,22 @@ def crc16(data):
     return c
 
 
+def crc16_24g(data):
+    """The app's ``ANSI_CRC_16_Ultimate2_4`` (reflected 0x8408, init 0xFFFF, result byte-swapped), for the record."""
+    c = 0xFFFF
+    for b in data:
+        c ^= b
+        for _ in range(8):
+            c = (c >> 1) ^ 0x8408 if c & 1 else c >> 1
+    return (c >> 8) | (c & 0xFF) << 8
+
+
 def build_request(cmd, sub=0, data=b"", total=0, offset=0, length=None, with_crc=True, prefixed=False):
     """64-byte request report. ``length`` pads ``data`` (reads send an empty, zero-padded payload).
 
     ``prefixed``: put the frame length after the report ID (``81 <n+1> 04 …``), as the app does for every
-    PID outside the Ultimate 2 family, e.g. the Ultimate Bluetooth in config mode."""
+    PID outside the Ultimate 2 family, e.g. the Ultimate Bluetooth in config mode. Without ``with_crc`` the CRC
+    field is 0, which is also the Ultimate 2.4G's header (``u32 len``, no CRC: the DLL's ``readUltimate2_4``)."""
     length = len(data) if length is None else length
     data = data.ljust(length, b"\0")
     c = crc16(data) if with_crc else 0

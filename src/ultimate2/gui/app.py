@@ -17,7 +17,7 @@ from .i18n import _
 from .live_input import PadInput
 from .pages import Pages
 from .sync import DeviceSync
-from .theme import BG, DEFAULT_SKIN, EDITION_SKINS, FG, MUTED, SKINS, TILE, WARN
+from .theme import BG, DANGER, DEFAULT_SKIN, EDITION_SKINS, FG, MUTED, SKINS, TILE, WARN
 from .widgets import Pill, Select, panel
 
 SETTINGS = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ultimate2", "gui.json")
@@ -79,6 +79,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self._remapped = set()
         self._closing = False
         self.conn = None         # connection badge state of the last successful read
+        self.readonly = False    # Ultimate 2.4G on Bluetooth: showing the copy kept from the last cable read
         self._style()
         self._vars()
         self._build()
@@ -136,6 +137,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         else:
             self.xr_card.pack(side="left", fill="both", expand=True, padx=int(6 * self.s), pady=int(6 * self.s))
         self.map_help.configure(text=self.map_help_text())
+        self.build_map_chips()
         if self.sel_btn not in self.buttons:
             self.sel_btn = "A"
         self.apply_skin(self.skin)
@@ -145,7 +147,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         if self.model.knock:                     # the GUI kept the controller in config mode: give it back
             device.leave_config_mode()
         for job in self.tk.splitlist(self.tk.call("after", "info")):   # timers would outlive the window
-            self.after_cancel(job)
+            self.tk.call("after", "cancel", job)   # not after_cancel: Tk's own idle jobs (file dialog) break it on 3.13
         super().destroy()
 
     font = staticmethod(theme.font)
@@ -154,6 +156,38 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         st = ttk.Style(self)
         st.theme_use("clam")
         st.configure(".", background=BG, foreground=FG, font=theme.font(10))
+        self._style_file_dialog(st)
+
+    def _style_file_dialog(self, st):
+        """Tk's file dialog (backups) in the window's colours: it is the only user of the ttk widgets besides the
+        message boxes. Its file list is a plain canvas, white with black names whatever the theme: recoloured right
+        after Tk builds the dialog. Hidden files are left out, behind its "show hidden" check box."""
+        edge = dict(bordercolor=theme.LINE, lightcolor=TILE, darkcolor=TILE)
+        st.configure("TEntry", fieldbackground=TILE, foreground=FG, insertcolor=FG, selectbackground=theme.SEL_FILL,
+                     selectforeground=FG, **edge)
+        st.map("TEntry", fieldbackground=[("disabled", BG)], foreground=[("disabled", MUTED)])
+        for w in ("TButton", "TMenubutton"):
+            st.configure(w, background=TILE, foreground=FG, arrowcolor=FG, padding=(10, 4), **edge)
+            st.map(w, background=[("disabled", BG), ("active", theme.TILE_HI)], foreground=[("disabled", MUTED)])
+        st.configure("TCheckbutton", indicatorbackground=TILE, indicatorforeground=FG)
+        st.map("TCheckbutton", background=[("active", BG)], indicatorbackground=[("pressed", theme.TILE_HI)])
+        st.configure("TScrollbar", background=TILE, troughcolor=BG, arrowcolor=FG, gripcount=0, **edge)
+        st.map("TScrollbar", background=[("active", theme.TILE_HI)])
+        for k, v in (("background", TILE), ("foreground", FG), ("activeBackground", theme.TILE_HI),
+                     ("activeForeground", FG), ("font", theme.font(10))):
+            self.option_add(f"*TkFDialog*Menu.{k}", v)        # the directory and file type drop-downs
+        self.tk.eval("auto_load ::tk::dialog::file::")
+        self.tk.eval("set ::tk::dialog::file::showHiddenBtn 1; set ::tk::dialog::file::showHiddenVar 0")
+        self.tk.eval(f"""proc ::u2_file_dialog {{cmd args}} {{
+            set icons [lindex $cmd 1].contents.icons
+            $icons.cHull.canvas configure -background {TILE} -width 5.5i -height 2.5i
+            set [info object namespace $icons]::fill {FG}
+        }}""")
+        self.tk.eval("trace add execution ::tk::dialog::file::Create leave ::u2_file_dialog")
+        self.tk.eval("""namespace eval ::tk {
+            ::msgcat::mcset pt "Show &Hidden Files and Directories" "Mostrar arquivos e pastas &ocultos"
+            ::msgcat::mcset pt "Show &Hidden Directories" "Mostrar pastas &ocultas"
+        }""")                                             # Tk's own Portuguese catalog lacks these two
 
     def _vars(self):
         V, I, B = tk.StringVar, tk.IntVar, tk.BooleanVar
@@ -195,6 +229,19 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
                                     wraplength=int(760 * s))
         self.banner_text.pack(side="left", fill="x", expand=True)
         self.banner_btn = self.button(banner_in, _("Editar o perfil ativo"), lambda: self.select_slot(self.active_slot))
+        # Ultimate 2.4G on Bluetooth only: no config channel; shows the copy kept from the last cable read
+        self.btinfo, btinfo_in = panel(self, s, fill="#2b2618", pady=10)
+        self.btinfo_text = tk.Label(btinfo_in, bg="#2b2618", fg=WARN, font=theme.font(9), anchor="w", justify="left",
+                                    wraplength=int(900 * s))
+        self.btinfo_text.pack(side="left", fill="x", expand=True)
+        # Ultimate 2.4G: editing the X configuration (receiver) while the pad plays on Bluetooth (D configuration)
+        self.conflict, conflict_in = panel(self, s, fill="#3a1d1d", pady=10)
+        tk.Label(conflict_in, text=_("Atenção: o controle está conectado pelo Bluetooth, mas você está editando a "
+                                     "configuração do modo X (receptor). O Bluetooth usa a configuração do modo D, então "
+                                     "estas mudanças NÃO valem nele. Para editar o que vale no Bluetooth, desconecte o "
+                                     "receptor e ligue o cabo USB com a chave em D."),
+                 bg="#3a1d1d", fg=DANGER, font=theme.font(9, "bold"), anchor="w", justify="left",
+                 wraplength=int(900 * s)).pack(side="left", fill="x", expand=True)
 
         foot = tk.Frame(self, bg=BG)
         foot.pack(side="bottom", fill="x", padx=int(24 * s), pady=int(14 * s))

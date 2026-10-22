@@ -2,7 +2,7 @@
 import tkinter as tk
 
 from . import i18n, theme
-from .catalog import DISPLAY, GYRO_KEYS, KEY_NAMES, LED_TARGETS, SECTIONS
+from .catalog import GYRO_KEYS, KEY_NAMES_FOR, LED_TARGETS, SECTIONS
 from .drawing import rounded
 from .geometry import HEIGHT, HOME_OFFSET, WIDTH
 from .i18n import LANGS, _
@@ -55,7 +55,8 @@ class Pages:
         Toggle(r, var, self.s).pack(side="right")
 
     def chips(self, parent, var, options, cols):
-        """Grid of selectable chips bound to a variable (options: list of ``(value, label)``)."""
+        """Grid of selectable chips bound to a variable (options: list of ``(value, label)``); returns ``(grid, trace)``
+        so a grid can be rebuilt."""
         s = self.s
         grid = tk.Frame(parent, bg=parent["bg"])
         grid.pack(fill="x", pady=int(4 * s))
@@ -71,8 +72,9 @@ class Pages:
             for value, c in labels:
                 on = str(var.get()) == str(value)
                 c.set(fill=ACCENT if on else TILE_HI, fg=BG if on else FG)
-        var.trace_add("write", paint)
+        trace = var.trace_add("write", paint)
         paint()
+        return grid, trace
 
     # ------------------------------------------------------------ pages
     def _p_home(self, parent):
@@ -123,8 +125,20 @@ class Pages:
         self.map_choice = tk.StringVar()
         self.map_choice.trace_add("write", lambda *_: self.v["keys"][self.sel_btn].get() != self.map_choice.get()
                                   and self.v["keys"][self.sel_btn].set(self.map_choice.get()))
-        self.chips(right, self.map_choice, [(k, DISPLAY.get(k, k)) for k in KEY_NAMES], 4)   # output functions
+        self.map_chips = (tk.Frame(right, bg=TILE), None)
+        self.map_chips[0].pack(fill="x")
+        self.build_map_chips()
         self.button(right, _("Restaurar todos os botões"), self.reset_mapping).pack(anchor="w", pady=(int(10 * s), 0))
+
+    def build_map_chips(self):
+        """The output functions the connected controller can assign (rebuilt when another model is read)."""
+        holder, trace = self.map_chips
+        if trace:
+            self.map_choice.trace_remove("write", trace)
+        for w in holder.winfo_children():
+            w.destroy()
+        self.map_chips = (holder, self.chips(holder, self.map_choice, [(k, self.display.get(k, k)) for k in
+                                                                       KEY_NAMES_FOR[self.model.key]], 4)[1])
 
     def map_help_text(self):
         if "P3" not in self.model.buttons:                # no L4/R4: only the back paddles

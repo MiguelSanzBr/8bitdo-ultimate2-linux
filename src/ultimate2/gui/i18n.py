@@ -131,4 +131,22 @@ EN = {
     "Clique num botão do controle para escolher a função dele.\nP1/P2: botões traseiros · ★: estrela/turbo.":
         "Click a button on the controller to choose its function.\nP1/P2: back buttons · ★: star/turbo.",
     "Traseiros P1 / P2": "Back buttons P1 / P2",
+    "Atenção: o controle está conectado pelo Bluetooth, mas você está editando a configuração do modo X (receptor). "
+    "O Bluetooth usa a configuração do modo D, então estas mudanças NÃO valem nele. Para editar o que vale no "
+    "Bluetooth, desconecte o receptor e ligue o cabo USB com a chave em D.":
+        "Warning: the controller is connected over Bluetooth, but you are editing the X-mode configuration (receiver). "
+        "Bluetooth uses the D-mode configuration, so these changes do NOT apply there. To edit what applies on "
+        "Bluetooth, unplug the receiver and connect the USB cable with the switch on D.",
+    "Somente leitura no Bluetooth: ligue o cabo USB (chave em D) para mudar.":
+        "Read-only over Bluetooth: connect the USB cable (switch on D) to change it.",
+    "Controle conectado pelo Bluetooth, que não permite ler nem gravar a configuração.":
+        "Controller connected over Bluetooth, which cannot read or write the configuration.",
+    "Mostrando a última configuração lida pelo cabo, em {} (somente leitura); é a que vale no Bluetooth. Para mudar, "
+    "ligue o cabo USB com a chave em D.":
+        "Showing the last configuration read over the cable, on {} (read-only); it is the one Bluetooth uses. To "
+        "change it, connect the USB cable with the switch on D.",
+    "Ligue o cabo USB (chave em D) uma vez para o programa guardar e mostrar a configuração.":
+        "Connect the USB cable (switch on D) once so the program keeps and shows the configuration.",
+    "Bateria: {}%.": "Battery: {}%.",
+    "Bluetooth: somente leitura.": "Bluetooth: read-only.",
 }

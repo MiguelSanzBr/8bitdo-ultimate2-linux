@@ -1,3 +1,5 @@
 # 8BitDo controllers/dongles: give the logged-in user access to the hidraw config interface.
 # Must sort before 73-seat-late.rules, which turns the uaccess tag into an ACL (a 99-* rule never takes effect).
 KERNEL=="hidraw*", ATTRS{idVendor}=="2dc8", TAG+="uaccess"
+# Ultimate 2.4G in XInput mode (2dc8:3106): its USB device node, to send the sequence that opens its config mode
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="2dc8", ATTR{idProduct}=="3106", TAG+="uaccess"

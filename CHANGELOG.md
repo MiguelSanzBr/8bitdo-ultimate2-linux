@@ -2,6 +2,30 @@
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+* Support for the **8BitDo Ultimate 2.4G Wireless Controller** (Xbox layout, X / D switch), over a USB cable or its
+  2.4G receiver, as the `ULTIMATE_24G` model. Reverse-engineered from *Ultimate Software V1* (`8BitDoAdvance.dll`) and
+  USBPcap captures of it; tested on a real pad, firmware 2.04, receiver 1.10.
+  * With the switch on D a cable gives its config channel straight away (`2dc8:3012`). On X (`2dc8:3106`) `u2ctl`
+    and `u2gui` send what Windows sends (xusb22's connect packets and the rumble knock, over usbfs) to reach the X
+    configuration (`3012` / `3013`) and switch it back afterwards; the udev rule now also gives access to that USB
+    node.
+  * Over Bluetooth it has no configuration channel: `u2ctl` and `u2gui` say so.
+  * New model fields: `header_crc`, `reports`, `colorway`, `echo_offset`, `own_slot`, `save_wait`, `layout`;
+    `knock` says how the pad is switched (`"rumble"` or `"usb"`). `config.decode`/`encode`/`default_slot` take the
+    model's layout, `config.same` verifies a write without the bytes the firmware owns.
+  * Protocol notes: `docs/ULTIMATE_24G.md` and a summary at the end of `docs/PROTOCOL.md`.
+* Ultimate 2.4G over Bluetooth: `u2ctl battery` (also in `u2ctl list`) and the `u2gui` badge show its battery (the
+  kernel's `power_supply` of the HID pad); `u2gui` shows read-only the D configuration kept from the last cable read
+  (the one Bluetooth uses), and `u2ctl info` and `u2gui` warn when the X configuration is edited while the pad is on
+  Bluetooth.
+* `u2ctl` speaks Brazilian Portuguese when the system does (messages, help, argparse's own words and device errors;
+  `ultimate2.mensagens`), like `u2gui`. English stays the source text.
+* `u2ctl keepalive`: keeps Ultimate 2.4G pads on X read, as Windows does, so a profile change through the receiver no
+  longer switches the controller off when no game is open. The .deb installs it as the systemd user service
+  `ultimate2-keepalive` and enables it for every user.
+
 ## 0.1.0-beta.7 — 2026-10-20
 
 * Support for the 1st-gen **8BitDo Ultimate Bluetooth Controller** (charging dock, Nintendo layout), on a USB cable
