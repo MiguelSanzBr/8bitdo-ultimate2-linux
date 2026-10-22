@@ -95,9 +95,11 @@ def test_restore_verifies_without_what_the_firmware_owns(u24app, u24fake, dlg, t
     assert "restaurado" in u24app.status.cget("text") and u24fake.saves == 1 and bytes(u24fake.cfg) != REAL
 
 
-def test_joystick_numbering(u24app):
+def test_joystick_numbering(u24app, monkeypatch):
     a = u24app
-    a.pad_event(1, 1, 3)                                        # js button 3 is X on its generic HID node
+    monkeypatch.setattr(a, "js_axes", {})                       # what js_maps() read from its node: not used for it
+    monkeypatch.setattr(a, "js_buttons", {})
+    a.pad_event(1, 1, 3)                                       # js button 3 is X on its generic HID node
     a.pad_event(1, 1, 13)                                       # and 13 is L3
     assert {"X", "L3"} <= a.pad_down
     a.pad_event(32767, 2, 5)                                    # axis 5 is LT: xpad's axis 2

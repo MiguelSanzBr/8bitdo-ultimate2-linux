@@ -1,4 +1,6 @@
 """Mixin: live input from the controller's joystick node (pressed buttons, triggers, sticks, d-pad)."""
+import array
+import fcntl
 import os
 import struct
 import time
@@ -8,16 +10,36 @@ from .catalog import LIVE_BITS
 
 LIVE_POLL = 0.05         # live-state polling interval for live_by_query models (the Ultimate Bluetooth app asks ~20/s)
 JS_BUTTONS = ["A", "B", "X", "Y", "LB", "RB", "Select", "Start", "Home", "L3", "R3"]   # xpad js button order
-# controllers whose js node is not xpad's: model key -> (button number -> name, axis number -> xpad's axis number).
-# The Ultimate 2.4G's config mode is a generic HID pad: 16 buttons (Star and the paddles send none of their own) and
-# axes LX LY RX RY RT LT hat-X hat-Y
-JS_MAPS = {"ultimate_24g": ({0: "A", 1: "B", 3: "X", 4: "Y", 6: "LB", 7: "RB", 8: "LT", 9: "RT", 10: "Select",
-                             11: "Start", 12: "Home", 13: "L3", 14: "R3"}, {2: 3, 3: 4, 4: 5, 5: 2})}
+# controllers whose js node is not xpad's: model key -> (js axis -> drawing axis, js button -> name), used instead
+# of js_maps(). The Ultimate 2.4G's config mode is a generic HID pad: 16 buttons (Star and the paddles send none of
+# their own) and axes LX LY RX RY RT LT hat-X hat-Y
+JS_MAPS = {"ultimate_24g": ({0: 0, 1: 1, 2: 3, 3: 4, 4: 5, 5: 2, 6: 6, 7: 7},
+                            {0: "A", 1: "B", 3: "X", 4: "Y", 6: "LB", 7: "RB", 8: "LT", 9: "RT", 10: "Select",
+                             11: "Start", 12: "Home", 13: "L3", 14: "R3"})}
 JS_EVENT = "<IhBB"       # struct js_event: u32 time, s16 value, u8 type, u8 number
 JS_BUTTON, JS_AXIS, JS_INIT = 1, 2, 0x80
+JSIOCGAXMAP = 0x80406A32    # _IOR('j', 0x32, __u8[ABS_CNT]): js axis -> ABS_* code
+JSIOCGBTNMAP = 0x84006A34   # _IOR('j', 0x34, __u16[KEY_MAX - BTN_MISC + 1]): js button -> BTN_* code
+ABS_AXES = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 16: 6, 17: 7}   # ABS_X..ABS_RZ, ABS_HAT0X/Y -> drawing axis
+BTN_NAMES = dict(zip((0x130, 0x131, 0x133, 0x134, 0x136, 0x137, 0x13A, 0x13B, 0x13C, 0x13D, 0x13E), JS_BUTTONS))
+
+
+def js_maps(fd):
+    """(axes, buttons): js number -> drawing axis / button name, honouring a ``jscal`` remap; xpad order if unreadable."""
+    try:
+        ax, bt = bytearray(64), array.array("H", bytes(1024))
+        fcntl.ioctl(fd, JSIOCGAXMAP, ax)
+        fcntl.ioctl(fd, JSIOCGBTNMAP, bt)
+    except OSError:              # event* node, or no joydev ioctls
+        return PadInput.js_axes, PadInput.js_buttons
+    return ({n: ABS_AXES[c] for n, c in enumerate(ax) if c in ABS_AXES},
+            {n: BTN_NAMES[c] for n, c in enumerate(bt) if c in BTN_NAMES})
 
 
 class PadInput:
+    js_axes = {n: n for n in range(8)}         # js axis number -> drawing axis (see pad_event)
+    js_buttons = dict(enumerate(JS_BUTTONS))   # js button number -> button name
+
     def _read_pad(self):
         """Background thread: follow the real controller's buttons/axes; reconnects every second."""
         while not self._closing:
@@ -42,6 +64,7 @@ class PadInput:
             if fd is None:
                 time.sleep(1)
                 continue
+            self.js_axes, self.js_buttons = js_maps(fd)
             try:
                 while not self._closing:
                     ev = os.read(fd, 8)
@@ -91,16 +114,16 @@ class PadInput:
     def pad_event(self, value, kind, number):
         """One js_event: kind 1 = button, 2 = axis; bit 0x80 marks the initial-state burst (no ripple).
 
-        Axes: 0/1 left stick, 2 LT, 3/4 right stick, 5 RT, 6/7 d-pad (xpad's numbers; :data:`JS_MAPS` translates
-        other nodes to them).
+        Drawing axes: 0/1 left stick, 2 LT, 3/4 right stick, 5 RT, 6/7 d-pad; js numbers go through :data:`JS_MAPS`
+        for nodes that are not xpad's, else through :attr:`js_axes` / :attr:`js_buttons`, so a ``jscal`` remap is undone.
         """
         init = kind & JS_INIT
         kind &= ~JS_INIT & 0xFF
-        buttons, axes = JS_MAPS.get(self.model.key, (dict(enumerate(JS_BUTTONS)), {}))
+        axes, buttons = JS_MAPS.get(self.model.key) or (self.js_axes, self.js_buttons)   # model may change after open
         if kind == JS_BUTTON and number in buttons:
             self._pad_set(buttons[number], value != 0, init)
-        elif kind == JS_AXIS:
-            number = axes.get(number, number)
+        elif kind == JS_AXIS and number in axes:
+            number = axes[number]
             self.pad_axes[number] = value
             if number == 6:
                 self._pad_set("Left", value < 0, init)
