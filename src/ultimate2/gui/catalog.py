@@ -30,7 +30,10 @@ def sections(model):
 
 
 # names printed on each controller where they differ from the internal ones (the Ultimate Bluetooth prints P1/P2)
-DISPLAY_FOR = {"ultimate2": DISPLAY, "ultimate_bt": {}}
+DISPLAY_FOR = {"ultimate2": DISPLAY, "ultimate_bt": {}, "ultimate_24g": {}}
+# functions each controller can assign, in display order (the Ultimate 2.4G has no P3-P5 or stick directions)
+KEY_NAMES_FOR = {"ultimate2": KEY_NAMES, "ultimate_bt": KEY_NAMES,
+                 "ultimate_24g": [k for k in KEY_NAMES if k in config.KEYCODES_24G.values()]}
 # models with ``live_by_query``: key-code bits of the polled live state -> physical button (Nintendo labels)
 LIVE_BITS = {"ultimate_bt": {0x2000: "A", 0x1000: "B", 0x10: "X", 0x20: "Y", 0x400: "LB", 0x800: "RB", 0x4000: "LT", 0x8000: "RT",
            0x8: "Select", 0x1: "Start", 0x20000: "Home", 0x10000: "Star", 0x2: "L3", 0x4: "R3",

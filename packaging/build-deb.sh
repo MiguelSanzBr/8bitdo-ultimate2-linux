@@ -9,7 +9,7 @@ STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 DEST="$STAGE/${PKG}_${VERSION}_all"
 
-install -d "$DEST/DEBIAN" "$DEST/usr/bin" "$DEST/usr/lib/python3/dist-packages" \
+install -d "$DEST/DEBIAN" "$DEST/usr/bin" "$DEST/usr/lib/python3/dist-packages" "$DEST/usr/lib/systemd/user" \
     "$DEST/usr/lib/udev/rules.d" "$DEST/usr/share/applications" \
     "$DEST/usr/share/icons/hicolor/scalable/apps" "$DEST/usr/share/doc/$PKG"
 
@@ -26,6 +26,7 @@ for cmd in u2ctl:ultimate2.cli u2gui:ultimate2.gui.app; do
 done
 
 install -m 644 "$ROOT/udev/70-8bitdo-u2.rules" "$DEST/usr/lib/udev/rules.d/"
+install -m 644 "$ROOT/packaging/ultimate2-keepalive.service" "$DEST/usr/lib/systemd/user/"
 install -m 644 "$ROOT/packaging/u2gui.desktop" "$DEST/usr/share/applications/"
 install -m 644 "$ROOT/packaging/ultimate2.svg" "$DEST/usr/share/icons/hicolor/scalable/apps/"
 install -m 644 "$ROOT/README.md" "$ROOT/CHANGELOG.md" "$DEST/usr/share/doc/$PKG/"
@@ -54,7 +55,8 @@ cat > "$DEST/DEBIAN/postinst" <<'EOF'
 set -e
 if [ "$1" = configure ]; then
     udevadm control --reload-rules 2>/dev/null || true
-    udevadm trigger --subsystem-match=hidraw 2>/dev/null || true
+    udevadm trigger --subsystem-match=hidraw --subsystem-match=usb 2>/dev/null || true
+    systemctl --global enable ultimate2-keepalive.service 2>/dev/null || true   # starts at the next login
     command -v update-desktop-database >/dev/null && update-desktop-database -q /usr/share/applications || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
 fi
@@ -63,6 +65,9 @@ cat > "$DEST/DEBIAN/postrm" <<'EOF'
 #!/bin/sh
 set -e
 udevadm control --reload-rules 2>/dev/null || true
+if [ "$1" = remove ] || [ "$1" = purge ]; then
+    systemctl --global disable ultimate2-keepalive.service 2>/dev/null || true
+fi
 EOF
 chmod 755 "$DEST/DEBIAN/postinst" "$DEST/DEBIAN/postrm"
 

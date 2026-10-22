@@ -129,3 +129,17 @@ Same frames, commands and answers, with these differences (full notes in [ULTIMA
 | reports | `CMD_REPORT` 0/1 around writes | `CMD_REPORT` 0 opens the session; once 1, config requests go unanswered |
 | version | `CMD_INFO` | `81 05 00 21 01` only (`CMD_INFO` unanswered) |
 | live input | XInput / js node | `CMD_LIVE` (`3`, sub `0x15`): u32 button key codes, LX LY RX RY RT LT |
+
+## Ultimate 2.4G
+
+The Ultimate Bluetooth's sibling with an Xbox layout (full notes in [ULTIMATE_24G.md](ULTIMATE_24G.md)):
+
+| | Ultimate Bluetooth | Ultimate 2.4G |
+|---|---|---|
+| config channel | rumble knock from `3106` → `6007` | on D, a cable is `3012` already; on X (`3106`, cable or receiver) xusb22's connect packets + the knock over usbfs → `3012` / `3013`; `81 05 00 51 02` switches it back |
+| request frame | `81 <n+1> 04 <header> <data>` | the same, with no CRC in the header (`u32 len`); answers echo the offset |
+| record | 1652 bytes | 1652 bytes, same offsets; names UTF-16LE, its own key codes; the firmware keeps `cur_slot` and stores a save counter in `crc_value` |
+| save | `CMD_COMMIT` sub `0x15` | the same |
+| reports | `CMD_REPORT` 0 opens the session | no `CMD_REPORT` |
+| version | `81 05 00 21 01`, byte 6 = colorway | the same, byte 6 = PID |
+| live input | `CMD_LIVE` | generic HID js node, its own numbering |

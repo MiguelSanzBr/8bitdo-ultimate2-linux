@@ -2,7 +2,7 @@
 import copy
 
 from .. import config
-from .catalog import GYRO_KEYS, KEY_NAMES, LED_TARGETS
+from .catalog import GYRO_KEYS, KEY_NAMES_FOR, LED_TARGETS
 from .drawing import set_color
 from .i18n import _
 from .theme import ACCENT, FG, LINE, TILE_HI
@@ -12,7 +12,8 @@ from .widgets import Pill
 class Editor:
     def _defaults(self, n):
         """Slot ``n`` as the Windows app would create it."""
-        return config.default_slot(copy.deepcopy(self.doc), n, _("Perfil {}").format(n + 1))["slots"][n]
+        return config.default_slot(copy.deepcopy(self.doc), n, _("Perfil {}").format(n + 1),
+                                   self.model.layout or None)["slots"][n]
 
     def load(self, s=None):
         """Show slot ``self.slot`` (or the given slot dict) in the widgets without triggering auto-save."""
@@ -35,7 +36,7 @@ class Editor:
         dflt = self._defaults(n)
         for b in self.buttons:
             k = s["mapping"].get(b)
-            v["keys"][b].set(k if k in KEY_NAMES else dflt["mapping"][b])
+            v["keys"][b].set(k if k in KEY_NAMES_FOR[self.model.key] else dflt["mapping"][b])
         for sec, key in (("sticks", "sticks"), ("triggers", "triggers"), ("xr", "xinput_rumble")):
             if key not in s:                  # the Ultimate Bluetooth has no trigger rumble, gyro or LEDs
                 continue
