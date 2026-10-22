@@ -56,20 +56,27 @@ set -e
 if [ "$1" = configure ]; then
     udevadm control --reload-rules 2>/dev/null || true
     udevadm trigger --subsystem-match=hidraw --subsystem-match=usb 2>/dev/null || true
-    systemctl --global enable ultimate2-keepalive.service 2>/dev/null || true   # starts at the next login
+    # once (fresh install, or upgrade from before the service): an admin's later --global disable stays
+    if [ -z "$2" ] || dpkg --compare-versions "$2" lt 0.1.0~beta8; then
+        systemctl --global enable ultimate2-keepalive.service 2>/dev/null || true   # starts at the next login
+    fi
     command -v update-desktop-database >/dev/null && update-desktop-database -q /usr/share/applications || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q /usr/share/icons/hicolor || true
+fi
+EOF
+cat > "$DEST/DEBIAN/prerm" <<'EOF'
+#!/bin/sh
+set -e
+if [ "$1" = remove ]; then                     # while the unit file is still there to disable
+    systemctl --global disable ultimate2-keepalive.service 2>/dev/null || true
 fi
 EOF
 cat > "$DEST/DEBIAN/postrm" <<'EOF'
 #!/bin/sh
 set -e
 udevadm control --reload-rules 2>/dev/null || true
-if [ "$1" = remove ] || [ "$1" = purge ]; then
-    systemctl --global disable ultimate2-keepalive.service 2>/dev/null || true
-fi
 EOF
-chmod 755 "$DEST/DEBIAN/postinst" "$DEST/DEBIAN/postrm"
+chmod 755 "$DEST/DEBIAN/postinst" "$DEST/DEBIAN/prerm" "$DEST/DEBIAN/postrm"
 
 mkdir -p "$ROOT/dist"
 fakeroot dpkg-deb --build "$DEST" "$ROOT/dist/${PKG}_${VERSION}_all.deb" >/dev/null 2>&1 \

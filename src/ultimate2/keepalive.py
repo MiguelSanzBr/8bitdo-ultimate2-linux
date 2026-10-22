@@ -26,15 +26,17 @@ def find_nodes():
 
 def run(rounds=None, scan=1.0):
     """Hold every pad's node open and drain it; rescan for new pads every ``scan`` seconds (``rounds``: tests)."""
-    held = {}                                          # node -> fd
+    held, due = {}, 0.0                                # node -> fd; when to rescan
     try:
         for _ in itertools.count() if rounds is None else range(rounds):
-            for node in find_nodes():
-                if node not in held:
-                    try:
-                        held[node] = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
-                    except OSError:                    # not readable yet (udev still setting the ACL)
-                        pass
+            if time.monotonic() >= due:                # not on every input event: a game sends hundreds a second
+                due = time.monotonic() + scan
+                for node in find_nodes():
+                    if node not in held:
+                        try:
+                            held[node] = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
+                        except OSError:                # not readable yet (udev still setting the ACL)
+                            pass
             ready = select.select(list(held.values()), [], [], scan)[0] if held else time.sleep(scan) or []
             for node, fd in list(held.items()):
                 if fd in ready:

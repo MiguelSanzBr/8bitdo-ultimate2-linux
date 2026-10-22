@@ -46,7 +46,7 @@ def test_keepalive_holds_drains_and_reopens(tmp_path, monkeypatch):
         return fd
     monkeypatch.setattr(keepalive.os, "open", track_open)
     monkeypatch.setattr(keepalive.os, "close", lambda fd: closed.append(fd) or real_close(fd))
-    keepalive.run(rounds=3, scan=0.01)
+    keepalive.run(rounds=3, scan=0)                    # scan=0: rescan every round
     os.close(writer)
     names = [n for n, _fd in opened]
     assert names.count("js3") == 1                     # quiet but there: held the whole time
@@ -84,3 +84,13 @@ def test_keepalive_runs_until_stopped(tmp_path, monkeypatch):
     with pytest.raises(KeyboardInterrupt):
         keepalive.run()
     assert ticks == [1.0, 1.0, 1.0]
+
+
+def test_keepalive_does_not_rescan_on_every_event(tmp_path, monkeypatch):
+    monkeypatch.setattr(discovery, "SYS", str(tmp_path))
+    clock, scans = iter([0.0, 0.0, 0.3, 0.6, 1.0, 1.0]), []
+    monkeypatch.setattr(keepalive.time, "monotonic", lambda: next(clock))
+    monkeypatch.setattr(keepalive.time, "sleep", lambda s: None)
+    monkeypatch.setattr(keepalive, "find_nodes", lambda: scans.append(1) or [])
+    keepalive.run(rounds=4, scan=1.0)                  # rounds at t=0, 0.3, 0.6, 1.0: scans at 0 and 1.0
+    assert len(scans) == 2
