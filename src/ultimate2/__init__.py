@@ -10,4 +10,4 @@ Package layout:
 * :mod:`ultimate2.gui`       — the ``u2gui`` Tk interface.
 """
 
-__version__ = "0.1.0b7"
+__version__ = "0.1.0b8"
