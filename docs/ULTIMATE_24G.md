@@ -48,6 +48,11 @@ Bluetooth.
 A cable on D is `3012` too, and must not be "switched back": only the interfaces this process switched are given
 back (`device.SWITCHED`).
 
+`2dc8:3106` is not only this pad: other 8BitDo XInput pads and receivers (Ultimate C 2.4G, the Ultimate Bluetooth's
+receiver, Pro 2 Wired) use it too, with product strings that vary by firmware. A `3106` that does not come back as
+`3012`/`3013` after the sequence is remembered (`device.NOT_24G`) and never switched again until it re-enumerates, so
+`u2gui`'s retries do not keep taking it from `xpad` and rumbling it.
+
 ## Protocol in config mode
 
 ```

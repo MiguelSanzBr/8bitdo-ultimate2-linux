@@ -147,7 +147,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         if self.model.knock:                     # the GUI kept the controller in config mode: give it back
             device.leave_config_mode()
         for job in self.tk.splitlist(self.tk.call("after", "info")):   # timers would outlive the window
-            self.after_cancel(job)
+            self.tk.call("after", "cancel", job)   # not after_cancel: Tk's own idle jobs (file dialog) break it on 3.13
         super().destroy()
 
     font = staticmethod(theme.font)

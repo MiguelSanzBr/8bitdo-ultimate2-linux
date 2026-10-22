@@ -22,6 +22,7 @@ USBDEVFS_CLAIMINTERFACE, USBDEVFS_RELEASEINTERFACE = 0x8004550F, 0x80045510
 USBDEVFS_DISCONNECT, USBDEVFS_CONNECT = 0x5516, 0x5517
 EP_OUT_24G = 0x02
 SWITCHED = set()         # config interfaces this process switched an Ultimate 2.4G to (leave_config_mode gives them back)
+NOT_24G = set()          # usbfs nodes a usb_knock did not switch: other 8BitDo pads share 3106, never knock them again
 
 
 def knock(node):
@@ -94,7 +95,7 @@ def _find_or_knock():
     node, model = discovery.find_bt_xinput(), models.ULTIMATE_BT
     if not node:
         node, model = discovery.find_24g_xinput(), models.ULTIMATE_24G
-    if not node:
+    if not node or node in NOT_24G:
         return devs, False
     try:
         (knock if model.knock == "rumble" else usb_knock)(node)
@@ -115,6 +116,7 @@ def _find_or_knock():
                 SWITCHED.update(d[0] for d in devs)
             return devs, True
     if model.knock == "usb":
+        NOT_24G.add(node)                    # a replug or reconnection gives it a new node, and another try
         sys.exit("the Ultimate 2.4G did not switch to config mode (is the controller on and connected?)")
     # now and then the pad powers off instead of coming back (same bytes, cause unknown)
     sys.exit("the Ultimate Bluetooth did not switch to config mode (if it turned off, press Home and try again)")

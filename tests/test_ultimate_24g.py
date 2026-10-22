@@ -259,6 +259,7 @@ def on_x(monkeypatch, u24):
     monkeypatch.setattr(device, "usb_knock", lambda node: state["knocked"].append(node))
     monkeypatch.setattr(device.time, "sleep", lambda s: None)
     device.SWITCHED.clear()
+    device.NOT_24G.clear()
     return state
 
 
@@ -315,6 +316,7 @@ def test_switch_failures(on_x, monkeypatch):
     monkeypatch.setattr(device, "KNOCK_WAIT", 0)
     with pytest.raises(SystemExit, match="Ultimate 2.4G did not switch"):
         Device(knock=True)
+    device.NOT_24G.clear()
 
     def denied(node):
         raise PermissionError(13, "Permission denied")
@@ -334,6 +336,22 @@ def test_switch_failures(on_x, monkeypatch):
     monkeypatch.setattr(device, "usb_knock", timed_out)
     with pytest.raises(SystemExit, match="Ultimate 2.4G did not switch to config mode"):
         Device(knock=True)
+
+
+def test_another_3106_pad_is_knocked_only_once(on_x, monkeypatch):
+    """2dc8:3106 is shared (Ultimate C 2.4G, other receivers): the GUI retries every few seconds and must not keep
+    taking such a pad from xpad and rumbling it."""
+    monkeypatch.setattr(device, "KNOCK_WAIT", 0)
+    monkeypatch.setattr(discovery, "find_devices", lambda: iter([]))  # it never comes back as a config interface
+    with pytest.raises(SystemExit, match="Ultimate 2.4G did not switch"):
+        Device(knock=True)
+    with pytest.raises(SystemExit, match="no 8BitDo"):
+        Device(knock=True)
+    assert on_x["knocked"] == ["/devx/bus/usb/003/009"]
+    monkeypatch.setattr(discovery, "find_24g_xinput", lambda: "/devx/bus/usb/003/012")   # replugged: a new node
+    with pytest.raises(SystemExit, match="Ultimate 2.4G did not switch"):
+        Device(knock=True)
+    assert on_x["knocked"] == ["/devx/bus/usb/003/009", "/devx/bus/usb/003/012"]
 
 
 def test_leave_config_mode_skips_a_vanished_node(monkeypatch):
