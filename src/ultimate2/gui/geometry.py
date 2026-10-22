@@ -87,13 +87,16 @@ HOME_OFFSET = 160                # room for the callouts left of the drawing
 
 
 def drawing(key):
-    """``(parts, rings, callouts)`` of the drawing for the model ``key``: the Ultimate 2, or the 1st-gen Ultimate
-    Bluetooth (Nintendo face layout: A right, B bottom, X top, Y left; no L4/R4, no LED rings, back paddles P1/P2)."""
+    """``(parts, rings, callouts)`` of the drawing for the model ``key``: the Ultimate 2, the 1st-gen Ultimate
+    Bluetooth (Nintendo face layout: A right, B bottom, X top, Y left; no L4/R4, no LED rings, back paddles P1/P2) or
+    the Ultimate 2.4G (the same, with the Ultimate 2's Xbox face layout)."""
     if key == "ultimate2":
         return PARTS, RINGS, CALLOUTS
     xy = {n: PARTS[n][1] for n in "ABXY"}
     parts = {n: p for n, p in PARTS.items() if n not in ("P3", "P4")}
-    parts.update({"A": ("circle", xy["B"], "A"), "B": ("circle", xy["A"], "B"), "X": ("circle", xy["Y"], "X"),
-                  "Y": ("circle", xy["X"], "Y"), "P2": ("rrect", PARTS["P2"][1], "P2"), "P1": ("rrect", PARTS["P1"][1], "P1")})
+    parts.update({"P2": ("rrect", PARTS["P2"][1], "P2"), "P1": ("rrect", PARTS["P1"][1], "P1")})
+    if key == "ultimate_bt":
+        parts.update({"A": ("circle", xy["B"], "A"), "B": ("circle", xy["A"], "B"), "X": ("circle", xy["Y"], "X"),
+                      "Y": ("circle", xy["X"], "Y")})
     callouts = [("Traseiros P1 / P2", *c[1:]) if c[4] == "P1" else c for c in CALLOUTS if c[4] not in ("P3", "P4")]
     return parts, [], callouts

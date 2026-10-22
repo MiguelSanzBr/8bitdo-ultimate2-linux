@@ -10,6 +10,12 @@ from .catalog import LIVE_BITS
 
 LIVE_POLL = 0.05         # live-state polling interval for live_by_query models (the Ultimate Bluetooth app asks ~20/s)
 JS_BUTTONS = ["A", "B", "X", "Y", "LB", "RB", "Select", "Start", "Home", "L3", "R3"]   # xpad js button order
+# controllers whose js node is not xpad's: model key -> (js axis -> drawing axis, js button -> name), used instead
+# of js_maps(). The Ultimate 2.4G's config mode is a generic HID pad: 16 buttons (Star and the paddles send none of
+# their own) and axes LX LY RX RY RT LT hat-X hat-Y
+JS_MAPS = {"ultimate_24g": ({0: 0, 1: 1, 2: 3, 3: 4, 4: 5, 5: 2, 6: 6, 7: 7},
+                            {0: "A", 1: "B", 3: "X", 4: "Y", 6: "LB", 7: "RB", 8: "LT", 9: "RT", 10: "Select",
+                             11: "Start", 12: "Home", 13: "L3", 14: "R3"})}
 JS_EVENT = "<IhBB"       # struct js_event: u32 time, s16 value, u8 type, u8 number
 JS_BUTTON, JS_AXIS, JS_INIT = 1, 2, 0x80
 JSIOCGAXMAP = 0x80406A32    # _IOR('j', 0x32, __u8[ABS_CNT]): js axis -> ABS_* code
@@ -45,6 +51,8 @@ class PadInput:
                 dev = next(discovery.find_devices(), None)
                 # a live_by_query controller sends no js events: wait for the read to set self.model
                 node = dev and not models.for_pid(dev[1]).live_by_query and discovery.find_input_node(dev[2])
+                if not dev and self.model is models.ULTIMATE_24G:     # only on Bluetooth: no config channel there
+                    node = discovery.bluetooth_24g_input()
             except OSError:
                 pass
             fd = None
@@ -106,15 +114,16 @@ class PadInput:
     def pad_event(self, value, kind, number):
         """One js_event: kind 1 = button, 2 = axis; bit 0x80 marks the initial-state burst (no ripple).
 
-        Drawing axes: 0/1 left stick, 2 LT, 3/4 right stick, 5 RT, 6/7 d-pad; js numbers go through
-        :attr:`js_axes` / :attr:`js_buttons` first, so a ``jscal`` remap is undone.
+        Drawing axes: 0/1 left stick, 2 LT, 3/4 right stick, 5 RT, 6/7 d-pad; js numbers go through :data:`JS_MAPS`
+        for nodes that are not xpad's, else through :attr:`js_axes` / :attr:`js_buttons`, so a ``jscal`` remap is undone.
         """
         init = kind & JS_INIT
         kind &= ~JS_INIT & 0xFF
-        if kind == JS_BUTTON and number in self.js_buttons:
-            self._pad_set(self.js_buttons[number], value != 0, init)
-        elif kind == JS_AXIS and number in self.js_axes:
-            number = self.js_axes[number]
+        axes, buttons = JS_MAPS.get(self.model.key) or (self.js_axes, self.js_buttons)   # model may change after open
+        if kind == JS_BUTTON and number in buttons:
+            self._pad_set(buttons[number], value != 0, init)
+        elif kind == JS_AXIS and number in axes:
+            number = axes[number]
             self.pad_axes[number] = value
             if number == 6:
                 self._pad_set("Left", value < 0, init)

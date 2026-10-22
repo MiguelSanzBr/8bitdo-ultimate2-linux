@@ -25,6 +25,6 @@ fi
 
 install -D -m 644 "$RULE" "$DEST"
 udevadm control --reload-rules 2>/dev/null || true
-udevadm trigger --action=add --subsystem-match=hidraw 2>/dev/null || true
+udevadm trigger --action=add --subsystem-match=hidraw --subsystem-match=usb 2>/dev/null || true
 echo "Rule installed in $DEST."
 echo "Now unplug and replug the controller (or its 2.4G adapter)."
