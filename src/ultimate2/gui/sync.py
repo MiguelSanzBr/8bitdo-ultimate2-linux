@@ -128,6 +128,7 @@ class DeviceSync:
 
         def done(_r):
             self.base = new
+            self.keep_d(new)
             self.profile_note.configure(text="")
             self.set_status(_("✓ Salvo no controle ({} bytes).").format(span[1] - span[0]))
         self.run(_("Salvando no controle…"), job, done)
@@ -233,8 +234,7 @@ class DeviceSync:
             self.readonly = False
             self.btinfo.pack_forget()
             self.check_conflict()
-            if model is models.ULTIMATE_24G and self.doc["gamepad_mode"] == 1:
-                self.keep_copy(cfg)
+            self.keep_d(cfg)
         self.run("" if retry else _("Lendo do controle…"), job, done, quiet=retry, fail=fail, knock=True)
 
     # ------------------------------------------------------------ Ultimate 2.4G on Bluetooth
@@ -248,6 +248,11 @@ class DeviceSync:
         elif not on and self.conflict.winfo_manager():
             self.conflict.pack_forget()
         return on
+
+    def keep_d(self, cfg):
+        """After every read or write of an Ultimate 2.4G's D record: keep the copy Bluetooth shows up to date."""
+        if self.model is models.ULTIMATE_24G and self.doc["gamepad_mode"] == 1:
+            self.keep_copy(cfg)
 
     def keep_copy(self, cfg):
         """Keep the D configuration read over the cable: shown read-only when the pad is only on Bluetooth."""
@@ -320,6 +325,7 @@ class DeviceSync:
         def done(_r):
             self.base = data
             self.doc = config.decode(data, self.model.layout or None)
+            self.keep_d(data)
             self.load()
             self.set_status(_("Backup restaurado e verificado."))
         self.run(_("Restaurando…"), job, done)

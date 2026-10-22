@@ -12,9 +12,10 @@ from . import discovery, protocol
 
 
 def bluetooth():
-    """``{"capacity": %, "status": "Discharging"…, "name": …}`` of the first 8BitDo pad on Bluetooth, or ``None``."""
+    """``{"capacity": %, "status": "Discharging"…, "name": …}`` of the first Ultimate 2.4G on Bluetooth, or ``None``."""
+    want = [f"0005:{protocol.VID:04X}:{pid:04X}." for pid in protocol.PIDS_24G]    # not another 8BitDo pad's
     for p in sorted(glob.glob(discovery.SYS + "/class/power_supply/hid-*-battery")):
-        if f"0005:{protocol.VID:04X}:" not in os.path.realpath(p + "/device").upper():
+        if not any(w in os.path.realpath(p + "/device").upper() for w in want):
             continue
         info = dict(l.split("=", 1) for l in discovery._read(p + "/uevent").decode(errors="replace").splitlines()
                     if "=" in l)

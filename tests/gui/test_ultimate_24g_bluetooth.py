@@ -146,6 +146,23 @@ def test_a_copy_of_another_size_is_ignored(window, bluetooth_only, monkeypatch):
     assert not window.readonly
 
 
+def test_the_copy_follows_saves_and_restores(window, cable, monkeypatch, tmp_path):
+    a = window
+    monkeypatch.setattr(theme, "AUTOSAVE_MS", 5)
+    read(a)
+    a.v["name"].set("Nova")
+    pump(a, lambda: a._save_job is None and not a.busy and "Salvo" in a.status.cget("text"))
+    assert config.decode(a.base, L)["slots"][0]["name"] == "Nova"
+    assert open(sync.cache_path(), "rb").read() == a.base
+    f = tmp_path / "backup.bin"
+    f.write_bytes(BLANK)
+    monkeypatch.setattr(sync.filedialog, "askopenfilename", lambda **kw: str(f))
+    monkeypatch.setattr(sync.messagebox, "askyesno", lambda *x, **kw: True)
+    a.restore()
+    pump(a, lambda: not a.busy and "restaurado" in a.status.cget("text"))
+    assert open(sync.cache_path(), "rb").read() == BLANK
+
+
 def test_keeping_the_copy_is_only_a_convenience(window, monkeypatch, tmp_path):
     (tmp_path / "ultimate2").write_text("a file where the folder should be")
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))

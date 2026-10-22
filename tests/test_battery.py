@@ -26,6 +26,8 @@ def test_battery_over_bluetooth(tmp_path, monkeypatch):
     assert battery.bluetooth() is None
     _supply(tmp_path, "hid-00:11:22:33:44:55-battery", "0005:054C:09CC.0001",          # another vendor's pad
             "POWER_SUPPLY_CAPACITY=50\nPOWER_SUPPLY_STATUS=Discharging\n")
+    _supply(tmp_path, "hid-e4:17:d8:00:00:02-battery", "0005:2DC8:6012.0002",          # another 8BitDo pad
+            "POWER_SUPPLY_CAPACITY=40\nPOWER_SUPPLY_STATUS=Discharging\n")
     _supply(tmp_path, "hid-e4:17:d8:00:00:00-battery", "0005:2DC8:3012.0009",          # no report yet
             "POWER_SUPPLY_STATUS=Unknown\n")
     assert battery.bluetooth() is None
