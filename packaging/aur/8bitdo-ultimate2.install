@@ -1,5 +1,6 @@
 post_install() {
   echo "Replug the controller (or run: udevadm trigger) so the udev rule gives you access to it."
+  echo "Ultimate 2.4G on X: systemctl --user enable --now ultimate2-keepalive keeps it connected with no game open."
 }
 
 post_upgrade() {
