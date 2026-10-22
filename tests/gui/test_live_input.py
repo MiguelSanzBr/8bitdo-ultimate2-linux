@@ -1,4 +1,5 @@
 """live_input mixin: js_event decoding and the reader thread (all I/O patched)."""
+import array
 import struct
 
 import pytest
@@ -111,3 +112,38 @@ def test_read_pad_returns_when_already_closing(shared_app):
         shared_app._read_pad()                                  # loop body never runs
     finally:
         shared_app._closing = False
+
+
+def fake_ioctl(axmap, btnmap):
+    def ioctl(fd, req, buf):
+        if req == live_input.JSIOCGAXMAP:
+            buf[:len(axmap)] = bytes(axmap)
+        else:
+            buf[:len(btnmap)] = array.array("H", btnmap)
+    return ioctl
+
+
+def test_js_maps_undo_jscal_remap(app, monkeypatch):
+    # issue 15: jscal -u 8,0,1,3,4,2,5,16,17,... puts the right stick on js 2/3 and LT on js 4; A and B swapped
+    monkeypatch.setattr(live_input.fcntl, "ioctl", fake_ioctl([0, 1, 3, 4, 2, 5, 16, 17], [0x131, 0x130, 0x133]))
+    axes, buttons = live_input.js_maps(5)
+    assert axes[2] == 3 and axes[3] == 4 and axes[4] == 2 and axes[6] == 6
+    assert buttons[0] == "B" and buttons[1] == "A" and buttons[2] == "X"
+    monkeypatch.setattr(app, "js_axes", axes)
+    monkeypatch.setattr(app, "js_buttons", buttons)
+    app.pad_event(20000, 2, 2)                              # right stick X
+    assert app.pad_axes[3] == 20000 and "LT" not in app.pad_down
+    app.pad_event(5, 2, 4)                                  # LT
+    assert app.pad_axes[2] == 5 and "LT" in app.pad_down
+    app.pad_event(1, 1, 0)
+    assert "B" in app.pad_down and "A" not in app.pad_down
+    app.pad_event(1, 1, 99)                                 # js numbers past the maps: ignored
+    app.pad_event(1, 2, 99)
+    assert 99 not in app.pad_axes and "A" not in app.pad_down
+
+
+def test_js_maps_fallback_without_joydev_ioctls(monkeypatch):
+    def enotty(fd, req, buf):
+        raise OSError(25, "not a joystick node")
+    monkeypatch.setattr(live_input.fcntl, "ioctl", enotty)
+    assert live_input.js_maps(5) == (live_input.PadInput.js_axes, live_input.PadInput.js_buttons)
