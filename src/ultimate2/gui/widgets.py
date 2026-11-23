@@ -9,6 +9,49 @@ from .i18n import _
 from .theme import ACCENT, FG, LINE, MUTED, TILE, TILE_HI
 
 
+class Tooltip:
+    """One delayed, non-focusing popup shared by a group of widgets, including disabled canvases."""
+
+    def __init__(self, parent, scale, enabled):
+        self.parent, self.scale, self.enabled = parent, scale, enabled
+        self.job = self.window = None
+
+    def bind(self, widget, text):
+        def enter(event):
+            self.hide()
+            if self.enabled():
+                self.job = self.parent.after(theme.TOOLTIP_MS, self._show, widget, text, event.x_root)
+
+        widget.bind("<Enter>", enter, add="+")
+        for seq in ("<Leave>", "<Unmap>", "<Button-1>"):
+            widget.bind(seq, self.hide, add="+")
+
+    def _show(self, widget, text, x):
+        self.job = None
+        if not widget.winfo_viewable() or not self.enabled():
+            return
+        tip = self.window = tk.Toplevel(self.parent)
+        tip.withdraw()
+        tip.overrideredirect(True)
+        tk.Label(tip, text=text, bg=TILE_HI, fg=FG, font=theme.font(9), justify="left", wraplength=int(320 * self.scale),
+                 padx=10, pady=6, highlightbackground=LINE, highlightthickness=1).pack()
+        tip.update_idletasks()
+        x = max(0, min(x, widget.winfo_screenwidth() - tip.winfo_reqwidth()))
+        y = widget.winfo_rooty() + widget.winfo_height() + 4
+        if y + tip.winfo_reqheight() > widget.winfo_screenheight():
+            y = max(0, widget.winfo_rooty() - tip.winfo_reqheight() - 4)
+        tip.geometry(f"+{x}+{y}")
+        tip.deiconify()
+
+    def hide(self, event=None):
+        if self.job is not None:
+            self.parent.after_cancel(self.job)
+            self.job = None
+        if self.window is not None:
+            self.window.destroy()
+            self.window = None
+
+
 class Pill(tk.Canvas):
     """Rounded button/chip: fill, hover, optional colour dot (canvas tag ``"dot"``); stretches with its cell."""
 
@@ -22,17 +65,23 @@ class Pill(tk.Canvas):
         self.text, self.font_, self.s, self.radius = text, font, s, radius
         self.fill, self.fg, self.hover, self.base, self.dot = fill, fg, hover, fill, dot
         self.dot_fill = "#000000"
+        self.enabled, self.cmd = True, cmd
         self.bind("<Configure>", lambda e: self.draw())
         if cmd:
-            self.bind("<Button-1>", lambda e: cmd())
+            self.bind("<Button-1>", lambda e: cmd() if self.enabled else None)
         if hover:
             self.bind("<Enter>", lambda e: self._hover(True))
             self.bind("<Leave>", lambda e: self._hover(False))
         self.draw()
 
     def _hover(self, on):
-        self.fill = self.hover if on else self.base
+        self.fill = self.hover if on and self.enabled else self.base
         self.draw()
+
+    def set_enabled(self, enabled):
+        self.enabled = enabled
+        self.configure(cursor="hand2" if enabled and self.cmd else "")
+        self._hover(False)
 
     def set(self, fill=None, fg=None, text=None):
         if fill:
@@ -48,13 +97,14 @@ class Pill(tk.Canvas):
         h = int(self["height"])
         r = min(self.radius * self.s if self.radius else h / 2, h / 2)
         self.delete("all")
-        rounded(self, 1, 1, w - 1, h - 1, r, fill=self.fill, outline="")
+        rounded(self, 1, 1, w - 1, h - 1, r, fill=self.fill if self.enabled else theme.DISABLED_FILL,
+                outline="" if self.enabled else LINE, dash=() if self.enabled else (3, 3))
         cx = (w + self.dot_w) / 2
         if self.dot:
             d = 7 * self.s
             x = cx - tkfont.Font(root=self, font=self.font_).measure(self.text) / 2 - 12 * self.s
             self.create_oval(x - d, h / 2 - d, x + d, h / 2 + d, fill=self.dot_fill, outline=LINE, tags="dot")
-        self.create_text(cx, h / 2, text=self.text, fill=self.fg, font=self.font_)
+        self.create_text(cx, h / 2, text=self.text, fill=self.fg if self.enabled else MUTED, font=self.font_)
 
 
 def panel(parent, s, fill=TILE, radius=14, padx=18, pady=14):

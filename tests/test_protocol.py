@@ -1,7 +1,21 @@
 """Pure protocol helpers: constants, CRC, request/reply framing."""
 import struct
 
+import pytest
+
 from ultimate2 import protocol as p
+
+
+@pytest.mark.parametrize(("offset", "mask", "name"), [
+    (8, 0x01, "A"), (8, 0x02, "B"), (8, 0x04, "P1"), (8, 0x08, "X"),
+    (8, 0x10, "Y"), (8, 0x20, "P2"), (8, 0x40, "LB"), (8, 0x80, "RB"),
+    (9, 0x04, "Select"), (9, 0x08, "Start"), (9, 0x10, "Home"), (9, 0x20, "L3"), (9, 0x40, "R3"),
+    (10, 0x01, "P3"), (10, 0x02, "P4"),
+])
+def test_parse_dinput_buttons(offset, mask, name):
+    report = bytearray.fromhex("01 0f 7f 7f 7f 7f 00 00 00 00 00 00")
+    report[offset] = mask
+    assert p.parse_dinput(report) == ({name}, bytes.fromhex("7f7f7f7f0000"), (0, 0), None)
 
 
 def test_constants():

@@ -1,11 +1,12 @@
-"""Mixin: live input from the controller's joystick node (pressed buttons, triggers, sticks, d-pad)."""
+"""Mixin: live input from the controller (pressed buttons, triggers, sticks, d-pad)."""
 import array
 import fcntl
 import os
+import select
 import struct
 import time
 
-from .. import device, discovery, models
+from .. import device, discovery, models, protocol
 from .catalog import LIVE_BITS
 
 LIVE_POLL = 0.05         # live-state polling interval for live_by_query models (the Ultimate Bluetooth app asks ~20/s)
@@ -36,13 +37,36 @@ def js_maps(fd):
             {n: BTN_NAMES[c] for n, c in enumerate(bt) if c in BTN_NAMES})
 
 
+def decode_dinput(report):
+    """Return ``(buttons, drawing_axes, battery_percent)`` for a 6012 state report, else ``None``."""
+    state = protocol.parse_dinput(report)
+    if state is None:
+        return None
+    buttons, (lx, ly, rx, ry, rt, lt), (hx, hy), battery = state
+    # Center is 0x7f, not 0x80. Keep the drawing's symmetric axis range.
+    stick = lambda v: round((v - 127) * 32767 / (127 if v < 127 else 128))
+    trigger = lambda v: max(-32767, v * 257 - 32768)
+    axes = {0: stick(lx), 1: stick(ly), 2: trigger(lt), 3: stick(rx), 4: stick(ry), 5: trigger(rt), 6: hx, 7: hy}
+    for name, pressed in (("Left", hx < 0), ("Right", hx > 0), ("Up", hy < 0), ("Down", hy > 0),
+                          ("LT", axes[2] > 0), ("RT", axes[5] > 0)):
+        if pressed:
+            buttons.add(name)
+    return buttons, axes, battery
+
+
 class PadInput:
     js_axes = {n: n for n in range(8)}         # js axis number -> drawing axis (see pad_event)
     js_buttons = dict(enumerate(JS_BUTTONS))   # js button number -> button name
+    dinput_battery = None                     # only set while reading an enhanced DInput report
 
     def _read_pad(self):
         """Background thread: follow the real controller's buttons/axes; reconnects every second."""
         while not self._closing:
+            raw_node = discovery.find_dinput_wireless()
+            if raw_node:
+                self._read_dinput(raw_node)
+                time.sleep(1)
+                continue
             if self.model.live_by_query:
                 self._poll_live()
                 continue
@@ -78,6 +102,39 @@ class PadInput:
             self.pad_down.clear()
             self.pad_axes.clear()
             time.sleep(1)
+
+    def _read_dinput(self, node):
+        """Read one hidraw subscription; its queue is independent of Steam's, with no grab or reports sent."""
+        try:
+            fd = os.open(node, os.O_RDONLY | os.O_NONBLOCK)
+        except OSError:
+            return
+        initial = True
+        try:
+            while not self._closing:
+                if not select.select([fd], [], [], 0.25)[0]:
+                    continue
+                try:
+                    report = os.read(fd, 64)
+                except BlockingIOError:
+                    continue
+                if not report:
+                    break
+                state = decode_dinput(report)
+                if state is None:
+                    continue
+                buttons, axes, self.dinput_battery = state
+                self.pad_axes.update(axes)
+                for name in self.pad_down ^ buttons:
+                    self._pad_set(name, name in buttons, initial)
+                initial = False
+        except OSError:
+            pass
+        finally:
+            os.close(fd)
+            self.pad_down.clear()
+            self.pad_axes.clear()
+            self.dinput_battery = None
 
     def _poll_live(self):
         """Controllers without gamepad reports in config mode (``live_by_query``): ask for the live state between jobs."""

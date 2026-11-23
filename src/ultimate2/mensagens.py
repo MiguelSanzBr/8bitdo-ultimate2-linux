@@ -72,6 +72,7 @@ STATUS = {"discharging": "descarregando", "charging": "carregando", "full": "car
           "not charging": "sem carregar", "unknown": "desconhecido"}
 
 PATTERNS = [(re.compile(rx), pt) for rx, pt in (
+    (r"^(.+)  Ultimate 2 Wireless \(DInput gamepad\)$", "{0}  Ultimate 2 Wireless (controle DInput)"),
     (r"^battery     (\d+)% \((.+)\)$", "bateria     {0}% ({1:status})"),
     (r"^(.+): (\d+)% \((.+)\)$", "{0}: {1}% ({2:status})"),
     (r"^(.+)  \(switched to config mode on use\)$", "{0}  (passa ao modo de configuração ao ser usado)"),

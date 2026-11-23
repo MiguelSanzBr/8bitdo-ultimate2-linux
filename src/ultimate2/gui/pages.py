@@ -100,11 +100,12 @@ class Pages:
             t = tk.Canvas(tiles, width=int(104 * s), height=int(96 * s), bg=BG, highlightthickness=0, cursor="hand2")
             t.pack(side="left", padx=int(5 * s))
             self.tiles[key] = t
-            rounded(t, 1, 1, 103 * s, 95 * s, 16 * s, fill=TILE, outline="", tags="bg")
+            rounded(t, 1, 1, 103 * s, 95 * s, 16 * s, fill=TILE, outline="", tags="bg",
+                    disabledfill=theme.DISABLED_FILL, disabledoutline=LINE, disableddash=(3, 3))
             self.icon(t, key, 52, 36)
-            t.create_text(52 * s, 74 * s, text=_(title), fill=FG, font=theme.font(9))
+            t.create_text(52 * s, 74 * s, text=_(title), fill=FG, disabledfill=MUTED, font=theme.font(9))
             t.bind("<Button-1>", lambda e, k=key: self.show(k))
-            t.bind("<Enter>", lambda e, t=t: t.itemconfigure("bg", fill=TILE_HI))
+            t.bind("<Enter>", lambda e, t=t: not self.preview_only and t.itemconfigure("bg", fill=TILE_HI))
             t.bind("<Leave>", lambda e, t=t: t.itemconfigure("bg", fill=TILE))
         return page
 
@@ -252,13 +253,29 @@ class Pages:
         self.lang_var.trace_add("write", lambda *_a: self.set_lang(self.lang_var.get()))
 
     # ------------------------------------------------------------ navigation
+    def set_preview_only(self, on):
+        self.preview_only = on
+        self.preview_tip.hide()
+        self.home_canvas.itemconfigure("callout", state="disabled" if on else "normal")
+        for button in (*self.slot_btns, *self.backup_buttons):
+            button.set_enabled(not on)
+        for tile in self.tiles.values():
+            tile.configure(state="disabled" if on else "normal", cursor="" if on else "hand2")
+            tile.itemconfigure("bg", fill=TILE)
+        if on and self.page != "home":
+            self.show("home")
+
     def show(self, name):
+        if self.preview_only and name != "home":
+            return
         for page in self.pages.values():
             page.pack_forget()
         self.pages[name].pack(fill="both", expand=True)
         self.page = name
 
     def select_slot(self, i, gather=True):
+        if self.preview_only:
+            return
         if gather and self.doc:
             self.gather()
         self.slot = i

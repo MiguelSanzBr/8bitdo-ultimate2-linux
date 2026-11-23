@@ -18,7 +18,7 @@ from .live_input import PadInput
 from .pages import Pages
 from .sync import DeviceSync
 from .theme import BG, DANGER, DEFAULT_SKIN, EDITION_SKINS, FG, MUTED, SKINS, TILE, WARN
-from .widgets import Pill, Select, panel
+from .widgets import Pill, Select, Tooltip, panel
 
 SETTINGS = os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "ultimate2", "gui.json")
 
@@ -80,6 +80,7 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         self._closing = False
         self.conn = None         # connection badge state of the last successful read
         self.readonly = False    # Ultimate 2.4G on Bluetooth: showing the copy kept from the last cable read
+        self.preview_only = False  # DInput had no config channel; keep editing blocked until a config read succeeds
         self._style()
         self._vars()
         self._build()
@@ -241,14 +242,25 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
                                      "estas mudanças NÃO valem nele. Para editar o que vale no Bluetooth, desconecte o "
                                      "receptor e ligue o cabo USB com a chave em D."),
                  bg="#3a1d1d", fg=DANGER, font=theme.font(9, "bold"), anchor="w", justify="left",
+                  wraplength=int(900 * s)).pack(side="left", fill="x", expand=True)
+        self.dinput_info, dinput_in = panel(self, s, fill="#2b2618", pady=10)
+        reconnect = _("Para editar as configurações, conecte o cabo USB. Para usar XInput sem fio, desligue o controle "
+                      "e pressione Home sem segurar A, B, X ou Y.")
+        tk.Label(dinput_in, text=_("O modo DInput sem fio permite testar os botões e analógicos, mas não permite ler "
+                                   "nem gravar a configuração.") + " " + reconnect,
+                 bg="#2b2618", fg=WARN, font=theme.font(9), anchor="w", justify="left",
                  wraplength=int(900 * s)).pack(side="left", fill="x", expand=True)
 
         foot = tk.Frame(self, bg=BG)
         foot.pack(side="bottom", fill="x", padx=int(24 * s), pady=int(14 * s))
         self.fw_label = tk.Label(foot, text="", bg=BG, fg=MUTED, font=theme.font(8))      # bottom-right corner
         self.fw_label.pack(side="right", padx=(int(8 * s), 0))
-        for text, cmd in ((_("Recarregar"), self.read_device), (_("Restaurar backup"), self.restore), (_("Backup"), self.backup)):
-            self.button(foot, text, cmd).pack(side="right", padx=int(4 * s))
+        self.button(foot, _("Recarregar"), self.read_device).pack(side="right", padx=int(4 * s))
+        self.backup_buttons = []
+        for text, cmd in ((_("Restaurar backup"), self.restore), (_("Backup"), self.backup)):
+            b = self.button(foot, text, cmd)
+            b.pack(side="right", padx=int(4 * s))
+            self.backup_buttons.append(b)
         self.lang_pick = tk.StringVar(value=i18n.LANG)                 # language selector, left of Backup
         Select(foot, self.lang_pick, list(i18n.LANGS.items()), s).pack(side="right", padx=int(4 * s))
         self.lang_pick.trace_add("write", lambda *_a: self.set_lang(self.lang_pick.get()))
@@ -258,6 +270,14 @@ class App(Pages, ControllerView, Editor, DeviceSync, PadInput, tk.Tk):
         body = tk.Frame(self, bg=BG)
         body.pack(fill="both", expand=True)
         self.pages = {"home": self._p_home(body)}
+        self.preview_tip = Tooltip(self, s, enabled=lambda: self.preview_only)
+        for widget in self.slot_btns:
+            self.preview_tip.bind(widget, _("Não é possível selecionar um perfil no DInput sem fio.") + " " + reconnect)
+        for widget in self.tiles.values():
+            self.preview_tip.bind(widget, _("Não é possível editar as configurações no DInput sem fio.") + " " + reconnect)
+        for widget in self.backup_buttons:
+            self.preview_tip.bind(widget, _("Não é possível ler nem restaurar backups no DInput sem fio.") + " " + reconnect)
+        self.preview_tip.bind(self.home_canvas, _("Teste os botões e analógicos aqui.") + " " + reconnect)
         builders = {"buttons": self._p_buttons, "sticks": self._p_sticks, "triggers": self._p_triggers,
                     "rumble": self._p_rumble, "gyro": self._p_gyro, "leds": self._p_leds, "profile": self._p_profile}
         for title, key in SECTIONS:

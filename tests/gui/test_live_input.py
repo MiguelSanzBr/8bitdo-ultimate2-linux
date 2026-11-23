@@ -1,4 +1,4 @@
-"""live_input mixin: js_event decoding and the reader thread (all I/O patched)."""
+"""live_input mixin: joystick and DInput decoding and the reader thread (all I/O patched)."""
 import array
 import struct
 
@@ -46,6 +46,7 @@ def run_pad(app, mp, devs, read=None, node="/dev/input/js9", open_=lambda p, f: 
     closed = []
     app._closing = False
     mp.setattr(discovery, "find_devices", devs)
+    mp.setattr(discovery, "find_dinput_wireless", lambda: None)
     mp.setattr(discovery, "find_input_node", lambda usb: node)
     mp.setattr(live_input.os, "open", open_)
     mp.setattr(live_input.os, "read", read)
@@ -147,3 +148,79 @@ def test_js_maps_fallback_without_joydev_ioctls(monkeypatch):
         raise OSError(25, "not a joystick node")
     monkeypatch.setattr(live_input.fcntl, "ioctl", enotty)
     assert live_input.js_maps(5) == (live_input.PadInput.js_axes, live_input.PadInput.js_buttons)
+
+
+def test_decode_dinput_axes_hat_and_battery():
+    # Enhanced SDL USB report. Also seen as 0x01 on the DInput receiver.
+    report = bytes.fromhex("04 f5 00 ff 7f ff 20 ff 80 83 fc 00 00 00 b9") + bytes(19)
+    assert live_input.decode_dinput(report) == (
+        {"Left", "Down", "RB", "LT"},
+        {0: -32767, 1: 32767, 2: 32767, 3: 0, 4: 32767, 5: -24544, 6: -1, 7: 1}, 57)
+    assert live_input.decode_dinput(report[:14] + b"\xff" + report[15:])[2] is None
+    assert live_input.decode_dinput(report[:14] + b"\x80" + report[15:])[2] == 0
+    assert live_input.decode_dinput(b"\x03" + report[1:12])[2] is None
+    for invalid in (b"", report[:-1], b"\x02" + report[1:], b"\x02" + bytes(63)):
+        assert live_input.decode_dinput(invalid) is None
+
+
+def test_read_pad_dinput_is_passive_and_clears_on_unplug(monkeypatch):
+    app = live_input.PadInput()
+    app._closing, app.pad_down, app.pad_axes, app.press_t = False, set(), {}, {}
+    node = "/dev/hidraw12"
+    opened, closed = [], []
+    # Real neutral report from https://github.com/ascendedent/8bitdo-Linux-Software/issues/1.
+    neutral = bytes.fromhex("010f7f7f7f7f0000000000000000617ffe4400000f05002d00100000000000000000")
+    pressed = neutral[:8] + b"\x24\x00\x03" + neutral[11:]
+    reads = iter([b"\x02" + bytes(63), pressed, neutral, pressed, neutral])
+
+    def read(fd, size):
+        assert (fd, size) == (77, 64)
+        packet = next(reads, None)
+        if packet is neutral:
+            assert app.pad_down == {"P1", "P2", "P3", "P4"} and app.dinput_battery == 97
+        if packet is pressed:
+            assert not app.press_t                  # first valid state does not invent a new press
+        if packet is None:
+            assert not app.pad_down
+            raise OSError("unplugged")
+        return packet
+
+    monkeypatch.setattr(discovery, "find_dinput_wireless", lambda: node)
+    monkeypatch.setattr(discovery, "find_devices", lambda: pytest.fail("DInput bypasses config discovery"))
+    monkeypatch.setattr(live_input.os, "open", lambda p, f: opened.append((p, f)) or 77)
+    monkeypatch.setattr(live_input.os, "read", read)
+    monkeypatch.setattr(live_input.os, "close", closed.append)
+    monkeypatch.setattr(live_input.select, "select", lambda r, w, x, t: (r, [], []))
+    monkeypatch.setattr(live_input.fcntl, "ioctl", lambda *_: pytest.fail("DInput makes no ioctls"))
+    monkeypatch.setattr(live_input.os, "write", lambda *_: pytest.fail("DInput never writes"))
+    monkeypatch.setattr(live_input.time, "sleep", lambda _: setattr(app, "_closing", True))
+    app._read_pad()
+    assert opened == [(node, live_input.os.O_RDONLY | live_input.os.O_NONBLOCK)] and closed == [77]
+    assert {"P1", "P2", "P3", "P4"} <= app.press_t.keys()
+    assert not app.pad_down and not app.pad_axes and app.dinput_battery is None
+
+
+@pytest.mark.parametrize("stop", ["EOF", "closing"])
+def test_dinput_reader_recovers_from_transient_events(monkeypatch, stop):
+    pad = live_input.PadInput()
+    pad._closing, pad.pad_down, pad.pad_axes = False, set(), {}
+    closed = []
+    monkeypatch.setattr(live_input.os, "open", lambda *_: (_ for _ in ()).throw(PermissionError()))
+    pad._read_dinput("inaccessible")
+    monkeypatch.setattr(live_input.os, "open", lambda *_: 41)
+    monkeypatch.setattr(live_input.os, "close", closed.append)
+    readiness = iter([False, True, True, True])
+    monkeypatch.setattr(live_input.select, "select", lambda *_: ([41] if next(readiness) else [], [], []))
+    packets = iter([None, b"\x00", b""])
+
+    def read(*_):
+        packet = next(packets)
+        if packet is None:
+            raise BlockingIOError()
+        if packet == b"\x00" and stop == "closing":
+            pad._closing = True
+        return packet
+
+    monkeypatch.setattr(live_input.os, "read", read)
+    pad._read_dinput("reconnected")
+    assert closed == [41] and pad.dinput_battery is None and not pad.pad_down

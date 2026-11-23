@@ -1,4 +1,4 @@
-"""Find the controller in sysfs: its vendor config ``hidraw`` node and the joystick node of the same device."""
+"""Find the controller's config and live input nodes in sysfs."""
 import glob
 import os
 
@@ -10,6 +10,8 @@ CONFIG_DESCRIPTORS = (b"\x06\x7a\xff", b"\x06\xa0\xff")
 # the Ultimate 2.4G's single gamepad interface carries the config channel (output report 0x81) over USB only; over
 # Bluetooth it has the same PID and no such report
 CONFIG_REPORT_24G = b"\x85\x81"
+DINPUT_USB_ID = (0x0003, protocol.VID, 0x6012)
+GAMEPAD_APP = b"\x05\x01\x09\x05\xa1\x01"   # Generic Desktop / Game Pad / Application Collection
 
 
 def _read(path):
@@ -20,15 +22,21 @@ def _read(path):
         return b""
 
 
-def find_devices():
-    """Yield ``(hidraw_path, pid, usb_dir)`` for every 8BitDo vendor config interface."""
+def _hidraw_devices():
+    """Yield each sysfs hidraw path and its (bus, vendor, product) HID ID."""
     for d in sorted(glob.glob(SYS + "/class/hidraw/hidraw*")):
         ue = _read(d + "/device/uevent").decode(errors="replace")
-        hid_id = next((l.split("=")[1] for l in ue.splitlines() if l.startswith("HID_ID=")), "")
+        hid_id = next((l.partition("=")[2] for l in ue.splitlines() if l.startswith("HID_ID=")), "")
         try:
-            _, vid, pid = (int(x, 16) for x in hid_id.split(":"))
+            bus, vid, pid = (int(x, 16) for x in hid_id.split(":"))
         except ValueError:
             continue
+        yield d, (bus, vid, pid)
+
+
+def find_devices():
+    """Yield ``(hidraw_path, pid, usb_dir)`` for every 8BitDo vendor config interface."""
+    for d, (_, vid, pid) in _hidraw_devices():
         if vid != protocol.VID or pid == protocol.PID_24G_IDLE:
             continue
         # the Ultimate Bluetooth's config mode and the Ultimate 2.4G have one gamepad interface; their config reports
@@ -41,6 +49,18 @@ def find_devices():
             continue
         usb_dir = os.path.dirname(os.path.dirname(os.path.realpath(d + "/device")))
         yield DEV + "/" + os.path.basename(d), pid, usb_dir
+
+
+def find_dinput_wireless():
+    """Live hidraw path of a USB Ultimate 2 Wireless in DInput mode, or ``None``.
+
+    Match the gamepad collection, not a vendor config-only interface with the same product ID, nor Bluetooth.
+    This node is not returned by :func:`find_devices`, even if its descriptor also declares vendor reports.
+    """
+    for d, hid_id in _hidraw_devices():
+        if hid_id == DINPUT_USB_ID and _read(d + "/device/report_descriptor").startswith(GAMEPAD_APP):
+            return DEV + "/" + os.path.basename(d)
+    return None
 
 
 def find_input_node(usb_dir):
