@@ -128,6 +128,17 @@ EN = {
     "Traseiros PL / PR": "Back buttons PL / PR",
     "Controle desligado ou fora de alcance. Ligue-o: ele será lido automaticamente.":
         "Controller off or out of range. Turn it on: it will be read automatically.",
+    "O modo DInput sem fio permite testar os botões e analógicos, mas não permite ler nem gravar a configuração.":
+        "Wireless DInput lets you test buttons and sticks, but cannot read or write the configuration.",
+    "DInput sem fio: apenas teste de entradas.": "Wireless DInput: input preview only.",
+    "Para editar as configurações, conecte o cabo USB. Para usar XInput sem fio, desligue o controle "
+    "e pressione Home sem segurar A, B, X ou Y.":
+        "To edit settings, connect via USB. For wireless XInput, turn the controller off, "
+        "then press Home without holding a face button.",
+    "Não é possível selecionar um perfil no DInput sem fio.": "Profile selection is unavailable in wireless DInput.",
+    "Não é possível editar as configurações no DInput sem fio.": "Settings cannot be edited in wireless DInput.",
+    "Não é possível ler nem restaurar backups no DInput sem fio.": "Wireless DInput cannot back up or restore settings.",
+    "Teste os botões e analógicos aqui.": "Test buttons and sticks here.",
     "Clique num botão do controle para escolher a função dele.\nP1/P2: botões traseiros · ★: estrela/turbo.":
         "Click a button on the controller to choose its function.\nP1/P2: back buttons · ★: star/turbo.",
     "Traseiros P1 / P2": "Back buttons P1 / P2",

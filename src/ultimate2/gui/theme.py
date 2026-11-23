@@ -9,11 +9,13 @@ import tkinter.font as tkfont
 BG, TILE, TILE_HI, LINE, FG, MUTED, ACCENT, DANGER, WARN = (
     "#1b1b1b", "#262626", "#313131", "#3c3c3c", "#ececec", "#8c8c8c", "#4cd964", "#ff6b6b", "#ffcc66")
 BODY_FILL, SEL_FILL = "#222222", "#1d3524"
+DISABLED_FILL = "#202020"
 CALLOUT_FILL, CALLOUT_LINE, CALLOUT_DOT = "#1d1733", "#7c5cd6", "#b9a1ec"
 
 # timings (ms) and the ripple duration (s)
 AUTOSAVE_MS, POLL_MS, FRAME_MS = 400, 2500, 33
 RETRY_MS = 3000                  # next read attempt while the controller does not answer
+TOOLTIP_MS = 500
 PULSE = 0.35
 
 FAMILY = "Sans"          # replaced at startup by pick_family()

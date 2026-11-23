@@ -99,7 +99,8 @@ class ControllerView:
             if mode == "map":
                 c.tag_bind(tag, "<Button-1>", lambda e, n=name: (self.flash(n), self.select_button(n)))
             elif mode == "home":
-                c.tag_bind(tag, "<Button-1>", lambda e, n=name: (self.flash(n), self.select_button(n), self.show("buttons")))
+                c.tag_bind(tag, "<Button-1>", lambda e, n=name: not self.preview_only
+                           and (self.flash(n), self.select_button(n), self.show("buttons")))
 
         for name in BEHIND:
             make(name)
@@ -180,15 +181,21 @@ class ControllerView:
             x1 = 6 if side == "l" else 2 * ox + WIDTH - 6 - w
             x2, edge = x1 + w, (x1 + w if side == "l" else x1)
             tag = "co:" + text.replace(" ", "_")          # Tk splits tags at spaces
+            state = "disabled" if self.preview_only else "normal"
             rounded(c, x1 * s, (y - h / 2) * s, x2 * s, (y + h / 2) * s, h / 2 * s, fill=theme.CALLOUT_FILL,
-                    outline=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)), tags=tag)
-            c.create_text((x1 + w / 2) * s, y * s, text=label, fill=FG, font=theme.font(9, "bold"), tags=tag)
+                    outline=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)), tags=(tag, "callout"), state=state,
+                    disabledfill=theme.DISABLED_FILL, disabledoutline=theme.LINE, disableddash=(3, 3))
+            c.create_text((x1 + w / 2) * s, y * s, text=label, fill=FG, font=theme.font(9, "bold"),
+                          tags=(tag, "callout"), state=state, disabledfill=theme.MUTED)
             px, py = (tx + ox) * s, ty * s
             mx = (edge + (14 if side == "l" else -14)) * s
-            c.create_line(edge * s, y * s, mx, y * s, px, py, fill=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)))
-            c.create_oval(px - 3 * s, py - 3 * s, px + 3 * s, py + 3 * s, fill=theme.CALLOUT_DOT, outline="")
+            c.create_line(edge * s, y * s, mx, y * s, px, py, fill=theme.CALLOUT_LINE, width=max(1, round(1.5 * s)),
+                          tags="callout", state=state, disabledfill=theme.LINE)
+            c.create_oval(px - 3 * s, py - 3 * s, px + 3 * s, py + 3 * s, fill=theme.CALLOUT_DOT, outline="",
+                          tags="callout", state=state, disabledfill=theme.MUTED)
             page = "sticks" if target == "sticks" else "buttons"
-            c.tag_bind(tag, "<Button-1>", lambda e, t=target, p=page: (p == "buttons" and self.select_button(t), self.show(p)))
+            c.tag_bind(tag, "<Button-1>", lambda e, t=target, p=page: not self.preview_only
+                       and (p == "buttons" and self.select_button(t), self.show(p)))
 
     def apply_skin(self, name):
         """Redraw every controller drawing with another skin (chosen from the controller's edition)."""
@@ -210,29 +217,31 @@ class ControllerView:
         """Line icon of a section tile."""
         s, w = self.s, max(1, round(1.6 * self.s))
         P = lambda *xy: [v * s for v in xy]
+        stroke = dict(outline=FG, disabledoutline=theme.MUTED, width=w)
+        ink = dict(fill=FG, disabledfill=theme.MUTED)
         if kind == "buttons":
             for dx, dy in ((0, -9), (0, 9), (-9, 0), (9, 0)):
-                c.create_oval(P(x + dx - 4, y + dy - 4, x + dx + 4, y + dy + 4), outline=FG, width=w)
+                c.create_oval(P(x + dx - 4, y + dy - 4, x + dx + 4, y + dy + 4), **stroke)
         elif kind == "sticks":
             for r in (13, 7, 2):
-                c.create_oval(P(x - r, y - r, x + r, y + r), outline=FG, width=w)
+                c.create_oval(P(x - r, y - r, x + r, y + r), **stroke)
         elif kind == "triggers":
-            rounded(c, *P(x - 9, y - 13, x + 9, y + 13), 8 * s, fill="", outline=FG, width=w)
-            c.create_line(P(x - 9, y - 2, x + 9, y - 2), fill=FG, width=w)
+            rounded(c, *P(x - 9, y - 13, x + 9, y + 13), 8 * s, fill="", **stroke)
+            c.create_line(P(x - 9, y - 2, x + 9, y - 2), width=w, **ink)
         elif kind == "rumble":
             for dx in (-10, -3, 4, 11):
-                c.create_line(P(x + dx, y - 10, x + dx - 3, y - 4, x + dx + 3, y + 4, x + dx, y + 10), fill=FG, width=w, smooth=True)
+                c.create_line(P(x + dx, y - 10, x + dx - 3, y - 4, x + dx + 3, y + 4, x + dx, y + 10), width=w, smooth=True, **ink)
         elif kind == "gyro":
-            c.create_oval(P(x - 14, y - 6, x + 14, y + 6), outline=FG, width=w)
-            c.create_oval(P(x - 6, y - 14, x + 6, y + 14), outline=FG, width=w)
-            c.create_oval(P(x - 2, y - 2, x + 2, y + 2), fill=FG, outline="")
+            c.create_oval(P(x - 14, y - 6, x + 14, y + 6), **stroke)
+            c.create_oval(P(x - 6, y - 14, x + 6, y + 14), **stroke)
+            c.create_oval(P(x - 2, y - 2, x + 2, y + 2), outline="", **ink)
         elif kind == "leds":
-            c.create_oval(P(x - 6, y - 6, x + 6, y + 6), outline=FG, width=w)
+            c.create_oval(P(x - 6, y - 6, x + 6, y + 6), **stroke)
             for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0), (.7, .7), (-.7, .7), (.7, -.7), (-.7, -.7)):
-                c.create_line(P(x + dx * 9, y + dy * 9, x + dx * 13, y + dy * 13), fill=FG, width=w)
+                c.create_line(P(x + dx * 9, y + dy * 9, x + dx * 13, y + dy * 13), width=w, **ink)
         else:  # profile
-            c.create_oval(P(x - 5, y - 13, x + 5, y - 3), outline=FG, width=w)
-            c.create_arc(P(x - 11, y - 1, x + 11, y + 21), start=0, extent=180, style="arc", outline=FG, width=w)
+            c.create_oval(P(x - 5, y - 13, x + 5, y - 3), **stroke)
+            c.create_arc(P(x - 11, y - 1, x + 11, y + 21), start=0, extent=180, style="arc", **stroke)
 
     # ------------------------------------------------------------ live state
     def flash(self, name):
@@ -249,7 +258,7 @@ class ControllerView:
         s = self.s
         for name, p in parts.items():
             # the extras (L4/R4/PL/PR) send no input of their own: light them when the function they output arrives
-            fn = self.v["keys"][name].get() if name in DISPLAY else name
+            fn = self.v["keys"][name].get() if name in DISPLAY and not self.preview_only else name
             level = self.trigger_level(fn)
             if name in self.pad_down or fn in self.pad_down:
                 st = (ACCENT, ACCENT, BG)

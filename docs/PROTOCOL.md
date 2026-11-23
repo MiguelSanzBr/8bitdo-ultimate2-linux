@@ -11,6 +11,17 @@ This was reverse-engineered from *8BitDo Ultimate Software V2* (v1.37) for inter
 | `2dc8:310b` | controller over USB (XInput mode) | HID interface 2, usage page `0xFF7A` |
 | `2dc8:6013` | 2.4G dongle (`Ultimate2RR`) | HID interface 0, usage page `0xFFA0` |
 | `0x6012` | PID the controller reports internally (`PID_Ultimate2`) | — |
+| `2dc8:6012` | host-visible gamepad on the 2.4G receiver in DInput mode | no known config interface |
+
+### DInput state reports
+
+With the receiver in DInput, a second reader can passively open the gamepad's
+hidraw node alongside Steam. On the tested receiver the 34-byte `0x01` report
+uses byte 8 bits 2/5 for PR/PL and byte 10 bits 0/1 for L4/R4 (byte 0 is
+the report ID). Byte 14's low seven bits give the battery percentage. Cycling
+the physical profile lights did not reveal a persistent slot identifier.
+See the [DInput evidence and mode comparison](DINPUT_PROTOCOL.md) for report
+variants, the profile-cycle test and the limits of the configuration protocol.
 
 The 1st-gen *Ultimate Bluetooth Controller* (charging dock, Nintendo layout) speaks a variant of this protocol:
 see [Ultimate Bluetooth](#ultimate-bluetooth-1st-gen) at the end.

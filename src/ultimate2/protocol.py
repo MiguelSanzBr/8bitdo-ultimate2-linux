@@ -9,6 +9,23 @@ See ``docs/PROTOCOL.md`` for the full description.
 """
 import struct
 
+# SDL HIDAPI layout (SDL_hidapi_8bitdo.c); the 6012 receiver uses report 0x01.
+DINPUT_BUTTONS = (("A", "B", "P1", "X", "Y", "P2", "LB", "RB"),
+                  (None, None, "Select", "Start", "Home", "L3", "R3"), ("P3", "P4"))
+DINPUT_HATS = ((0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1))
+
+
+def parse_dinput(report):
+    """6012 state: buttons, raw LX/LY/RX/RY/RT/LT, hat vector and optional battery percentage."""
+    if len(report) not in (12, 34) or report[0] not in (0x01, 0x03, 0x04):
+        return None
+    hat = report[1] & 0x0f
+    buttons = {name for names, bits in zip(DINPUT_BUTTONS, report[8:11])
+               for bit, name in enumerate(names) if name and bits & (1 << bit)}
+    battery = report[14] & 0x7f if len(report) == 34 else None
+    return (buttons, report[2:8], DINPUT_HATS[hat] if hat < 8 else (0, 0),
+            battery if battery is not None and battery <= 100 else None)
+
 VID = 0x2DC8
 PIDS = {0x310B: "wired (XInput)", 0x6012: "Ultimate 2", 0x6013: "2.4G dongle",
         0x3106: "Ultimate Bluetooth (XInput)", 0x6007: "Ultimate Bluetooth (config mode)",

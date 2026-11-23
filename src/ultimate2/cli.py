@@ -68,6 +68,9 @@ def _main(argv=None):
     if a.cmd == "list":
         for path, pid, usb in discovery.find_devices():
             out(f"{path}  {VID:04x}:{pid:04x}  {PIDS.get(pid, '?')}  poll={discovery.find_input_node(usb)}")
+        dinput = discovery.find_dinput_wireless()
+        if dinput:
+            out(f"{dinput}  2dc8:6012  Ultimate 2 Wireless (DInput gamepad)")
         bt = discovery.find_bt_xinput()
         if bt:
             out(f"{bt}  {VID:04x}:{PID_BT_XINPUT:04x}  {PIDS[PID_BT_XINPUT]}  (switched to config mode on use)")
@@ -144,8 +147,9 @@ def _run(a, dev):
         t = dev.get_theme()
         out(THEMES.get(t, f"unknown ({t})"))
     elif a.cmd == "backup":
+        data = dev.read_config()        # a failed read must not truncate an existing backup
         with open(a.file, "wb") as f:
-            f.write(dev.read_config())
+            f.write(data)
         out(f"saved {dev.model.cfg_size} bytes to {a.file}")
     elif a.cmd == "restore":
         with open(a.file, "rb") as f:

@@ -33,6 +33,24 @@ def test_list(fake, monkeypatch, capsys):
     assert "2dc8:1234  ?" in capsys.readouterr().out
 
 
+def test_list_dinput_without_config_interface(monkeypatch, capsys):
+    monkeypatch.setattr(cli.discovery, "find_devices", lambda: [])
+    monkeypatch.setattr(cli.discovery, "find_dinput_wireless", lambda: "/dev/hidraw-dinput")
+    run(monkeypatch, "list")
+    assert "/dev/hidraw-dinput  2dc8:6012  Ultimate 2 Wireless (DInput gamepad)" in capsys.readouterr().out
+
+
+def test_backup_read_failure_preserves_previous_backup(fake, monkeypatch, tmp_path):
+    def disconnected(self):
+        raise IOError("disconnected")
+    monkeypatch.setattr(device.Device, "read_config", disconnected)
+    target = tmp_path / "controller.bin"
+    target.write_bytes(b"previous backup")
+    with pytest.raises(SystemExit, match="disconnected"):
+        run(monkeypatch, "backup", str(target))
+    assert target.read_bytes() == b"previous backup"
+
+
 def test_info(fake, monkeypatch, capsys):
     run(monkeypatch, "-d", fake.path, "info")
     out = capsys.readouterr().out

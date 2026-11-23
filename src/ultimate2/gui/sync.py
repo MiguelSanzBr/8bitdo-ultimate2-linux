@@ -75,8 +75,6 @@ class DeviceSync:
                 msg = str(e) or e.__class__.__name__
                 if fail:
                     self.after(0, lambda e=e: fail(e, msg))     # `e` is unbound once the except block ends
-                elif quiet:
-                    self.after(0, lambda: self.set_connected(None))
                 else:
                     self.after(0, lambda: (self.set_status(msg, True), self.set_connected(None),
                                            messagebox.showerror(_("Erro"), msg, parent=self)))
@@ -92,7 +90,7 @@ class DeviceSync:
     # ------------------------------------------------------------ auto-save
     def changed(self, var=None):
         """A setting changed: an empty profile becomes a custom one, then save shortly (debounced)."""
-        if self._loading or self.doc is None:
+        if self._loading or self.preview_only or self.doc is None:
             return
         if self.readonly:                          # Bluetooth: nothing can be written, put the shown values back
             self.after_idle(self.load)
@@ -108,6 +106,8 @@ class DeviceSync:
     def autosave(self):
         """Write only the changed byte range (like the app's per-setting writes) and verify it."""
         self._save_job = None
+        if self.preview_only or self.doc is None or self.readonly:
+            return
         if self.busy:
             self._save_job = self.after(300, self.autosave)
             return
@@ -148,6 +148,9 @@ class DeviceSync:
 
             def done(r):
                 slot, pad = r
+                if slot is None and self.show_dinput():
+                    self.schedule_retry()
+                    return
                 bt = battery.bluetooth() if self.model is models.ULTIMATE_24G and self.conn else None
                 if pad or bt:
                     self.conn = (self.conn[0], pad["battery"] if pad else bt["capacity"])
@@ -157,7 +160,13 @@ class DeviceSync:
                     self.active_slot = slot
                     self.refresh_slots()
             # a knocked controller that lost power or was replugged is back in XInput: read (and knock) it again
-            fail = (lambda e, msg: (self.set_connected(None), self.read_device(True))) if self.model.knock else None
+            def fail(_e, _msg):
+                if self.show_dinput():
+                    self.schedule_retry()
+                else:
+                    self.set_connected(None)
+                    if self.model.knock:
+                        self.read_device(True)
             self.run("", lambda dev: (dev.current_slot(), dev.pad_status() if wireless else None), done, quiet=True,
                      fail=fail)
         self.after(theme.POLL_MS, self.poll)
@@ -165,7 +174,7 @@ class DeviceSync:
     def apply_theme(self):
         """Send the LED theme chosen in ``v["theme"]`` (applies at once, for every profile)."""
         t = self.v["theme"].get()
-        if t == self.theme_dev or t not in protocol.THEMES or self.doc is None:
+        if self.preview_only or t == self.theme_dev or t not in protocol.THEMES or self.doc is None:
             return
         if self.busy:
             self.after(300, self.apply_theme)
@@ -186,20 +195,25 @@ class DeviceSync:
             self.after_cancel(self._retry_job)
             self._retry_job = None
         if retry and self.busy:
-            self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
+            self.schedule_retry()
             return
 
         def fail(e, msg):
-            self.set_connected(None)
             if isinstance(e, SystemExit) and ("permission" in msg or "cannot switch" in msg):
+                self.set_connected(None)
+                self.dinput_info.pack_forget()
                 self.set_status(msg, True)
                 messagebox.showerror(_("Erro"), msg, parent=self)
                 return
             if "over Bluetooth" in msg:
+                self.set_preview_only(False)
+                self.dinput_info.pack_forget()
                 self.show_bluetooth()
-            else:
+            elif not self.show_dinput():
+                self.set_connected(None)
+                self.dinput_info.pack_forget()
                 self.set_status(_("Controle desligado ou fora de alcance. Ligue-o: ele será lido automaticamente."))
-            self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
+            self.schedule_retry()
 
         def job(dev):
             m = dev.model
@@ -233,9 +247,44 @@ class DeviceSync:
             self.set_status(_("Configuração lida do controle. As mudanças são salvas automaticamente."))
             self.readonly = False
             self.btinfo.pack_forget()
+            self.dinput_info.pack_forget()
+            if self.preview_only:
+                self.set_preview_only(False)
             self.check_conflict()
             self.keep_d(cfg)
         self.run("" if retry else _("Lendo do controle…"), job, done, quiet=retry, fail=fail, knock=True)
+
+    def schedule_retry(self):
+        self._retry_job = self.after(theme.RETRY_MS, lambda: self.read_device(True))
+
+    def show_dinput(self):
+        """Keep input visualization working without showing or writing any previously read configuration."""
+        if not discovery.find_dinput_wireless():
+            return False
+        if not self.preview_only:
+            if self._save_job:
+                self.after_cancel(self._save_job)
+                self._save_job = None
+            self.doc = self.base = self.active_slot = self.conn = self.theme_dev = None
+            self.readonly = False
+            self.colors = {}
+            self.edition = None
+            self.set_preview_only(True)
+            skin = self.skin_pref if self.skin_pref in SKINS else DEFAULT_SKIN
+            if self.model is models.ULTIMATE2:
+                self.apply_skin(skin)        # clear the old LED animation even if the skin didn't change
+            else:
+                self.skin = skin             # set_model redraws for the new model
+                self.set_model(models.ULTIMATE2)
+            self.info_label.configure(text="")
+            self.refresh_slots()
+        self.btinfo.pack_forget()
+        self.conflict.pack_forget()
+        if not self.dinput_info.winfo_manager():
+            self.dinput_info.pack(fill="x", padx=int(24 * self.s), pady=(int(10 * self.s), 0), after=self.slot_btns[0].master)
+        self.set_connected((None, self.dinput_battery))
+        self.set_status(_("DInput sem fio: apenas teste de entradas."))
+        return True
 
     # ------------------------------------------------------------ Ultimate 2.4G on Bluetooth
     def check_conflict(self):
@@ -295,18 +344,22 @@ class DeviceSync:
 
     # ------------------------------------------------------------ backups
     def backup(self):
+        if self.preview_only:
+            return
         path = filedialog.asksaveasfilename(parent=self, defaultextension=".bin",
                                             initialfile=f"u2-backup-{time.strftime('%Y%m%d-%H%M')}.bin",
                                             filetypes=[(_("Backup"), "*.bin")])
-        if path:
+        if path and not self.preview_only:
             def job(dev):
                 with open(path, "wb") as f:
                     f.write(dev.read_config())
             self.run(_("Fazendo backup…"), job, lambda r: self.set_status(_("Backup salvo em {}").format(path)))
 
     def restore(self):
+        if self.preview_only:
+            return
         path = filedialog.askopenfilename(parent=self, filetypes=[(_("Backup"), "*.bin")])
-        if not path:
+        if not path or self.preview_only:
             return
         with open(path, "rb") as f:
             data = f.read()
@@ -315,6 +368,8 @@ class DeviceSync:
             return messagebox.showerror(_("Erro"), _("Arquivo inválido ({} bytes, esperado {}).").format(len(data), size),
                                         parent=self)
         if not messagebox.askyesno(_("Restaurar"), _("Substituir toda a configuração do controle por este backup?"), parent=self):
+            return
+        if self.preview_only:
             return
 
         def job(dev):
